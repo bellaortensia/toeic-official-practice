@@ -1,4 +1,5 @@
 const CLIENT_ID = 'z86hx1zqjrt28urcj8mz487fyg5wl76t';
+const CLIENT_SECRET = 'd1QAC50V41mR9NAhquGi9l5p12fYqlHS';
 const REDIRECT_URI = 'https://bellaortensia.github.io/toeic-official-practice/';
 const AUDIO_FOLDER_ID = '409318407954'; // 接続テスト用: 音声フォルダ
 
@@ -65,6 +66,7 @@ async function exchangeCodeForToken(code) {
       grant_type: 'authorization_code',
       code,
       client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET,
       code_verifier: verifier,
       redirect_uri: REDIRECT_URI
     })
@@ -82,7 +84,8 @@ async function refreshToken() {
     body: new URLSearchParams({
       grant_type: 'refresh_token',
       refresh_token,
-      client_id: CLIENT_ID
+      client_id: CLIENT_ID,
+      client_secret: CLIENT_SECRET
     })
   });
   if (!res.ok) return false;
