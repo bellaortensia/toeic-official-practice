@@ -99,16 +99,19 @@ async function getValidAccessToken() {
   return localStorage.getItem('box_access_token');
 }
 
-function updateStatus() {
+function updateButtons() {
   if (isLoggedIn()) {
-    statusEl.textContent = 'Boxにログイン済みです。';
     loginBtn.style.display = 'none';
     testBtn.style.display = 'inline-block';
   } else {
-    statusEl.textContent = '未ログインです。';
     loginBtn.style.display = 'inline-block';
     testBtn.style.display = 'none';
   }
+}
+
+function updateStatus() {
+  statusEl.textContent = isLoggedIn() ? 'Boxにログイン済みです。' : '未ログインです。';
+  updateButtons();
 }
 
 async function handleRedirect() {
@@ -117,18 +120,20 @@ async function handleRedirect() {
   const state = params.get('state');
   if (code) {
     const savedState = localStorage.getItem('box_oauth_state');
+    window.history.replaceState({}, document.title, REDIRECT_URI);
     if (state !== savedState) {
       statusEl.textContent = 'ログイン処理でエラーが発生しました(state不一致)。もう一度お試しください。';
-      window.history.replaceState({}, document.title, REDIRECT_URI);
+      updateButtons();
       return;
     }
     try {
       await exchangeCodeForToken(code);
       statusEl.textContent = 'ログインに成功しました！';
     } catch (e) {
-      statusEl.textContent = e.message;
+      statusEl.textContent = 'ログイン失敗: ' + e.message;
     }
-    window.history.replaceState({}, document.title, REDIRECT_URI);
+    updateButtons();
+    return;
   }
   updateStatus();
 }
