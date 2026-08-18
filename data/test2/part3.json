@@ -1,0 +1,72 @@
+{
+  "test": "T2",
+  "part": 3,
+  "type": "conversation",
+  "groups": [
+    { "questions": [32,33,34], "audioConversation": "185 T2 Pt3 Q32-34 会話.mp3", "audioQuestions": "186 T2 Pt3 Q32-34 設問.mp3", "items": [
+      { "number": 32, "text": "What was recently built?", "choices": {"A":"A restaurant","B":"A hotel","C":"An airport","D":"A parking area"}, "answer": "B" },
+      { "number": 33, "text": "According to the woman, what will customers like about a service?", "choices": {"A":"It will be environmentally friendly.","B":"It will be available 24 hours a day.","C":"It will not require reservations.","D":"It will be free of charge."}, "answer": "D" },
+      { "number": 34, "text": "What does the man ask the woman to do?", "choices": {"A":"Gather some information","B":"Train some staff","C":"Clean some vehicles","D":"Apply for a permit"}, "answer": "A" }
+    ]},
+    { "questions": [35,36,37], "audioConversation": "187 T2 Pt3 Q35-37 会話.mp3", "audioQuestions": "188 T2 Pt3 Q35-37 設問.mp3", "items": [
+      { "number": 35, "text": "Why does the man contact the woman?", "choices": {"A":"To get directions to her office","B":"To offer her a job","C":"To arrange for a meeting","D":"To purchase a newspaper subscription"}, "answer": "C" },
+      { "number": 36, "text": "What does the man say will take place next week?", "choices": {"A":"A grand-opening event","B":"A product launch","C":"A retirement party","D":"A career fair"}, "answer": "A" },
+      { "number": 37, "text": "What does the woman ask permission to do?", "choices": {"A":"Postpone a subscription","B":"Park in a certain area","C":"Call some references","D":"Take pictures"}, "answer": "D" }
+    ]},
+    { "questions": [38,39,40], "audioConversation": "189 T2 Pt3 Q38-40 会話.mp3", "audioQuestions": "190 T2 Pt3 Q38-40 設問.mp3", "items": [
+      { "number": 38, "text": "What is the man organizing?", "choices": {"A":"A fund-raising event","B":"A community festival","C":"A company retreat","D":"A professional conference"}, "answer": "D" },
+      { "number": 39, "text": "What idea does the woman say she likes?", "choices": {"A":"Giving away free samples","B":"Providing a shuttle service","C":"Offering group activities","D":"Inviting a guest speaker"}, "answer": "C" },
+      { "number": 40, "text": "What does the man decide to do next?", "choices": {"A":"Plan a menu","B":"Make a payment","C":"Call a city office","D":"Hire a cleaning service"}, "answer": "C" }
+    ]},
+    { "questions": [41,42,43], "audioConversation": "191 T2 Pt3 Q41-43 会話.mp3", "audioQuestions": "192 T2 Pt3 Q41-43 設問.mp3", "items": [
+      { "number": 41, "text": "Where is the conversation most likely taking place?", "choices": {"A":"At a textile factory","B":"At a grocery store","C":"At a bakery","D":"At a food manufacturing plant"}, "answer": "B" },
+      { "number": 42, "text": "What does the man mean when he says, \"I saw the truck leave about an hour ago\"?", "choices": {"A":"A delivery was not made.","B":"A truck driver left without the woman.","C":"A product should now be available.","D":"A supplier filled an order incorrectly."}, "answer": "C" },
+      { "number": 43, "text": "Why did the woman e-mail the man yesterday?", "choices": {"A":"To invite him to a training event","B":"To apply for a new position","C":"To ask for vacation time","D":"To make a complaint"}, "answer": "B" }
+    ]},
+    { "questions": [44,45,46], "audioConversation": "193 T2 Pt3 Q44-46 会話.mp3", "audioQuestions": "194 T2 Pt3 Q44-46 設問.mp3", "items": [
+      { "number": 44, "text": "Where is the conversation taking place?", "choices": {"A":"At a hotel","B":"At a restaurant","C":"At an art gallery","D":"At a concert hall"}, "answer": "B" },
+      { "number": 45, "text": "Who does the woman say gave her some instructions?", "choices": {"A":"Her client","B":"Her manager","C":"An event planner","D":"An interior designer"}, "answer": "D" },
+      { "number": 46, "text": "What does the man agree to do?", "choices": {"A":"Sell some tickets","B":"Take an extra work shift","C":"Cancel a reservation","D":"Take care of a group of people"}, "answer": "D" }
+    ]},
+    { "questions": [47,48,49], "audioConversation": "195 T2 Pt3 Q47-49 会話.mp3", "audioQuestions": "196 T2 Pt3 Q47-49 設問.mp3", "items": [
+      { "number": 47, "text": "Where do the speakers most likely work?", "choices": {"A":"At an automobile manufacturer","B":"At a cosmetics developer","C":"At a construction firm","D":"At a technology company"}, "answer": "C" },
+      { "number": 48, "text": "Why was a business trip canceled?", "choices": {"A":"A client ended a contract.","B":"A supplier will be replaced.","C":"A flaw in a product was discovered.","D":"A flight was canceled."}, "answer": "A" },
+      { "number": 49, "text": "What does the woman say she will do?", "choices": {"A":"Contact a travel agent","B":"Review some presentation slides","C":"Apply for more funding","D":"Revise an instruction manual"}, "answer": "A" }
+    ]},
+    { "questions": [50,51,52], "audioConversation": "197 T2 Pt3 Q50-52 会話.mp3", "audioQuestions": "198 T2 Pt3 Q50-52 設問.mp3", "items": [
+      { "number": 50, "text": "What problem does the woman mention?", "choices": {"A":"A source of funding has been lost.","B":"An entertainer is not available.","C":"Bad weather is predicted.","D":"A permit has not been approved."}, "answer": "A" },
+      { "number": 51, "text": "Where did the woman go this morning?", "choices": {"A":"To a community center","B":"To a bank","C":"To a music shop","D":"To a bookstore"}, "answer": "D" },
+      { "number": 52, "text": "What will Roberto most likely do after the meeting?", "choices": {"A":"Call his brother","B":"Check his e-mail","C":"Visit a Web site","D":"Adjust a budget"}, "answer": "A" }
+    ]},
+    { "questions": [53,54,55], "audioConversation": "199 T2 Pt3 Q53-55 会話.mp3", "audioQuestions": "200 T2 Pt3 Q53-55 設問.mp3", "items": [
+      { "number": 53, "text": "Why is So-Hyoon nervous?", "choices": {"A":"She has participated only in smaller productions.","B":"She has a lot of lines to remember.","C":"She has to sing a solo.","D":"She has not yet met the other cast members."}, "answer": "C" },
+      { "number": 54, "text": "What does the man say he will give to So-Hyoon?", "choices": {"A":"A parking pass","B":"A notebook","C":"A schedule","D":"A room number"}, "answer": "D" },
+      { "number": 55, "text": "Why does Shreya interrupt the conversation?", "choices": {"A":"To start a rehearsal","B":"To provide a backstage tour","C":"To arrange for a photoshoot","D":"To take costume measurements"}, "answer": "C" }
+    ]},
+    { "questions": [56,57,58], "audioConversation": "201 T2 Pt3 Q56-58 会話.mp3", "audioQuestions": "202 T2 Pt3 Q56-58 設問.mp3", "items": [
+      { "number": 56, "text": "Where do the speakers most likely work?", "choices": {"A":"At an advertising agency","B":"At a training consultancy","C":"At a law firm","D":"At a social media company"}, "answer": "C" },
+      { "number": 57, "text": "What does the man offer to do?", "choices": {"A":"Review a contract","B":"Purchase some advertising space","C":"Lead a project","D":"Contact Human Resources"}, "answer": "D" },
+      { "number": 58, "text": "What will the man do next?", "choices": {"A":"Assemble a team","B":"Write an online review","C":"Negotiate a higher salary","D":"Conduct some research"}, "answer": "C" }
+    ]},
+    { "questions": [59,60,61], "audioConversation": "203 T2 Pt3 Q59-61 会話.mp3", "audioQuestions": "204 T2 Pt3 Q59-61 設問.mp3", "items": [
+      { "number": 59, "text": "Where is the conversation most likely taking place?", "choices": {"A":"At an art supply store","B":"At a furniture outlet","C":"At a car dealership","D":"At a sporting goods shop"}, "answer": "B" },
+      { "number": 60, "text": "Why is the woman concerned?", "choices": {"A":"She lost her wallet.","B":"A product is damaged.","C":"A color is not available.","D":"A warranty is not included."}, "answer": "A" },
+      { "number": 61, "text": "Why does the woman say, \"Thursday is two days from now\"?", "choices": {"A":"To express surprise","B":"To make a correction","C":"To offer reassurance","D":"To show disappointment"}, "answer": "C" }
+    ]},
+    { "questions": [62,63,64], "audioConversation": "205 T2 Pt3 Q62-64 会話.mp3", "audioQuestions": "206 T2 Pt3 Q62-64 設問.mp3", "graphic": "October Class Schedule table (Mon Vegetarian Delights 5:00PM, Tue Intro to Pasta Making 6:30PM, Wed Bread Making for Beginners 7:00PM, Thu Advanced Bread Making 4:30PM, Fri Classic French Cuisine 5:30PM) - not yet captured as image", "items": [
+      { "number": 62, "text": "How did the man first learn about a program?", "choices": {"A":"From the radio","B":"From a newspaper","C":"From a neighbor","D":"From a Web site"}, "answer": "B" },
+      { "number": 63, "text": "Look at the graphic. What course will the man sign up for?", "choices": {"A":"Vegetarian Delights","B":"Intro to Pasta Making","C":"Bread Making for Beginners","D":"Advanced Bread Making"}, "answer": "D" },
+      { "number": 64, "text": "What does the woman want the man to do?", "choices": {"A":"Speak to an instructor","B":"Purchase class materials","C":"Pay with a credit card","D":"Fill out a survey"}, "answer": "A" }
+    ]},
+    { "questions": [65,66,67], "audioConversation": "207 T2 Pt3 Q65-67 会話.mp3", "audioQuestions": "208 T2 Pt3 Q65-67 設問.mp3", "graphic": "Order table: item/quantity/model/price (Business cards, Exhibit banners, Brochures, Posters) - not yet captured as image", "items": [
+      { "number": 65, "text": "What industry do the speakers most likely work in?", "choices": {"A":"Art","B":"Entertainment","C":"Catering","D":"Technology"}, "answer": "D" },
+      { "number": 66, "text": "Look at the graphic. Which item arrived in the wrong quantity?", "choices": {"A":"Business cards","B":"Exhibit banners","C":"Brochures","D":"Posters"}, "answer": "A" },
+      { "number": 67, "text": "What is the man concerned about?", "choices": {"A":"A deadline","B":"Paper quality","C":"A venue","D":"An extra expense"}, "answer": "A" }
+    ]},
+    { "questions": [68,69,70], "audioConversation": "209 T2 Pt3 Q68-70 会話.mp3", "audioQuestions": "210 T2 Pt3 Q68-70 設問.mp3", "graphic": "Graphic referenced by Q69 (replacement part cost) not yet captured as image", "items": [
+      { "number": 68, "text": "According to the woman, what is wrong with the water in the pool?", "choices": {"A":"It is cloudy.","B":"It is too cold.","C":"It has a bad smell.","D":"It contains too many chemicals."}, "answer": "C" },
+      { "number": 69, "text": "Look at the graphic. How much was a replacement part cost?", "choices": {"A":"$26","B":"$32","C":"$55","D":"$70"}, "answer": "D" },
+      { "number": 70, "text": "What will the man most likely do later today?", "choices": {"A":"Submit an invoice","B":"Clean some equipment","C":"Post an announcement","D":"Visit a store"}, "answer": "D" }
+    ]}
+  ]
+}
