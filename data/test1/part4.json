@@ -1,0 +1,57 @@
+{
+  "test": "T1",
+  "part": 4,
+  "type": "talk",
+  "groups": [
+    { "questions": [71,72,73], "audioTalk": "073 T1 Pt4 Q71-73 トーク.mp3", "audioQuestions": "074 T1 Pt4 Q71-73 設問.mp3", "items": [
+      { "number": 71, "text": "What does the speaker feel proud about?", "choices": {"A":"A hiring decision","B":"A company's expansion","C":"An industry award","D":"A project's completion"}, "answer": "D" },
+      { "number": 72, "text": "According to product reviews, what did customers like most about a product?", "choices": {"A":"The affordable price","B":"The storage capability","C":"The stylish design","D":"The ease of operation"}, "answer": "C" },
+      { "number": 73, "text": "How will a product most likely change?", "choices": {"A":"Digital controls will be added.","B":"More colors will be offered.","C":"Stronger materials will be used.","D":"Adjustable shelves will be installed."}, "answer": "A" }
+    ]},
+    { "questions": [74,75,76], "audioTalk": "075 T1 Pt4 Q74-76 トーク.mp3", "audioQuestions": "076 T1 Pt4 Q74-76 設問.mp3", "items": [
+      { "number": 74, "text": "Where is the announcement most likely taking place?", "choices": {"A":"At a ferry station","B":"At an airport","C":"At a train depot","D":"At a taxi stand"}, "answer": "A" },
+      { "number": 75, "text": "What will some of the listeners receive?", "choices": {"A":"A schedule","B":"A refund","C":"A food voucher","D":"An identification badge"}, "answer": "D" },
+      { "number": 76, "text": "What does the speaker remind the listeners about?", "choices": {"A":"Luggage restrictions","B":"Safety procedures","C":"Entertainment options","D":"Building hours"}, "answer": "C" }
+    ]},
+    { "questions": [77,78,79], "audioTalk": "077 T1 Pt4 Q77-79 トーク.mp3", "audioQuestions": "078 T1 Pt4 Q77-79 設問.mp3", "items": [
+      { "number": 77, "text": "Where does the speaker most likely work?", "choices": {"A":"At a university","B":"At a technology firm","C":"At a magazine publisher","D":"At a public library"}, "answer": "C" },
+      { "number": 78, "text": "Why does the speaker say, \"there's an error message when I try to download the files\"?", "choices": {"A":"To give an excuse","B":"To request assistance","C":"To express caution","D":"To correct a misunderstanding"}, "answer": "B" },
+      { "number": 79, "text": "What does the speaker tell the listener to do?", "choices": {"A":"Prepare for a discussion","B":"Contact a computer store","C":"Reprint some articles","D":"Stop some research"}, "answer": "D" }
+    ]},
+    { "questions": [80,81,82], "audioTalk": "079 T1 Pt4 Q80-82 トーク.mp3", "audioQuestions": "080 T1 Pt4 Q80-82 設問.mp3", "items": [
+      { "number": 80, "text": "Who is the speaker?", "choices": {"A":"A sales representative","B":"A store manager","C":"A company executive","D":"A news reporter"}, "answer": "C" },
+      { "number": 81, "text": "What type of product does the company make?", "choices": {"A":"Vehicles","B":"Furniture","C":"Dishware","D":"Electronics"}, "answer": "D" },
+      { "number": 82, "text": "What will happen next?", "choices": {"A":"Some instructions will be given.","B":"Some uniforms will be distributed.","C":"Some questions will be collected.","D":"Some materials will be unpacked."}, "answer": "A" }
+    ]},
+    { "questions": [83,84,85], "audioTalk": "081 T1 Pt4 Q83-85 トーク.mp3", "audioQuestions": "082 T1 Pt4 Q83-85 設問.mp3", "items": [
+      { "number": 83, "text": "What is the speaker calling about?", "choices": {"A":"Car maintenance","B":"Boat renovations","C":"Park development","D":"Home repairs"}, "answer": "B" },
+      { "number": 84, "text": "What does the speaker imply when he says, \"we have several new crew members on the project\"?", "choices": {"A":"The payroll needs to be updated.","B":"The crew's work is impressive.","C":"A requested due date cannot be met.","D":"Some colleagues will need driving directions."}, "answer": "D" },
+      { "number": 85, "text": "What will the listener receive this afternoon?", "choices": {"A":"An inspection report","B":"Some photographs","C":"An invoice","D":"A delivery"}, "answer": "A" }
+    ]},
+    { "questions": [86,87,88], "audioTalk": "083 T1 Pt4 Q86-88 トーク.mp3", "audioQuestions": "084 T1 Pt4 Q86-88 設問.mp3", "items": [
+      { "number": 86, "text": "What does the speaker say the company is passionate about?", "choices": {"A":"Keeping the oceans clean","B":"Reducing waste in landfills","C":"Stopping air pollution","D":"Preserving forests"}, "answer": "C" },
+      { "number": 87, "text": "According to the speaker, what does the company collect?", "choices": {"A":"Plastic packaging","B":"Soil samples","C":"Cash donations","D":"Electronic devices"}, "answer": "C" },
+      { "number": 88, "text": "What does the speaker say the listeners can request?", "choices": {"A":"A receipt","B":"A tour of a site","C":"A shipping label","D":"A free guidebook"}, "answer": "B" }
+    ]},
+    { "questions": [89,90,91], "audioTalk": "085 T1 Pt4 Q89-91 トーク.mp3", "audioQuestions": "086 T1 Pt4 Q89-91 設問.mp3", "items": [
+      { "number": 89, "text": "Where are the listeners?", "choices": {"A":"In a sports arena","B":"In a theater","C":"In a classroom","D":"In a bookstore"}, "answer": "A" },
+      { "number": 90, "text": "Why does the speaker praise some students?", "choices": {"A":"Their financial goals were met.","B":"Their project received many positive reviews.","C":"They solved a problem quickly.","D":"They dedicated a lot of time to a project."}, "answer": "D" },
+      { "number": 91, "text": "What does the speaker ask the listeners to do?", "choices": {"A":"Take their seats","B":"Gather in the lobby","C":"Enjoy some refreshments","D":"Silence electronic devices"}, "answer": "D" }
+    ]},
+    { "questions": [92,93,94], "audioTalk": "087 T1 Pt4 Q92-94 トーク.mp3", "audioQuestions": "088 T1 Pt4 Q92-94 設問.mp3", "items": [
+      { "number": 92, "text": "Where does the speaker work?", "choices": {"A":"At an architectural firm","B":"At a historical foundation","C":"At a construction company","D":"At a concert hall"}, "answer": "B" },
+      { "number": 93, "text": "Why does the speaker say, \"I just heard that there is fog at the airport\"?", "choices": {"A":"To suggest using alternate transportation","B":"To request help from the audience","C":"To explain a schedule change","D":"To complain about poor communication"}, "answer": "A" },
+      { "number": 94, "text": "Who does the speaker thank at the end of the speech?", "choices": {"A":"An archivist","B":"An event planner","C":"Some public officials","D":"Some restaurant owners"}, "answer": "D" }
+    ]},
+    { "questions": [95,96,97], "audioTalk": "089 T1 Pt4 Q95-97 トーク.mp3", "audioQuestions": "090 T1 Pt4 Q95-97 設問.mp3", "graphic": "Map showing Food Market (212 Klein St.), City Hall (1 Main St.), Cobb Museum (555 1st St.), Seafront Park (1066 Grand St.) - not yet captured as image", "items": [
+      { "number": 95, "text": "What aspect of the city will the listeners learn about on the tour?", "choices": {"A":"Its industries","B":"Its history","C":"Its art","D":"Its parks"}, "answer": "B" },
+      { "number": 96, "text": "According to the speaker, what is included in the tickets?", "choices": {"A":"Meal discounts","B":"Free parking","C":"Complimentary photographs","D":"Museum admission"}, "answer": "C" },
+      { "number": 97, "text": "Look at the graphic. Where did the tour end?", "choices": {"A":"At 212 Klein St.","B":"At 1 Main St.","C":"At 1066 Grand St.","D":"At 555 1st St."}, "answer": "A" }
+    ]},
+    { "questions": [98,99,100], "audioTalk": "091 T1 Pt4 Q98-100 トーク.mp3", "audioQuestions": "092 T1 Pt4 Q98-100 設問.mp3", "graphic": "Project step timeline table: Model development (July 27), Client review, Prototype revisions (August 3), Production (August 8), [unlabeled step] (August 16) - not yet captured as image", "items": [
+      { "number": 98, "text": "Where does the speaker work?", "choices": {"A":"At a glass factory","B":"At an interior design firm","C":"At a perfume developer","D":"At a cosmetics store"}, "answer": "A" },
+      { "number": 99, "text": "Look at the graphic. By which date is the listener asked to complete a project?", "choices": {"A":"July 27","B":"August 3","C":"August 8","D":"August 16"}, "answer": "C" },
+      { "number": 100, "text": "What does the speaker say she will pay for?", "choices": {"A":"Additional materials","B":"Legal fees","C":"Expedited service","D":"Staff training"}, "answer": "D" }
+    ]}
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "test": "T1",
+  "part": 1,
+  "type": "photograph",
+  "note": "Audio-only: four statements about a picture are spoken, not printed in the book. No choice text exists in print.",
+  "questions": [
+    { "number": 1, "audio": "013 T1 Pt1 Q1.mp3", "answer": "D" },
+    { "number": 2, "audio": "014 T1 Pt1 Q2.mp3", "answer": "B" },
+    { "number": 3, "audio": "015 T1 Pt1 Q3.mp3", "answer": "A" },
+    { "number": 4, "audio": "016 T1 Pt1 Q4.mp3", "answer": "C" },
+    { "number": 5, "audio": "017 T1 Pt1 Q5.mp3", "answer": "A" },
+    { "number": 6, "audio": "018 T1 Pt1 Q6.mp3", "answer": "C" }
+  ]
+}

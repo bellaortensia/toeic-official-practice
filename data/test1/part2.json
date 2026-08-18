@@ -1,0 +1,33 @@
+{
+  "test": "T1",
+  "part": 2,
+  "type": "question_response",
+  "note": "Audio-only: a question/statement and three spoken responses (A)(B)(C), not printed in the book.",
+  "questions": [
+    { "number": 7, "audio": "020 T1 Pt2 Q7.mp3", "answer": "A" },
+    { "number": 8, "audio": "021 T1 Pt2 Q8.mp3", "answer": "C" },
+    { "number": 9, "audio": "022 T1 Pt2 Q9.mp3", "answer": "A" },
+    { "number": 10, "audio": "023 T1 Pt2 Q10.mp3", "answer": "B" },
+    { "number": 11, "audio": "024 T1 Pt2 Q11.mp3", "answer": "A" },
+    { "number": 12, "audio": "025 T1 Pt2 Q12.mp3", "answer": "B" },
+    { "number": 13, "audio": "026 T1 Pt2 Q13.mp3", "answer": "A" },
+    { "number": 14, "audio": "027 T1 Pt2 Q14.mp3", "answer": "C" },
+    { "number": 15, "audio": "028 T1 Pt2 Q15.mp3", "answer": "A" },
+    { "number": 16, "audio": "029 T1 Pt2 Q16.mp3", "answer": "B" },
+    { "number": 17, "audio": "030 T1 Pt2 Q17.mp3", "answer": "B" },
+    { "number": 18, "audio": "031 T1 Pt2 Q18.mp3", "answer": "A" },
+    { "number": 19, "audio": "032 T1 Pt2 Q19.mp3", "answer": "C" },
+    { "number": 20, "audio": "033 T1 Pt2 Q20.mp3", "answer": "B" },
+    { "number": 21, "audio": "034 T1 Pt2 Q21.mp3", "answer": "A" },
+    { "number": 22, "audio": "035 T1 Pt2 Q22.mp3", "answer": "B" },
+    { "number": 23, "audio": "036 T1 Pt2 Q23.mp3", "answer": "C" },
+    { "number": 24, "audio": "037 T1 Pt2 Q24.mp3", "answer": "C" },
+    { "number": 25, "audio": "038 T1 Pt2 Q25.mp3", "answer": "C" },
+    { "number": 26, "audio": "039 T1 Pt2 Q26.mp3", "answer": "B" },
+    { "number": 27, "audio": "040 T1 Pt2 Q27.mp3", "answer": "B" },
+    { "number": 28, "audio": "041 T1 Pt2 Q28.mp3", "answer": "C" },
+    { "number": 29, "audio": "042 T1 Pt2 Q29.mp3", "answer": "A" },
+    { "number": 30, "audio": "043 T1 Pt2 Q30.mp3", "answer": "B" },
+    { "number": 31, "audio": "044 T1 Pt2 Q31.mp3", "answer": "B" }
+  ]
+}
