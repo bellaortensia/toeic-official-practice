@@ -17,8 +17,41 @@
       <h2>Box連携</h2>
       <p id="status">確認中...</p>
       <button id="login-btn">Boxにログイン</button>
-      <button id="test-btn" style="display:none;">接続テスト(音声フォルダを読み込む)</button>
       <p id="result"></p>
+    </section>
+
+    <section id="nav-test" class="nav-section" style="display:none;">
+      <h2>テストを選ぶ</h2>
+      <div class="button-row">
+        <button class="test-select" data-test="T1">TEST 1</button>
+        <button class="test-select" data-test="T2">TEST 2</button>
+      </div>
+    </section>
+
+    <section id="nav-part" class="nav-section" style="display:none;">
+      <h2><span id="current-test-label"></span> — Partを選ぶ</h2>
+      <div class="button-row">
+        <button class="part-select" data-part="1">Part1<br><small>写真描写</small></button>
+        <button class="part-select" data-part="2">Part2<br><small>応答</small></button>
+        <button class="part-select" data-part="3">Part3<br><small>会話</small></button>
+        <button class="part-select" data-part="4">Part4<br><small>説明文</small></button>
+        <button class="part-select" data-part="5">Part5<br><small>短文穴埋め</small></button>
+        <button class="part-select" data-part="6">Part6<br><small>長文穴埋め</small></button>
+        <button class="part-select" data-part="7">Part7<br><small>読解</small></button>
+      </div>
+      <button id="back-to-test" class="link-btn">← テスト選択に戻る</button>
+    </section>
+
+    <section id="practice" class="nav-section" style="display:none;">
+      <div class="practice-header">
+        <button id="back-to-part" class="link-btn">← Part選択に戻る</button>
+        <span id="progress-label"></span>
+      </div>
+      <div id="practice-body"></div>
+      <div class="practice-footer">
+        <button id="prev-btn">← 前へ</button>
+        <button id="next-btn">次へ →</button>
+      </div>
     </section>
   </main>
 
