@@ -1,0 +1,199 @@
+{
+  "test": "T2",
+  "part": 7,
+  "type": "reading_comprehension",
+  "passages": [
+    {
+      "questions": [147,148],
+      "audio": "266 特典 T2 Pt7 Q147-148.mp3",
+      "topic": "Appointment information",
+      "documents": [{ "label": "Appointment card", "text": "Best Crown Hair Salon\n11 Beauty Row\nBrisbane\n(07) 555-7890\n\nName: Madeline Turner\nAppointment: 4 August, 11:00 A.M.\nService: Wash, cut, blow-dry\n\nPlease notify us at least 24 hours in advance if you need to cancel, or you will be subject to a $25 fee." }],
+      "items": [
+        { "number": 147, "text": "What is the purpose of the information?", "choices": {"A":"To remind a customer about an appointment","B":"To alert patrons to a grand opening","C":"To notify a stylist of a schedule change","D":"To advertise the services available at a salon"}, "answer": "A" },
+        { "number": 148, "text": "What detail is included?", "choices": {"A":"A price for a haircut","B":"A business's location","C":"A store owner's name","D":"A customer's phone number"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [149,150,151],
+      "audio": "267 特典 T2 Pt7 Q149-151.mp3",
+      "topic": "E-mail",
+      "documents": [{ "label": "E-mail", "text": "From: Marsha Beecham <mbeecham@...>\nTo: Fabrizio Cardozo <fcardozo@lichtmail.net>\nDate: June 30\nSubject: RE: Order number 439-628\nAttachment: Instructions\n\nDear Mr. Cardozo,\n\nThank you for contacting us regarding order number 439-628. —[1]— I see that your order was placed on June 23. The item you ordered was originally scheduled to ship out on June 25 for delivery to you by June 29. However, due to high demand, there has been a delay in fulfilling the order. —[2]— To apologize for the inconvenience, we would like to offer you a $25 voucher toward a future order. —[3]— Please see the attachment for instructions on how to apply the voucher. —[4]—\n\nWe thank you for your patience.\n\nSincerely,\nMarsha Beecham, Customer Service Representative\nGreer Home Goods" }],
+      "items": [
+        { "number": 149, "text": "Why did Ms. Beecham send the e-mail?", "choices": {"A":"To respond to an inquiry","B":"To announce a new service","C":"To complain about a late order","D":"To ask that a form be completed"}, "answer": "A" },
+        { "number": 150, "text": "What is the topic of the attached instructions?", "choices": {"A":"How to return an order","B":"How to request a refund","C":"How to update an account","D":"How to apply a credit"}, "answer": "D" },
+        { "number": 151, "text": "In which of the positions marked [1], [2], [3], and [4] does the following sentence best belong?\n\"The new expected date of arrival is July 5.\"", "choices": {"A":"[1]","B":"[2]","C":"[3]","D":"[4]"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [152,153],
+      "audio": "268 特典 T2 Pt7 Q152-153.mp3",
+      "topic": "Article",
+      "documents": [{ "label": "Business Briefs", "text": "MEXICO CITY (25 June)—When the restaurant Tomoichi Sushi closed last month, Jordan Cohen made a quick decision. He purchased the recently vacated building in the Polanco neighborhood of Mexico City and decided to turn it into a bagel shop.\n\nMr. Cohen was raised in New York City, where he developed a love for bagels, ring-shaped rolls that are boiled before being baked, resulting in a chewy interior. Bagels are one of the city's most treasured culinary traditions.\n\nThe new shop, Lox On Bagels, opened this week. In addition to bagels and spreads, Lox On Bagels serves an assortment of breakfast sandwiches, specialty coffees, and smoothies.\n\n\"Bagels were the main staple of my childhood breakfast,\" Mr. Cohen says. \"It's my dream to make them a larger part of Mexican cuisine.\"" }],
+      "items": [
+        { "number": 152, "text": "According to the article, what is true about Mr. Cohen?", "choices": {"A":"He works in the construction industry.","B":"He owns many businesses.","C":"He was trained as a sushi chef.","D":"He grew up in New York City."}, "answer": "D" },
+        { "number": 153, "text": "What is indicated about Lox On Bagels?", "choices": {"A":"It will open at the end of July.","B":"It has received positive reviews.","C":"It is in a location that once housed another restaurant.","D":"It will export bagels to the United States."}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [154,155,156],
+      "audio": "269 特典 T2 Pt7 Q154-156.mp3",
+      "topic": "Letter",
+      "documents": [{ "label": "Letter", "text": "Nakaima Industries\n10 4-1262, Makiku Yoshitsubo\nJoetsu-shi, Niigata\nJapan\n\n21 November\n\nKenneth Wallcroft\nWallcroft Pen Designs\n2284 Dufferin Street\nMarfa, Texas 79843\nUnited States of America\n\nDear Mr. Wallcroft,\n\nOur board of directors asked me to convey their compliments on your beautifully handcrafted fountain pens. Company President Asa Nakaima, who commissioned the pens to honor our board members, said your work surpassed his expectations. Most noteworthy was how you inscribed the initials of a different board member on each pen. Consequently, every writing implement is a personalized work of art to be cherished.\n\nMr. Nakaima is also grateful that our company's vice president, Chihiro Hirota, came up with the idea to have you create these gifts, which were distributed at the board's most recent meeting.\n\nBest regards,\nGwen Reger, Office Manager\nNakaima Industries" }],
+      "items": [
+        { "number": 154, "text": "What is the purpose of the letter?", "choices": {"A":"To praise an employee","B":"To thank a client for a gift","C":"To express appreciation for an artistic creation","D":"To place an order for promotional items"}, "answer": "C" },
+        { "number": 155, "text": "What is mentioned about the pens?", "choices": {"A":"They were manufactured in Japan.","B":"They were presented during an official dinner.","C":"Each contains a different color of ink.","D":"Each includes a unique design feature."}, "answer": "D" },
+        { "number": 156, "text": "What is suggested about Ms. Hirota?", "choices": {"A":"She gift wrapped the pens.","B":"She recommended Mr. Wallcroft's services.","C":"She is in charge of scheduling board meetings.","D":"She signed a contract with Mr. Wallcroft."}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [157,158],
+      "audio": "270 特典 T2 Pt7 Q157-158.mp3",
+      "topic": "Text-message chain",
+      "documents": [{ "label": "Text messages", "text": "Alan Ropp (1:06 P.M.): Where are you? Weren't we supposed to meet at 1 o'clock to get decorations for the office party?\n\nCamille Saenz (1:07 P.M.): I'm outside Glinda's Books, the shop next to Parker Fashions.\n\nAlan Ropp (1:08 P.M.): Oh, OK. I'm in the art supply store. Should I leave and try to find you?\n\nCamille Saenz (1:09 P.M.): No, don't worry. I know exactly where the art supply store is. I'm walking over now.\n\nAlan Ropp (1:10 P.M.): Good. They have a roll of bright yellow paper here that we could use to make a banner. It would look very dramatic!" }],
+      "items": [
+        { "number": 157, "text": "Where most likely are Mr. Ropp and Ms. Saenz?", "choices": {"A":"In a theater","B":"In an art museum","C":"In a shopping center","D":"In an office building"}, "answer": "C" },
+        { "number": 158, "text": "At 1:09 P.M., what does Ms. Saenz most likely mean when she writes, \"No, don't worry\"?", "choices": {"A":"She prefers to walk to the office.","B":"She has already made a brightly colored banner.","C":"Mr. Ropp will be reimbursed for any decorations he buys.","D":"Mr. Ropp should stay where he is."}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [159,160],
+      "audio": "271 特典 T2 Pt7 Q159-160.mp3",
+      "topic": "Brochure",
+      "documents": [{ "label": "Certified Laundry Services", "text": "Some health-care facilities believe managing their linen inventory on their premises is practical. However, the costs of handling large volumes of laundry can be high. Allow Certified Laundry Services to supply your sanitized textiles so that you can focus on your core business of patient care. We can schedule weekly or by-request laundry pickup with next-day delivery.\n\nContact us at 863-555-0119 to arrange a free consultation. We will create a detailed report listing the advantages of using our service, including lowering operating costs. We can compare the actual price-per-pound savings of allowing us to manage your laundry with doing your laundry in-house." }],
+      "items": [
+        { "number": 159, "text": "For whom is the brochure most likely intended?", "choices": {"A":"Hotels","B":"Hospitals","C":"Beauty salons","D":"Manufacturing companies"}, "answer": "B" },
+        { "number": 160, "text": "What is indicated about the report?", "choices": {"A":"It will include client reviews.","B":"It will present new products.","C":"It will describe the region served.","D":"It will provide a cost-savings analysis."}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [161,162,163],
+      "audio": "272 特典 T2 Pt7 Q161-163.mp3",
+      "topic": "Press release",
+      "documents": [{ "label": "For Immediate Release", "text": "Contact: Hiari Mensah, h.mensah@sandarr.com\n\nSandarr Announces Exciting New Addition to Its Lineup\n\nLOS ANGELES (May 9)—Anyone who has attended a meeting, presentation, or live music concert has most likely seen a Sandarr product in use. As an award-winning designer and producer of microphones and headsets, Sandarr is known for its quality.\n\nSandarr is pleased to introduce the XTT, a microphone that offers studio-quality sound yet is affordable for the general consumer. For those who work remotely or operate a home-based business, it is essential to have high-quality sound during audio and video conferences so as to be heard clearly by colleagues or clients. Created exclusively for this type of application, the XTT is perfectly suited to all home office environments.\n\nBased on years of research at Sandarr labs, the XTT has been designed to enhance the audio signal quality. The XTT is easily connected to a laptop or desktop computer. The microphone is mounted on a sturdy stand to prevent wobbling.\n\nFor further information and pricing, contact Hiari Mensah at h.mensah@sandarr.com or visit www.sandarr.com." }],
+      "items": [
+        { "number": 161, "text": "What kind of company is Sandarr?", "choices": {"A":"A professional recording studio","B":"A designer of business software","C":"An event management company","D":"A manufacturer of audio equipment"}, "answer": "D" },
+        { "number": 162, "text": "According to the press release, who are the intended users of the XTT?", "choices": {"A":"Researchers who record outdoors","B":"Singers who perform live on stage","C":"Announcers who work at radio stations","D":"Workers who join meetings from home"}, "answer": "D" },
+        { "number": 163, "text": "The word \"mounted\" in paragraph 3, line 3, is closest in meaning to", "choices": {"A":"climbed","B":"installed","C":"reached","D":"tested"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [164,165,166,167],
+      "audio": "273 特典 T2 Pt7 Q164-167.mp3",
+      "topic": "Letter",
+      "documents": [{ "label": "Letter", "text": "Lonterna Services\nwww.lonterna.ca\n\n14 January\n\nAudra Bain\nOwner, Volta Tea\n130 Quillen Street, Suite 265\nToronto, Ontario M5X 1E3\n\nDear Ms. Bain,\n\nI am pleased to introduce myself as president of Lonterna Services, a Toronto-based social media marketing firm. For the last two years, we have been identified by Vanguard Monthly as a leader in social media publicity. Although Lonterna Services was established just four years ago, we have consistently outperformed regional firms that have been in business for over ten years. I am confident that we can help you achieve your marketing goals.\n\nAs you know, timing is crucial in your industry, and success often depends on disseminating product information to the public as quickly as possible. Catalogues and flyers may be inexpensive, but they can take weeks to reach potential customers. With a reliable social media team, you can ensure that news about your product will be seen by a large number of people within hours.\n\nOur clients range from fashion retailers to music distributors, but a handful of our team members have deep knowledge of the beverage industry. Their experience ensures that we can start planning a media campaign for you from day one without needing to learn the basics of your business. Please call or e-mail me and let me tell you about the exciting things we can do for you. My direct line is 416-555-0129, and my e-mail address is loh@lonterna.ca.\n\nSincerely,\nTrent Loh, President" }],
+      "items": [
+        { "number": 164, "text": "What most likely does Mr. Loh want Ms. Bain to do?", "choices": {"A":"Subscribe to Vanguard Monthly","B":"Hire his company as a contractor","C":"Publish an article about his company","D":"Apply for a marketing job at his company"}, "answer": "B" },
+        { "number": 165, "text": "How long has Lonterna Services been in business?", "choices": {"A":"For one year","B":"For two years","C":"For four years","D":"For ten years"}, "answer": "C" },
+        { "number": 166, "text": "According to the letter, why is social media marketing so effective?", "choices": {"A":"It reaches the largest number of potential customers.","B":"It delivers information faster than other methods.","C":"It can be easily managed by traditional marketing agencies.","D":"It is less expensive than other methods."}, "answer": "B" },
+        { "number": 167, "text": "What kind of business most likely is Volta Tea?", "choices": {"A":"A fashion retailer","B":"A music distributor","C":"A magazine publisher","D":"A beverage producer"}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [168,169,170,171],
+      "audio": "274 特典 T2 Pt7 Q168-171.mp3",
+      "topic": "Text-message chain",
+      "documents": [{ "label": "Text messages", "text": "Marcus Angelo (6:19 P.M.): Hi, Geraldo and Claudette. Could one of you bring the box of fabric samples to my apartment on your way home tonight? I forgot it.\n\nGeraldo Soria (6:20 P.M.): I will. I live around the corner from you. The samples for the HRE Sportswear line?\n\nMarcus Angelo (6:21 P.M.): Yes. I think I left the box in my office. I'd like to go directly to the client's location tomorrow morning without having to go to the office. It is out of my way.\n\nGeraldo Soria (6:24 P.M.): I am in your office now. I don't see a box.\n\nClaudette Lymer (6:27 P.M.): It is in the conference room. I took the samples to show during my video call with the cloth mill's management team.\n\nMarcus Angelo (6:28 P.M.): Make sure the label reads \"HRE Sportswear.\"\n\nGeraldo Soria (6:30 P.M.): Got it! You should see me in about 30 minutes." }],
+      "items": [
+        { "number": 168, "text": "In what type of business do the writers most likely work?", "choices": {"A":"Packaging","B":"Videoconferencing equipment sales","C":"Clothing","D":"Sporting event planning"}, "answer": "C" },
+        { "number": 169, "text": "What can be concluded about Mr. Angelo?", "choices": {"A":"He is on vacation.","B":"He is in a meeting.","C":"He has left the office for the day.","D":"He traveled out of town for business."}, "answer": "C" },
+        { "number": 170, "text": "Why did Mr. Soria have trouble finding the box?", "choices": {"A":"Because Mr. Angelo took it home","B":"Because Ms. Lymer had moved it to a new location","C":"Because the clients have it","D":"Because it was sent to the cloth mill managers"}, "answer": "B" },
+        { "number": 171, "text": "At 6:30 P.M., what does Mr. Soria most likely mean when he writes, \"You should see me in about 30 minutes\"?", "choices": {"A":"He will return to the office to see Ms. Lymer.","B":"He will arrive at the client meeting after Ms. Lymer.","C":"He plans to place a video call to Mr. Angelo.","D":"He expects to arrive at Mr. Angelo's apartment soon."}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [172,173,174,175],
+      "audio": "275 特典 T2 Pt7 Q172-175.mp3",
+      "topic": "E-mail",
+      "documents": [{ "label": "E-mail", "text": "From: Stockton Office Solutions <sales@stocktonofficesolutions.com>\nTo: Esme <...@hamiltonrealestate.com>\nDate: March 27\nSubject: news\n\nDear Member of the Stockton Office Solutions Family:\n\nDo the responsibilities of your employees require them to sit for long hours at a desk? Do they sometimes feel neck strain, and are their muscles tired and sore at the end of the day? Research shows that being too sedentary can potentially increase the risk of developing health problems. There's one very simple remedy, and that's more movement. —[1]— However, being physically active is not easy when you're in front of a computer all day.\n\nNow there is a great solution: the Stockton Stand-and-Sit Desk. The easily adjustable height of our desk allows workers to alternate between standing and sitting throughout the day without interrupting daily tasks. Now they can move more while never losing productivity. —[2]— In addition, the Stand-and-Sit Desk also helps improve energy and concentration, which can further enhance productivity. —[3]—\n\nTo upgrade your office work spaces, visit our store today to see three different models of Stand-and-Sit Desks. —[4]— Because your firm is a regular customer, we are pleased to offer you 25 percent off your purchase of these desks when you order a minimum of five.\n\nVisit our online store today at stocktonofficesolutions.com for all your office furniture needs!" }],
+      "items": [
+        { "number": 172, "text": "What is the purpose of the e-mail?", "choices": {"A":"To promote a new product","B":"To offer an employee discount","C":"To request customer feedback","D":"To introduce a new furniture department"}, "answer": "A" },
+        { "number": 173, "text": "What is NOT mentioned as a benefit of the Stand-and-Sit desk?", "choices": {"A":"Improved health","B":"Improved group work","C":"Better concentration","D":"Increased productivity"}, "answer": "B" },
+        { "number": 174, "text": "What is suggested about Stockton Office Solutions?", "choices": {"A":"It has just opened a new store.","B":"It is currently recruiting sales staff.","C":"It provides free design consultations.","D":"It offers discounts to repeat customers."}, "answer": "D" },
+        { "number": 175, "text": "In which of the positions marked [1], [2], [3], and [4] does the following sentence best belong?\n\"However, being physically active is not easy when you're in front of a computer all day.\"", "choices": {"A":"[1]","B":"[2]","C":"[3]","D":"[4]"}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [176,177,178,179,180],
+      "audio": ["276 特典 T2 Pt7 Q176-180.mp3", "277 特典 T2 Pt7 Q176-180.mp3"],
+      "topic": "Web page and e-mail",
+      "documents": [
+        { "label": "Web page", "text": "https://www.judithkembeldesigns.ca/home\nHome | Gallery | Terms | Contact\n\nWelcome to my Web site! My name is Judith Kembel, and I am a freelance illustrator in Canada. My career began ten years ago after I completed my degree in art and design. While I have diverse skills, I am known primarily for my artwork featured on mystery novel covers, but I have also been recognised for my nature and wildlife illustrations. I am always open for commissions and can be reached via the e-mail address on my contact page. To facilitate our conversation, please address the following points of information in your e-mail inquiry.\n\n1. A description of your project and personal style preferences\n2. Notes about illustrations or design elements that inspire you\n3. Confirmation that you have reviewed my contract requirements and understand the rates and payment conditions listed on my Terms page\n4. Agreement to a collaborative process that may involve regular communication" },
+        { "label": "E-mail", "text": "From: Eric Wardza <ewardza@worldmail.ca>\nTo: Judith Kembel <inquiries@judithkembeldesigns.ca>\nSubject: Commission\n\nHello, Ms. Kembel,\n\nI am looking for an artist to design a cover for a book I published several years ago. I would like to release a new edition of the book with updated cover art. Even though people say you can't judge a book by its cover, I read a study stating that 80 percent of people do exactly that. A fresh book cover may help my book capture a new audience. I envision a fanciful scene with colourful animal characters—something reminiscent of Speak of the Bees or Wisdom of Sea and Sky, both written by Rufus Wennerstrem, for whom you have produced book covers. I have an idea of the style I like and can provide my input as we collaborate on a final design. Please let me know the cost to work with you and whether you have time to work with me.\n\nBest wishes,\nEric Wardza" }
+      ],
+      "items": [
+        { "number": 176, "text": "What does Ms. Kembel mention about herself?", "choices": {"A":"She uses the latest design software.","B":"She specializes in a particular type of book.","C":"She teaches design classes occasionally.","D":"She secures most assignments through an agent."}, "answer": "B" },
+        { "number": 177, "text": "What is true about Mr. Wardza's book?", "choices": {"A":"It is the first part of a series.","B":"It has received positive reviews.","C":"It has been published previously.","D":"It is intended for children."}, "answer": "C" },
+        { "number": 178, "text": "Why does Mr. Wardza mention a statistic?", "choices": {"A":"To estimate his book's revenue potential","B":"To offer a reason for wanting to hire Ms. Kembel","C":"To show why he prefers one publisher over another","D":"To propose a new study topic"}, "answer": "B" },
+        { "number": 179, "text": "In the e-mail, the word \"capture\" in paragraph 1, line 4, is closest in meaning to", "choices": {"A":"gain","B":"propose","C":"summarize","D":"represent"}, "answer": "A" },
+        { "number": 180, "text": "What point of information does Mr. Wardza fail to include in his message?", "choices": {"A":"Point 1","B":"Point 2","C":"Point 3","D":"Point 4"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [181,182,183,184,185],
+      "audio": ["278 特典 T2 Pt7 Q181-185.mp3", "279 特典 T2 Pt7 Q181-185.mp3"],
+      "topic": "Article and e-mail",
+      "documents": [
+        { "label": "Article", "text": "Popular Show to Resume Filming\n\nLONDON (8 July)—Fans of the hit TV series Best Son will be treated to a third season—but they will have to wait longer than anticipated to view it.\n\nThe drama that centers on the life of Guo Tzeng, the fictitious founder of the Tzeng family business dynasty, debuted two years ago but has gained a sizeable following only in the past year. This delayed jump in viewership prompted top executives at the Roscou streaming platform to approve funding for an additional season, which had been in question.\n\nBecause of the six-month gap between filming the previous season and Roscou's late order for the next season, the show has run into scheduling problems with some cast members.\n\n\"We discussed trying to rewrite multiple scripts around the characters that would be missing,\" said Justin Zhou, the award-winning director of Best Son. \"However, we ultimately decided that doing so would not be true to the story we want to tell.\"\n\nMany viewers were expecting episodes for season three to become available for viewing in April, the same month previous seasons began. But that timeline is no longer feasible, according to Mr. Zhou. \"We will announce a release date soon, but the new episodes probably won't be available until summer at the earliest,\" he said." },
+        { "label": "E-mail", "text": "From: Lexi Cotton <lexicotton@...co.uk>\nTo: [Ms. Landry] <...@films.co.uk>\nDate: 17 July\nSubject: Xiao-Ming Hu's [schedule]\n\nDear Ms. Landry:\n\nI am very relieved that we were able to schedule filming of the third season of Best Son for this September and October and that Xiao-Ming Hu will be available then to reprise his role of Guo Tzeng.\n\nI am writing to enquire whether Mr. Hu is available to film the outdoor winter scenes in late December in Churchill, Manitoba. Please let me know as soon as possible, as filming those scenes any sooner might require us to find another location. The shooting of the winter scenes will take about two weeks and will be the last ones scheduled.\n\nSincerely,\nLexi Cotton\nProduction Manager, Fern Tree Productions" }
+      ],
+      "items": [
+        { "number": 181, "text": "What is the purpose of the article?", "choices": {"A":"To provide an update about a television show","B":"To introduce a new streaming platform","C":"To profile the founder of a family business","D":"To review a popular film series"}, "answer": "A" },
+        { "number": 182, "text": "What most likely is Ms. Landry's profession?", "choices": {"A":"Scriptwriter","B":"Talent agent","C":"Set designer","D":"Camera operator"}, "answer": "B" },
+        { "number": 183, "text": "When does Ms. Cotton expect filming to be completed?", "choices": {"A":"In April","B":"In June","C":"In August","D":"In December"}, "answer": "D" },
+        { "number": 184, "text": "What is most likely true about Fern Tree Productions?", "choices": {"A":"It is owned by Mr. Zhou.","B":"It specializes in documentaries.","C":"It received funding from Roscou.","D":"It has reduced its operating budget."}, "answer": "D" },
+        { "number": 185, "text": "What can be concluded about Mr. Hu?", "choices": {"A":"He enjoys winter sports.","B":"He owns a home in Churchill.","C":"He is unavailable in September.","D":"He plays a leading role in Best Son."}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [186,187,188,189,190],
+      "audio": ["280 特典 T2 Pt7 Q186-190.mp3", "281 特典 T2 Pt7 Q186-190.mp3", "282 特典 T2 Pt7 Q186-190.mp3"],
+      "topic": "Agenda, notice, and text-message chain",
+      "documents": [
+        { "label": "Meeting agenda", "text": "Dovmart Executive Meeting Agenda\nLocation: Room 404, Bittings Building\nDate: April 30\nTime: 10:00 A.M.\n\nAgenda Item\nDovmart is concerned about delays in getting goods, including grocery products, into the hands of our customers. Store managers are frustrated, and customers are complaining. To resolve this issue, we will discuss proposals for solutions from our operations team.\nProposal 1: Extend store hours while considering costs and staffing needs (Donald Toye).\nProposal 2: Train employees to become delivery drivers (Jimeana Moreano).\nProposal 3: Open new warehouse locations (Jacob Gaburo).\nProposal 4: Establish relationships with new suppliers (Satoshi Yamada)." },
+        { "label": "Notice", "text": "Attention, Dovmart Employees\nMay 10\n\nWe are offering a twelve-week program to train Dovmart supply-chain employees to become certified long-haul truck drivers by September 1. Participants will learn how to operate company-owned tractor-trailer trucks. They will also prepare for the written and practical portions of the commercial driver's license test.\n\nWhat are the advantages of becoming a long-distance trucker?\n- Learn a skill that is in high demand.\n- Enjoy flexible scheduling.\n- Earn a substantially higher salary.\n\nLong-distance truck drivers will drive to and from Dovmart warehouses and retail locations. Drivers choose between regional and cross-country routes. To learn more, log on to the Dovmart internal Web site and follow the program link. Enroll before May 15 to receive a bonus." },
+        { "label": "Text messages", "text": "Joe Radovich (12:13 P.M.): Hello, Amelie. I'm almost finished with the training program. I can't wait to get my commercial driver's license.\n\nAmelie Ziff (12:15 P.M.): I'm sure you will be terrific in your new position, but I will miss having you on my team. You were one of the top supply-chain associates at our store here in Madison.\n\nJoe Radovich (12:15 P.M.): I will miss my job, too, but the program sounded too interesting to pass up. I even received a bonus when I joined! My last day in Madison will be August 30." }
+      ],
+      "items": [
+        { "number": 186, "text": "According to the agenda, what aspect of Dovmart products concerns customers?", "choices": {"A":"Their prices","B":"Their quality","C":"Their ingredients","D":"Their availability"}, "answer": "B", "uncertain": "agenda text as extracted reads as a delivery/availability issue, which maps more directly to D; official key gives B — worth spot-checking against a page image" },
+        { "number": 187, "text": "Whose proposal did company executives share with employees on May 10?", "choices": {"A":"Mr. Toye's","B":"Ms. Moreano's","C":"Mr. Gaburo's","D":"Mr. Yamada's"}, "answer": "C" },
+        { "number": 188, "text": "What does the notice indicate about employees who complete the program?", "choices": {"A":"They will have opportunities to work overtime.","B":"They will need to take courses every year.","C":"They will earn more money.","D":"They will work overseas."}, "answer": "B", "uncertain": "notice text as extracted ('Earn a substantially higher salary') maps most directly to C; official key gives B — worth spot-checking against a page image" },
+        { "number": 189, "text": "What does the notice instruct interested employees to do?", "choices": {"A":"Sign up for a test","B":"Consult a schedule","C":"Visit the company's Web site","D":"Submit preferences for routes"}, "answer": "A" },
+        { "number": 190, "text": "What is most likely true about Mr. Radovich?", "choices": {"A":"He already has a commercial driver's license.","B":"He enrolled in a training program before May 15.","C":"He will begin a new job in Madison soon.","D":"He hired Ms. Ziff as a supply-chain associate."}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [191,192,193,194,195],
+      "audio": ["283 特典 T2 Pt7 Q191-195.mp3", "284 特典 T2 Pt7 Q191-195.mp3", "285 特典 T2 Pt7 Q191-195.mp3"],
+      "topic": "Report, e-mail, and advertisement",
+      "documents": [
+        { "label": "Sales report", "text": "Brea Autolot\n58 Dahill Street\nHamilton, Virginia 20158\n\nSales for Model TX-400 (Quarter 1)\nExterior Color (by popularity) / Percentage of Total Sales\nWhite 32%\nBlack 26%\nGray 15%\nBlue 10%\nSilver 9%\nOther (Red, Green, Beige) 8%\n\nProjections for quarter 2: Similar patterns. Blue is the only color Brea Autolot expects to increase in sales in the second quarter. Beginning in quarter 2, model TX-400 will also be available in bronze." },
+        { "label": "E-mail", "text": "From: Anna Watkins <awatkins@mailcrate.com>\nTo: Rhea Adams <radams@breaautolot.com>\nSubject: Car\n\nDear Ms. Adams,\n\nThank you for taking the time to show me so many sport utility vehicles at Brea Autolot this week. I appreciated working with you, so I wanted you to know why I decided to go elsewhere for the car I purchased. Your dealership had an abundance of model TX-400s but none with all the extra features that I was looking for. Makefield Auto had the model TX-400 in the silver color I wanted with those features.\n\nIn addition, my father is a member of the Makefield Auto rewards program, and he referred me to that dealership. He was able to transfer all of his 10,000 rewards points to me, enabling me to reduce substantially the purchase price of my model TX-400. You are an excellent salesperson; it is just that I found a better deal with another dealership.\n\nSincerely,\nAnna Watkins" },
+        { "label": "Advertisement", "text": "MAKEFIELD AUTO\nModel TX-400—The Top-Rated Sport Utility Vehicle (SUV) of the Year\n\nThis year's eight-passenger model includes more passenger space and a more comfortable ride with lots of second-row legroom and an expanded third row.\n- Rear-seat media system for the first time includes touch screens for second-row passengers.\n- The built-in exterior cameras offer nine available views.\n- The safety system alerts you when it detects a pedestrian directly in front of your vehicle.\n- The model TX-400 gets the best gas mileage of any car in its size category.\n\nJoin the Makefield Auto rewards program when you buy a vehicle. Every time you visit our dealership for a service or to purchase a car, you will be rewarded with points that can be redeemed on a purchase or service. As a bonus, you will earn 100 rewards points each time you refer someone to our dealership." }
+      ],
+      "items": [
+        { "number": 191, "text": "What does the report suggest Brea Autolot will do in quarter 2?", "choices": {"A":"Open a second location","B":"Sell more blue model TX-400s","C":"Improve staff training","D":"Stop selling the bronze model TX-400"}, "answer": "A", "uncertain": "report content ('Blue is the only color expected to increase in sales in Q2') maps most directly to choice B; official key gives A — worth spot-checking against a page image" },
+        { "number": 192, "text": "What can be concluded about the color of the TX-400 that Ms. Watkins purchased?", "choices": {"A":"It is expected to be Makefield Auto's best-selling color TX-400 in quarter 2.","B":"That color is no longer available from the manufacturer.","C":"In quarter 1, 9 percent of Brea Autolot's sales of TX-400s were that color.","D":"The manufacturer usually sells 10,000 units in that color."}, "answer": "C" },
+        { "number": 193, "text": "What is a reason Ms. Watkins gives for purchasing a car from Makefield Auto?", "choices": {"A":"The extra features","B":"The excellent sales help","C":"The wide variety of colors","D":"The home-delivery service"}, "answer": "A" },
+        { "number": 194, "text": "What can be concluded about Ms. Watkins' father?", "choices": {"A":"He received 100 bonus points.","B":"He recently bought a car from Brea Autolot.","C":"He owns a green model TX-400.","D":"He transferred his vehicle ownership to Ms. Watkins."}, "answer": "A" },
+        { "number": 195, "text": "According to the advertisement, what is new in this year's model TX-400?", "choices": {"A":"The superior fuel efficiency","B":"The built-in exterior cameras","C":"The touch screens for passengers","D":"The pedestrian-alert safety system"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [196,197,198,199,200],
+      "audio": ["286 特典 T2 Pt7 Q196-200.mp3", "287 特典 T2 Pt7 Q196-200.mp3", "288 特典 T2 Pt7 Q196-200.mp3"],
+      "topic": "Two e-mails and a Web page",
+      "documents": [
+        { "label": "E-mail 1", "text": "From: Eun-Mi Yoon\nTo: Sarah Abboud <sabboud@mailhost.co.uk>\nDate: 8 February\nSubject: Lecture series\n\nHi Sarah,\n\nI hope you are settled into your new job. We miss you around the office. I thought you might be interested in the upcoming lecture series from Travel the World Society (TTWS). It would be fun to attend one of the lectures together, since they are interactive and participants might be able to turn on their cameras at some point. I attended a great one last year. To view the speaker lineup, visit www.ttws.org/events. I prefer the March lecture, but the April and May topics also look good. I am a member of TTWS. You don't have to join to buy a ticket, but you will get a discount if you do.\n\nEun-Mi" },
+        { "label": "Web page", "text": "https://www.ttws.org/events\nHome | Events | Blogs | Membership\n\nLECTURE SERIES\n\nTravel the World Society (TTWS) is pleased to announce that tickets for its fifth annual lecture series are now on sale. Tickets for the virtual lectures are £25 each or £95 for all four.* Each lecture starts at noon GMT and lasts 90 minutes. The final 15 minutes are reserved for an open exchange among the speakers and participants.\n\n- 15 March — Atesh Shirvani, professor of Iranian culture, discusses traditional textiles of ancient Persia.\n- 22 April — Carolina Perez, art historian, explores sculpture through Mexico's most important statues.\n- 28 May (SOLD OUT) — Marcel Bisset, five-star chef, explores the culinary delights of France's Normandy region.\n- 12 June — Aoki Watanabe, host of the hit travel TV show Let's Tour Japan, shares the sights and sounds of Japan's island of Kyushu.\n\nA link will be e-mailed to ticket holders five days prior to each event.\n*TTWS members pay £20 for an individual ticket or £75 for all four. Simply include your membership number on the order form to get your discount. To join TTWS, visit the Membership page." },
+        { "label": "E-mail 2", "text": "From: Sarah Abboud <sabboud@mailhost.co.uk>\nTo: Eun-Mi Yoon\nDate: 13 June\nSubject: Travel lecture\n\nHi Eun-Mi,\n\nWhat a delight to see you at Ms. Perez' presentation. You asked such an interesting question! We must plan a trip to see some of those sites Ms. Perez talked about. Thanks for letting me know about the lecture series and TTWS, which I will probably join eventually. My apologies for not thanking you much sooner. I was promoted to team leader in May, so you can imagine how busy I have been. I hope to see you at the civil engineering conference in New York next month!\n\nKind regards,\nSarah" }
+      ],
+      "items": [
+        { "number": 196, "text": "What does the first e-mail suggest about Ms. Yoon?", "choices": {"A":"She formerly worked with Ms. Abboud.","B":"She recently changed jobs.","C":"She is going to Japan in June.","D":"She has never attended a TTWS event."}, "answer": "A" },
+        { "number": 197, "text": "What does the Web page indicate about the lecture series?", "choices": {"A":"It is presented online only.","B":"It took place for the first time last year.","C":"Its speakers lead guided tours.","D":"Its most popular speaker is Mr. Watanabe."}, "answer": "A" },
+        { "number": 198, "text": "What is true about Ms. Abboud?", "choices": {"A":"She will lead a workshop at an engineering conference.","B":"She is a top executive at her company.","C":"She paid £25 for a lecture ticket.","D":"She arrived fifteen minutes late to an event."}, "answer": "C" },
+        { "number": 199, "text": "What is the topic of the lecture attended by Ms. Yoon and Ms. Abboud?", "choices": {"A":"Clothes and textiles","B":"Sculpture and statues","C":"French food","D":"Japanese islands"}, "answer": "B" },
+        { "number": 200, "text": "In the second e-mail, what does Ms. Abboud suggest that she and Ms. Yoon do?", "choices": {"A":"Discuss a question from the TTWS blog","B":"Book rooms in the same hotel","C":"Join a professional organization","D":"Visit some sites that they learned about"}, "answer": "D" }
+      ]
+    }
+  ]
+}

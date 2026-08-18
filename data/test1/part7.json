@@ -125,7 +125,7 @@
         { "number": 177, "text": "Who most likely is Mr. Clarkson?", "choices": {"A":"A corporate lawyer","B":"An advertising executive","C":"An insurance company owner","D":"A customer service supervisor"}, "answer": "D" },
         { "number": 178, "text": "In the e-mail, the word \"impression\" in paragraph 3, line 2, is closest in meaning to", "choices": {"A":"mark","B":"image","C":"reaction","D":"imitation"}, "answer": "C" },
         { "number": 179, "text": "What can be concluded about Ms. Ishida?", "choices": {"A":"She is planning to travel soon.","B":"She relocated to Australia four years ago.","C":"She is shopping for home insurance.","D":"She had a different insurer during her first year in Australia."}, "answer": "B" },
-        { "number": 180, "text": "What aspect of customer service did Ms. Robins have trouble with?", "choices": {"A":"Product knowledge","B":"Communication style","C":"Patience with customers","D":"Expertise with insurance software"}, "answer": "B" }
+        { "number": 180, "text": "What aspect of customer service did Ms. Robins have trouble with?", "choices": {"A":"Product knowledge","B":"Communication style","C":"Patience with customers","D":"Expertise with insurance software"}, "answer": "A" }
       ]
     },
     {
@@ -140,7 +140,7 @@
         { "number": 181, "text": "What is suggested on the form?", "choices": {"A":"The item exceeded a weight limit.","B":"The item was shipped to Guyana.","C":"The package contained a computer.","D":"The package included a prohibited item."}, "answer": "C" },
         { "number": 182, "text": "What can be concluded about Ms. Persaud?", "choices": {"A":"She is the manager of a hotel.","B":"She recently purchased a laptop computer.","C":"She works for a company that exports electronics.","D":"She is a customs inspector in Canada."}, "answer": "A" },
         { "number": 183, "text": "Why did Mr. Hawkins write the e-mail?", "choices": {"A":"To thank an employee for making travel arrangements","B":"To offer praise for an employee's actions","C":"To inquire about an unexpected shipping charge","D":"To report that a hotel's computer has been damaged"}, "answer": "B" },
-        { "number": 184, "text": "When did Mr. Hawkins leave for the Northwest Territories?", "choices": {"A":"On October 28","B":"On October 29","C":"On November 2","D":"On November 3"}, "answer": "B" },
+        { "number": 184, "text": "When did Mr. Hawkins leave for the Northwest Territories?", "choices": {"A":"On October 28","B":"On October 29","C":"On November 2","D":"On November 3"}, "answer": "D" },
         { "number": 185, "text": "In the e-mail, the word \"standard\" in paragraph 2, line 6, is closest in meaning to", "choices": {"A":"rule","B":"structure","C":"quality","D":"measure"}, "answer": "C" }
       ]
     },
@@ -157,7 +157,7 @@
         { "number": 186, "text": "Based on the e-mail, who most likely is Ms. Skrobol?", "choices": {"A":"The head chef at a restaurant","B":"A restaurant supply vendor","C":"The organizer of a festival","D":"A famous film critic"}, "answer": "C" },
         { "number": 187, "text": "What can be concluded about Ancheta Grill?", "choices": {"A":"It was not available on April 8.","B":"It is located near Ristorante Italia.","C":"It cannot accommodate 30 people.","D":"It does not serve vegetarian options."}, "answer": "D" },
         { "number": 188, "text": "What is indicated on the schedule about all the films shown at the festival?", "choices": {"A":"They will be followed by panel discussions.","B":"They are French-language films.","C":"They will be shown at the same movie theater.","D":"They were directed by the same person."}, "answer": "C" },
-        { "number": 189, "text": "What is indicated about Mr. Tai on the form?", "choices": {"A":"He works as a journalist.","B":"He will attend the entire festival.","C":"He is an experienced translator.","D":"He was unable to book a reservation for the festival dinner."}, "answer": "D" },
+        { "number": 189, "text": "What is indicated about Mr. Tai on the form?", "choices": {"A":"He works as a journalist.","B":"He will attend the entire festival.","C":"He is an experienced translator.","D":"He was unable to book a reservation for the festival dinner."}, "answer": "A" },
         { "number": 190, "text": "What event will Mr. Tai be able to attend?", "choices": {"A":"A tour of filming locations","B":"A short-film competition","C":"A farewell party","D":"A question-and-answer session with a director"}, "answer": "B" }
       ]
     },
@@ -190,7 +190,7 @@
       "items": [
         { "number": 196, "text": "According to the first review, how does Ms. Ramiro's new book differ from her previous ones?", "choices": {"A":"It is significantly longer.","B":"It is a different type of book.","C":"It is in a different language.","D":"It was written with a coauthor."}, "answer": "B" },
         { "number": 197, "text": "In the first review, what book is mentioned as the first novel written by Ms. Ramiro?", "choices": {"A":"The Vanishing Plate","B":"The Alpine Enigma","C":"The Saffron Table","D":"The Garnet Butterfly"}, "answer": "B" },
-        { "number": 198, "text": "Whose work does Ms. Ramiro praise in an interview?", "choices": {"A":"Derek Donne's","B":"Bernice Holm's","C":"Selda Solberg's","D":"Lukas Fogt's"}, "answer": "A" },
+        { "number": 198, "text": "Whose work does Ms. Ramiro praise in an interview?", "choices": {"A":"Derek Donne's","B":"Bernice Holm's","C":"Selda Solberg's","D":"Lukas Fogt's"}, "answer": "C" },
         { "number": 199, "text": "According to the third review, who are the ideal readers for Ms. Ramiro's new book?", "choices": {"A":"People who are professional writers themselves","B":"People who have read Ms. Ramiro's previous books","C":"People who read books to find creative inspiration","D":"People who have mastered a specific set of skills"}, "answer": "D" },
         { "number": 200, "text": "What do Mr. Keita and Ms. Yu both consider to be a problem with Ms. Ramiro's new book?", "choices": {"A":"Its high price","B":"Its confusing title","C":"Its focus on ingredients","D":"Its factual errors"}, "answer": "A" }
       ]

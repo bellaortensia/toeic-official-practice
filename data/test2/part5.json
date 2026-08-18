@@ -31,7 +31,7 @@
     { "number": 126, "sentence": "The clients could not agree on contract wording, and unfortunately, ----- could the lawyers.", "choices": {"A":"perhaps","B":"meanwhile","C":"neither","D":"rather"}, "answer": "C", "audio": "257 特典 T2 Pt5 Q126.mp3" },
     { "number": 127, "sentence": "References must be ------- by a human resources specialist before a job candidate arrives for an interview.", "choices": {"A":"verifying","B":"verifies","C":"verified","D":"verification"}, "answer": "C", "audio": "258 特典 T2 Pt5 Q127.mp3" },
     { "number": 128, "sentence": "Mr. Lee ended the department meeting ----- in order to greet a prominent client.", "choices": {"A":"hardly","B":"widely","C":"immensely","D":"abruptly"}, "answer": "D", "audio": "259 特典 T2 Pt5 Q128.mp3" },
-    { "number": 129, "sentence": "The accounting software has been developed in an ------- fashion over the past two years.", "choices": {"A":"increment","B":"incrementally","C":"increments","D":"incremental"}, "answer": "B", "audio": "260 特典 T2 Pt5 Q129.mp3" },
+    { "number": 129, "sentence": "The accounting software has been developed in an ------- fashion over the past two years.", "choices": {"A":"increment","B":"incrementally","C":"increments","D":"incremental"}, "answer": "D", "audio": "260 特典 T2 Pt5 Q129.mp3" },
     { "number": 130, "sentence": "The document outlines possible ------- of building without a permit in the municipality.", "choices": {"A":"adjustments","B":"consequences","C":"alignments","D":"designs"}, "answer": "B", "audio": "261 特典 T2 Pt5 Q130.mp3" }
   ]
 }
