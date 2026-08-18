@@ -1,0 +1,55 @@
+{
+  "test": "T2",
+  "part": 6,
+  "type": "text_completion",
+  "passages": [
+    {
+      "questions": [131,132,133,134],
+      "audio": "262 特典 T2 Pt6 Q131-134.mp3",
+      "topic": "instructions",
+      "text": "Before replacing a cracked screen on a customer's mobile phone, always examine the phone thoroughly to identify additional issues, cosmetic or otherwise. This (131)_____ will ensure that we will not be held responsible for a feature that was already flawed. If you detect evidence of corrosion or moisture, make a note of it. (132)_____ Also, make sure to check the key components. (133)_____ include the headphone jack, the microphone, the flashlight, the camera, and the volume controls. A checklist is available to guide you (134)_____ the process.",
+      "items": [
+        { "number": 131, "choices": {"A":"device","B":"individual","C":"inspection","D":"skill"}, "answer": "C" },
+        { "number": 132, "choices": {"A":"We will contact the customer soon.","B":"This is likely a sign of water damage.","C":"Hold the button down for five seconds.","D":"The two pieces may not be missing."}, "answer": "B" },
+        { "number": 133, "choices": {"A":"Others","B":"Whichever","C":"Many","D":"These"}, "answer": "D" },
+        { "number": 134, "choices": {"A":"onto","B":"under","C":"beyond","D":"through"}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [135,136,137,138],
+      "audio": "263 特典 T2 Pt6 Q135-138.mp3",
+      "topic": "press release",
+      "text": "SEOUL (19 August)—Korean carmaker Hwan Automotive has announced the release of its first all-electric vehicle in North America. The Nalgae electric vehicle (135)_____ available in Hwan Automotive showrooms in the United States and Canada beginning in May of next year. The Nalgae has been on the market in Asia for more than two years. (136)_____ will continue to be manufactured in Seoul while a new assembly plant is built in Calgary. A dedicated battery manufacturing complex is also slated for construction near the plant. (137)_____ Residents are looking forward to this development.\n\n\"This is our biggest (138)_____ ever outside of Asia,\" stated Hwan Automotive CEO Do-Yun Park. \"We are very excited about introducing the Nalgae to the North American market.\"",
+      "items": [
+        { "number": 135, "choices": {"A":"will be","B":"can be","C":"was going to be","D":"would have been"}, "answer": "A" },
+        { "number": 136, "choices": {"A":"It","B":"Both","C":"Either","D":"Those"}, "answer": "A" },
+        { "number": 137, "choices": {"A":"A prototype vehicle was on exhibit at the Beijing car show last year.","B":"Hwan Automotive has won awards for its innovative technology.","C":"Premium options are available at additional cost.","D":"Altogether, the expansion is expected to create 5,500 new jobs."}, "answer": "D" },
+        { "number": 138, "choices": {"A":"promotion","B":"investment","C":"celebration","D":"performance"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [139,140,141,142],
+      "audio": "264 特典 T2 Pt6 Q139-142.mp3",
+      "topic": "e-mail",
+      "text": "To: Lucinda Richards <lrichards@mailcrate.co.uk>\nFrom: Film Insiders <digital@filminsiders.com>\nSubject: Virtual screening\nDate: 10 December\n\nThis message is a reminder that you have claimed a free ticket to an exclusive virtual screening of So Then They Walked. The film becomes available to (139)_____ on our streaming platform at 6 P.M. GMT on Thursday, 12 December. You (140)_____ four hours to watch the film. Please make sure the mobile phone number linked to your account is correct so that we can send you an access code. (141)_____\n\nWe are pleased that you are interested in joining us (142)_____ this event. We are excited to share this movie with you and hope you enjoy it as much as we do!",
+      "items": [
+        { "number": 139, "choices": {"A":"shows","B":"actors","C":"benefits","D":"viewers"}, "answer": "D" },
+        { "number": 140, "choices": {"A":"had","B":"will have","C":"have had","D":"will be having"}, "answer": "B" },
+        { "number": 141, "choices": {"A":"You can pick up your files any time before Thursday.","B":"Call our customer service department to expedite your order.","C":"You need to enter the code before the screening begins.","D":"Films are a source of entertainment as well as information."}, "answer": "C", "uncertain": "choice text reconstructed from a garbled OCR passage; the answer letter (C) is confirmed from the official answer key, but option wording should be spot-checked against a page image before final use" },
+        { "number": 142, "choices": {"A":"for","B":"amid","C":"upon","D":"despite"}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [143,144,145,146],
+      "audio": "265 特典 T2 Pt6 Q143-146.mp3",
+      "topic": "letter",
+      "text": "Dear Scarborough residents,\n\nWe want to remind you that the city of Scarborough aims to become an Avian Night Neighborhood. This is a special (143)_____ given to communities that are working to eliminate unnecessary bright lighting.\n\nYou may be wondering why this initiative is (144)_____. Many birds migrate through this area at night, and bright lighting can interfere with their navigation.\n\nWe can all help by turning off nonessential lights from midnight to 6:00 A.M. (145)_____ Many shops have bright floodlights illuminating their storefronts even when they are closed. If you must have a light on at night, you should direct it downward and away from trees where birds are likely nesting. (146)_____, use motion-sensor lights that are on only when absolutely needed.\n\nThank you!\nDiane Slusky\nCommunications Department\nCity of Scarborough",
+      "items": [
+        { "number": 143, "choices": {"A":"distinct","B":"distinctive","C":"distinctively","D":"distinction"}, "answer": "D" },
+        { "number": 144, "choices": {"A":"important","B":"familiar","C":"challenging","D":"experimental"}, "answer": "A" },
+        { "number": 145, "choices": {"A":"A trail map is recommended.","B":"We can supply them if needed.","C":"This practice applies to businesses too.","D":"It depends on the particular species."}, "answer": "C" },
+        { "number": 146, "choices": {"A":"Additionally","B":"Consequently","C":"Nevertheless","D":"Interestingly"}, "answer": "A" }
+      ]
+    }
+  ]
+}
