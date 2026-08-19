@@ -4,47 +4,48 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TOEIC Official Practice</title>
-<link rel="stylesheet" href="style.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
-  <header>
-    <h1>TOEIC Official Practice</h1>
-    <p class="subtitle">公式問題集11 学習アプリ</p>
-  </header>
+<div class="wrap">
+  <div class="sticky-top">
+  <header class="app-header">
+    <h1><a href="https://bellaortensia.github.io/toeic-official-practice/">TOEIC Official Practice</a></h1>
 
-  <main>
-    <section class="box-connect">
-      <h2>Box連携</h2>
+    <select class="sub-select" id="practiceSelect">
+      <option value="">問題を選ぶ...</option>
+      <optgroup label="TEST 1">
+        <option value="T1-1">Part1 写真描写</option>
+        <option value="T1-2">Part2 応答問題</option>
+        <option value="T1-3">Part3 会話問題</option>
+        <option value="T1-4">Part4 説明文問題</option>
+        <option value="T1-5">Part5 短文穴埋め</option>
+        <option value="T1-6">Part6 長文穴埋め</option>
+        <option value="T1-7">Part7 読解問題</option>
+      </optgroup>
+      <optgroup label="TEST 2">
+        <option value="T2-1">Part1 写真描写</option>
+        <option value="T2-2">Part2 応答問題</option>
+        <option value="T2-3">Part3 会話問題</option>
+        <option value="T2-4">Part4 説明文問題</option>
+        <option value="T2-5">Part5 短文穴埋め</option>
+        <option value="T2-6">Part6 長文穴埋め</option>
+        <option value="T2-7">Part7 読解問題</option>
+      </optgroup>
+    </select>　<details class="help" id="setupDetails">
+      <summary>Box連携</summary>
       <p id="status">確認中...</p>
       <button id="login-btn">Boxにログイン</button>
       <p id="result"></p>
-    </section>
+    </details>
+  </header>
+  </div>
 
-    <section id="nav-test" class="nav-section" style="display:none;">
-      <h2>テストを選ぶ</h2>
-      <div class="button-row">
-        <button class="test-select" data-test="T1">TEST 1</button>
-        <button class="test-select" data-test="T2">TEST 2</button>
-      </div>
-    </section>
-
-    <section id="nav-part" class="nav-section" style="display:none;">
-      <h2><span id="current-test-label"></span> — Partを選ぶ</h2>
-      <div class="button-row">
-        <button class="part-select" data-part="1">Part1<br><small>写真描写</small></button>
-        <button class="part-select" data-part="2">Part2<br><small>応答</small></button>
-        <button class="part-select" data-part="3">Part3<br><small>会話</small></button>
-        <button class="part-select" data-part="4">Part4<br><small>説明文</small></button>
-        <button class="part-select" data-part="5">Part5<br><small>短文穴埋め</small></button>
-        <button class="part-select" data-part="6">Part6<br><small>長文穴埋め</small></button>
-        <button class="part-select" data-part="7">Part7<br><small>読解</small></button>
-      </div>
-      <button id="back-to-test" class="link-btn">← テスト選択に戻る</button>
-    </section>
-
-    <section id="practice" class="nav-section" style="display:none;">
+  <main>
+    <section id="practice" class="panel" style="display:none;">
       <div class="practice-header">
-        <button id="back-to-part" class="link-btn">← Part選択に戻る</button>
         <span id="progress-label"></span>
       </div>
       <div id="practice-body"></div>
@@ -53,7 +54,12 @@
         <button id="next-btn">次へ →</button>
       </div>
     </section>
+
+    <section id="empty-state" class="panel">
+      <p>上のBox連携でログインしてから、右上のプルダウンでテスト・Partを選んでください。</p>
+    </section>
   </main>
+</div>
 
   <script src="script.js"></script>
 </body>

@@ -102,14 +102,16 @@ async function getValidAccessToken() {
 }
 
 function updateButtons() {
+  const practiceSelect = document.getElementById('practiceSelect');
   if (isLoggedIn()) {
     loginBtn.style.display = 'none';
-    document.getElementById('nav-test').style.display = 'block';
+    practiceSelect.disabled = false;
   } else {
     loginBtn.style.display = 'inline-block';
-    document.getElementById('nav-test').style.display = 'none';
-    document.getElementById('nav-part').style.display = 'none';
+    practiceSelect.disabled = true;
+    practiceSelect.value = '';
     document.getElementById('practice').style.display = 'none';
+    document.getElementById('empty-state').style.display = 'block';
   }
 }
 
@@ -225,43 +227,25 @@ async function loadPartData(test, part) {
 
 const state = { test: null, part: null, data: null, index: 0 };
 
-const navTestEl = document.getElementById('nav-test');
-const navPartEl = document.getElementById('nav-part');
 const practiceEl = document.getElementById('practice');
+const emptyStateEl = document.getElementById('empty-state');
 const practiceBodyEl = document.getElementById('practice-body');
 const progressLabelEl = document.getElementById('progress-label');
-const currentTestLabelEl = document.getElementById('current-test-label');
+const practiceSelectEl = document.getElementById('practiceSelect');
 
-document.querySelectorAll('.test-select').forEach(btn => {
-  btn.addEventListener('click', () => {
-    state.test = btn.dataset.test;
-    currentTestLabelEl.textContent = state.test === 'T1' ? 'TEST 1' : 'TEST 2';
-    navTestEl.style.display = 'none';
-    navPartEl.style.display = 'block';
-    practiceEl.style.display = 'none';
-  });
-});
-
-document.getElementById('back-to-test').addEventListener('click', () => {
-  navPartEl.style.display = 'none';
-  navTestEl.style.display = 'block';
-});
-
-document.querySelectorAll('.part-select').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    state.part = Number(btn.dataset.part);
-    state.index = 0;
-    navPartEl.style.display = 'none';
-    practiceEl.style.display = 'block';
-    practiceBodyEl.innerHTML = '読み込み中...';
-    state.data = await loadPartData(state.test, state.part);
-    renderPractice();
-  });
-});
-
-document.getElementById('back-to-part').addEventListener('click', () => {
-  practiceEl.style.display = 'none';
-  navPartEl.style.display = 'block';
+practiceSelectEl.addEventListener('change', async () => {
+  const val = practiceSelectEl.value;
+  if (!val) return;
+  const [test, part] = val.split('-');
+  state.test = test;
+  state.part = Number(part);
+  state.index = 0;
+  emptyStateEl.style.display = 'none';
+  practiceEl.style.display = 'block';
+  practiceBodyEl.innerHTML = '読み込み中...';
+  document.getElementById('setupDetails').removeAttribute('open');
+  state.data = await loadPartData(state.test, state.part);
+  renderPractice();
 });
 
 document.getElementById('prev-btn').addEventListener('click', () => {
