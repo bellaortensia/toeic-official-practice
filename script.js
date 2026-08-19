@@ -60,9 +60,10 @@ const EXPLAIN_PROMPT = `あなたはTOEIC対策の講師です。以下のTOEIC�
 
 各見出しは簡潔に、しかし分かりやすく。装飾やMarkdown記号(**など)は使わず、プレーンテキストで出力してください。`;
 
+const EXPLAIN_PROMPT_VERSION = 'v2'; // プロンプトの形式を変えたらここを上げて古いキャッシュを無効化する
 const explainCache = {};
 async function getExplanation(cacheKey, questionText) {
-  const lsKey = 'toeicExplain.' + cacheKey;
+  const lsKey = 'toeicExplain.' + EXPLAIN_PROMPT_VERSION + '.' + cacheKey;
   const cached = explainCache[cacheKey] || localStorage.getItem(lsKey);
   if (cached) { explainCache[cacheKey] = cached; return cached; }
   const text = await callGemini(EXPLAIN_PROMPT, questionText);
