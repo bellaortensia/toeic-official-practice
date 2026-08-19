@@ -305,6 +305,7 @@ practiceSelectEl.addEventListener('change', async () => {
   state.test = test;
   state.part = Number(part);
   state.index = 0;
+  p12 = null;
   emptyStateEl.style.display = 'none';
   practiceEl.style.display = 'block';
   practiceBodyEl.innerHTML = '読み込み中...';
@@ -371,10 +372,17 @@ function createRevealButton(onReveal) {
 // ---------- Part別レンダリング ----------
 
 function renderPractice() {
-  progressLabelEl.textContent = `${state.index + 1} / ${getItemCount()}`;
+  const footerEl = document.querySelector('.practice-footer');
   practiceBodyEl.innerHTML = '';
-  if (state.part === 1 || state.part === 2) renderPart1or2();
-  else if (state.part === 3 || state.part === 4) renderPart3or4();
+  if (state.part === 1 || state.part === 2) {
+    footerEl.style.display = 'none';
+    progressLabelEl.textContent = '';
+    renderPart1or2();
+    return;
+  }
+  footerEl.style.display = 'flex';
+  progressLabelEl.textContent = `${state.index + 1} / ${getItemCount()}`;
+  if (state.part === 3 || state.part === 4) renderPart3or4();
   else if (state.part === 5) renderPart5();
   else if (state.part === 6) renderPart6();
   else if (state.part === 7) renderPart7();
@@ -383,20 +391,279 @@ function renderPractice() {
   document.getElementById('next-btn').disabled = state.index === getItemCount() - 1;
 }
 
+// ---------- ディクテーション/シャドーイング(共通コンポーネント) ----------
+
+function escapeHtml(s) {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// items: [{ label, text, audio }]
+function renderDictation(items, onComplete) {
+  let idx = 0;
+  let buffer = '';
+  const wrap = document.createElement('div');
+  wrap.className = 'training-wrap';
+
+  const title = document.createElement('div');
+  title.className = 'training-title';
+  wrap.appendChild(title);
+
+  const playBtn = document.createElement('button');
+  playBtn.className = 'audio-btn';
+  wrap.appendChild(playBtn);
+
+  const displayEl = document.createElement('div');
+  displayEl.className = 'dictation-display';
+  wrap.appendChild(displayEl);
+
+  const hintEl = document.createElement('div');
+  hintEl.className = 'training-hint';
+  hintEl.textContent = 'この画面を開いたまま、キーボードでそのまま入力してください(Spaceキー = 音声再生、Backspace = 1文字削除)。';
+  wrap.appendChild(hintEl);
+
+  const nextBtn = document.createElement('button');
+  nextBtn.textContent = '次の文へ';
+  nextBtn.style.display = 'none';
+  nextBtn.style.marginTop = '12px';
+  wrap.appendChild(nextBtn);
+
+  const skipBtn = document.createElement('button');
+  skipBtn.textContent = 'スキップ';
+  skipBtn.className = 'reveal-btn';
+  skipBtn.style.marginLeft = '8px';
+  wrap.appendChild(skipBtn);
+
+  async function playCurrent() {
+    playBtn.disabled = true;
+    playBtn.textContent = '読み込み中...';
+    const url = await getAudioUrl(items[idx].audio);
+    playBtn.disabled = false;
+    playBtn.textContent = '▶ 音声を再生 (Spaceキーでも再生できます)';
+    if (url) new Audio(url).play();
+  }
+  playBtn.addEventListener('click', playCurrent);
+
+  function render() {
+    const item = items[idx];
+    title.textContent = `ディクテーション (${idx + 1}/${items.length}) ${item.label || ''}`;
+    playBtn.textContent = '▶ 音声を再生 (Spaceキーでも再生できます)';
+    const ref = item.text;
+    let html = '';
+    for (let i = 0; i < ref.length; i++) {
+      const ch = ref[i];
+      if (i < buffer.length) {
+        const ok = buffer[i] === ch;
+        html += `<span class="${ok ? 'dict-ok' : 'dict-ng'}">${escapeHtml(ch)}</span>`;
+      } else {
+        html += `<span class="dict-pending">${escapeHtml(ch)}</span>`;
+      }
+    }
+    displayEl.innerHTML = html;
+    nextBtn.style.display = buffer.length >= ref.length ? 'inline-block' : 'none';
+  }
+
+  function goNext() {
+    idx++;
+    buffer = '';
+    if (idx >= items.length) {
+      document.removeEventListener('keydown', keyHandler);
+      onComplete();
+    } else {
+      render();
+    }
+  }
+
+  function keyHandler(e) {
+    if (e.code === 'Space') { e.preventDefault(); playCurrent(); return; }
+    if (e.key === 'Backspace') { e.preventDefault(); buffer = buffer.slice(0, -1); render(); return; }
+    if (e.key.length === 1) { e.preventDefault(); buffer += e.key; render(); }
+  }
+  nextBtn.addEventListener('click', goNext);
+  skipBtn.addEventListener('click', goNext);
+  document.addEventListener('keydown', keyHandler);
+
+  render();
+  practiceBodyEl.innerHTML = '';
+  practiceBodyEl.appendChild(wrap);
+}
+
+// items: [{ label, text, audio }]
+function renderShadowing(items, onComplete) {
+  let idx = 0;
+  const wrap = document.createElement('div');
+  wrap.className = 'training-wrap';
+
+  const title = document.createElement('div');
+  title.className = 'training-title';
+  wrap.appendChild(title);
+
+  const playBtn = document.createElement('button');
+  playBtn.className = 'audio-btn';
+  wrap.appendChild(playBtn);
+
+  const textEl = document.createElement('div');
+  textEl.className = 'shadowing-text';
+  wrap.appendChild(textEl);
+
+  const nextBtn = document.createElement('button');
+  nextBtn.textContent = '次の文へ';
+  nextBtn.style.marginTop = '12px';
+  wrap.appendChild(nextBtn);
+
+  async function playCurrent() {
+    playBtn.disabled = true;
+    playBtn.textContent = '読み込み中...';
+    const url = await getAudioUrl(items[idx].audio);
+    playBtn.disabled = false;
+    playBtn.textContent = '▶ 音声を再生 (Spaceキーでも再生できます)';
+    if (url) new Audio(url).play();
+  }
+  playBtn.addEventListener('click', playCurrent);
+
+  function render() {
+    const item = items[idx];
+    title.textContent = `シャドーイング (${idx + 1}/${items.length}) ${item.label || ''}`;
+    playBtn.textContent = '▶ 音声を再生 (Spaceキーでも再生できます)';
+    textEl.textContent = item.text;
+  }
+
+  function keyHandler(e) {
+    if (e.code === 'Space') { e.preventDefault(); playCurrent(); }
+  }
+  nextBtn.addEventListener('click', () => {
+    idx++;
+    if (idx >= items.length) {
+      document.removeEventListener('keydown', keyHandler);
+      onComplete();
+    } else {
+      render();
+    }
+  });
+  document.addEventListener('keydown', keyHandler);
+
+  render();
+  practiceBodyEl.innerHTML = '';
+  practiceBodyEl.appendChild(wrap);
+}
+
+let p12 = null; // { groupStart, qIdx, phase, selected }
+
+function initP12IfNeeded() {
+  if (!p12) p12 = { groupStart: 0, qIdx: 0, phase: 'question', selected: null };
+}
+
+function p12CurrentGroup() {
+  return state.data.questions.slice(p12.groupStart, p12.groupStart + 3);
+}
+
+function p12BuildTrainingItems(groupQuestions) {
+  const isPart1 = state.part === 1;
+  const items = [];
+  groupQuestions.forEach(q => {
+    if (!isPart1) items.push({ label: `Q${q.number} 質問`, text: q.question, audio: q.audio });
+    const choiceTexts = isPart1 ? q.statements : q.responses;
+    Object.keys(choiceTexts).forEach(l => {
+      items.push({ label: `Q${q.number} (${l})`, text: choiceTexts[l], audio: q.audio });
+    });
+  });
+  return items;
+}
+
 function renderPart1or2() {
-  const q = state.data.questions[state.index];
-  const div = document.createElement('div');
-  div.className = 'q-block';
+  initP12IfNeeded();
+  if (p12.phase === 'dictation') {
+    renderDictation(p12BuildTrainingItems(p12CurrentGroup()), () => {
+      p12.phase = 'shadowing';
+      renderPart1or2();
+    });
+    return;
+  }
+  if (p12.phase === 'shadowing') {
+    renderShadowing(p12BuildTrainingItems(p12CurrentGroup()), () => {
+      p12.groupStart += 3;
+      p12.qIdx = 0;
+      p12.phase = 'question';
+      p12.selected = null;
+      if (p12.groupStart >= state.data.questions.length) {
+        practiceBodyEl.innerHTML = '<p>このPartは終了です。上のプルダウンから次のPartを選んでください。</p>';
+      } else {
+        renderPart1or2();
+      }
+    });
+    return;
+  }
+
+  const isPart1 = state.part === 1;
+  const groupQuestions = p12CurrentGroup();
+  const q = groupQuestions[p12.qIdx];
+  const wrap = document.createElement('div');
+  wrap.className = 'q-block';
+
   const title = document.createElement('div');
   title.className = 'q-text';
-  title.textContent = `Q${q.number}`;
-  div.appendChild(title);
-  div.appendChild(createAudioButton(q.audio, '音声を再生'));
-  const answerP = document.createElement('p');
-  const reveal = createRevealButton(() => { answerP.textContent = '正解: ' + q.answer; });
-  div.appendChild(reveal);
-  div.appendChild(answerP);
-  practiceBodyEl.appendChild(div);
+  title.textContent = `Q${q.number}` + (isPart1 ? '' : `　${q.question}`);
+  wrap.appendChild(title);
+
+  wrap.appendChild(createAudioButton(q.audio, '音声を再生'));
+
+  const choiceTexts = isPart1 ? q.statements : q.responses;
+  const letters = Object.keys(choiceTexts);
+  const choicesDiv = document.createElement('div');
+  letters.forEach(letter => {
+    const btn = document.createElement('button');
+    btn.className = 'choice';
+    btn.textContent = `(${letter}) ${choiceTexts[letter]}`;
+    btn.addEventListener('click', () => {
+      choicesDiv.querySelectorAll('.choice').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      p12.selected = letter;
+      nextBtn.disabled = false;
+    });
+    choicesDiv.appendChild(btn);
+  });
+  wrap.appendChild(choicesDiv);
+
+  const explainDiv = document.createElement('div');
+  explainDiv.className = 'explain-box';
+  explainDiv.style.display = 'none';
+  wrap.appendChild(explainDiv);
+
+  const nextBtn = document.createElement('button');
+  nextBtn.textContent = '次へ';
+  nextBtn.style.display = 'block';
+  nextBtn.style.marginTop = '14px';
+  nextBtn.disabled = true;
+  const revealed = { done: false };
+  nextBtn.addEventListener('click', () => {
+    if (!revealed.done) {
+      revealed.done = true;
+      const buttons = choicesDiv.querySelectorAll('.choice');
+      buttons.forEach((b, i) => {
+        b.disabled = true;
+        if (letters[i] === q.answer) b.classList.add('correct');
+        else if (letters[i] === p12.selected) b.classList.add('wrong');
+      });
+      const jaTexts = isPart1 ? q.statementsJa : q.responsesJa;
+      let text = '';
+      if (!isPart1) text += `質問: ${q.questionJa}\n\n`;
+      text += letters.map(l => `(${l}) ${jaTexts[l]}`).join('\n') + '\n\n' + q.explanation;
+      explainDiv.textContent = text;
+      explainDiv.style.display = 'block';
+      const isLast = p12.qIdx >= groupQuestions.length - 1;
+      nextBtn.textContent = isLast ? 'ディクテーションへ' : '次の問題へ';
+    } else {
+      p12.qIdx++;
+      p12.selected = null;
+      if (p12.qIdx >= groupQuestions.length) {
+        p12.phase = 'dictation';
+      }
+      renderPart1or2();
+    }
+  });
+  wrap.appendChild(nextBtn);
+
+  practiceBodyEl.innerHTML = '';
+  practiceBodyEl.appendChild(wrap);
 }
 
 function renderPart3or4() {

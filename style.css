@@ -219,6 +219,46 @@ audio{
   margin-bottom:6px;
 }
 
+.training-wrap{padding:4px 0;}
+.training-title{
+  font-family:'Shippori Mincho',serif;
+  font-weight:700;
+  color:var(--accent-2);
+  font-size:14px;
+  margin-bottom:10px;
+}
+.training-hint{
+  font-size:12px;
+  color:var(--text-soft);
+  margin-top:10px;
+  line-height:1.6;
+}
+.dictation-display{
+  font-family:'JetBrains Mono',monospace;
+  font-size:17px;
+  line-height:2;
+  letter-spacing:.02em;
+  background:#faf7ee;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:16px 18px;
+  margin-top:10px;
+  min-height:60px;
+  word-break:break-word;
+}
+.dict-ok{color:var(--ok);}
+.dict-ng{color:var(--danger);text-decoration:underline wavy var(--danger);}
+.dict-pending{color:#c7bfa8;}
+.shadowing-text{
+  font-size:17px;
+  line-height:1.8;
+  background:#faf7ee;
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:16px 18px;
+  margin-top:10px;
+}
+
 @media (max-width:520px){
   .wrap{padding:20px 12px 60px;}
   header.app-header{gap:10px;}
