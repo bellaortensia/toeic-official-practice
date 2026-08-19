@@ -7,6 +7,58 @@ const loginBtn = document.getElementById('login-btn');
 const statusEl = document.getElementById('status');
 const resultEl = document.getElementById('result');
 
+// ---------- Gemini APIキー(decode-toeicと同じキー名で共有) ----------
+
+const GEMINI_KEY_LS = 'decodeToeic.geminiKey';
+const geminiKeyInput = document.getElementById('geminiKey');
+const savedGeminiKey = localStorage.getItem(GEMINI_KEY_LS);
+if (savedGeminiKey) geminiKeyInput.value = savedGeminiKey;
+geminiKeyInput.addEventListener('change', () => localStorage.setItem(GEMINI_KEY_LS, geminiKeyInput.value.trim()));
+
+function getGeminiKey() {
+  return localStorage.getItem(GEMINI_KEY_LS) || geminiKeyInput.value.trim();
+}
+
+const GEMINI_MODEL = 'gemini-2.5-flash';
+
+async function callGemini(systemPrompt, userText) {
+  const key = getGeminiKey();
+  if (!key) throw new Error('Gemini APIキーが設定されていません');
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+  const body = {
+    systemInstruction: { parts: [{ text: systemPrompt }] },
+    contents: [{ role: 'user', parts: [{ text: userText }] }],
+    generationConfig: { temperature: 0.3, maxOutputTokens: 1024 }
+  };
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) throw new Error(`Gemini APIエラー (${res.status}): ${(await res.text()).slice(0, 200)}`);
+  const data = await res.json();
+  const parts = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+  const text = (parts || []).filter(p => !p.thought).map(p => p.text || '').join('').trim();
+  if (!text) throw new Error('空の応答でした');
+  return text;
+}
+
+const EXPLAIN_PROMPT = `あなたはTOEIC対策の講師です。以下のTOEICの問題について、日本語で簡潔に解説してください。
+必ず最初に「【必要な知識】」という見出しで、この問題を解くために知っておく必要がある文法事項・語彙・イディオムなどを1〜2行で明記してください。
+その後「【解説】」という見出しで、なぜその選択肢が正解で、他がなぜ誤りなのかを短く説明してください。
+装飾やMarkdown記号(**など)は使わず、プレーンテキストで出力してください。`;
+
+const explainCache = {};
+async function getExplanation(cacheKey, questionText) {
+  const lsKey = 'toeicExplain.' + cacheKey;
+  const cached = explainCache[cacheKey] || localStorage.getItem(lsKey);
+  if (cached) { explainCache[cacheKey] = cached; return cached; }
+  const text = await callGemini(EXPLAIN_PROMPT, questionText);
+  explainCache[cacheKey] = text;
+  try { localStorage.setItem(lsKey, text); } catch (e) { /* 保存容量オーバー等は無視 */ }
+  return text;
+}
+
 function base64UrlEncode(buffer) {
   return btoa(String.fromCharCode(...new Uint8Array(buffer)))
     .replace(/\+/g, '-')
@@ -255,9 +307,15 @@ document.getElementById('next-btn').addEventListener('click', () => {
   if (state.index < getItemCount() - 1) { state.index++; renderPractice(); }
 });
 
+function chunk(arr, size) {
+  const out = [];
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size));
+  return out;
+}
+
 function getItemList() {
   if (state.part === 1 || state.part === 2) return state.data.questions;
-  if (state.part === 5) return state.data.questions;
+  if (state.part === 5) return chunk(state.data.questions, 5);
   if (state.part === 3 || state.part === 4) return state.data.groups;
   return state.data.passages; // 6, 7
 }
@@ -359,18 +417,77 @@ function renderPart3or4() {
 }
 
 function renderPart5() {
-  const q = state.data.questions[state.index];
-  const div = document.createElement('div');
-  div.className = 'q-block';
-  const t = document.createElement('div');
-  t.className = 'q-text';
-  t.textContent = `${q.number}. ${q.sentence}`;
-  div.appendChild(t);
-  if (q.audio) div.appendChild(createAudioButton(q.audio, '音声を再生'));
-  const choicesDiv = document.createElement('div');
-  renderChoices(choicesDiv, q.choices, q.answer);
-  div.appendChild(choicesDiv);
-  practiceBodyEl.appendChild(div);
+  const batch = getItemList()[state.index];
+  const wrap = document.createElement('div');
+  const selections = {};
+  const blocks = {};
+
+  batch.forEach(q => {
+    const block = document.createElement('div');
+    block.className = 'q-block';
+    const t = document.createElement('div');
+    t.className = 'q-text';
+    t.textContent = `${q.number}. ${q.sentence}`;
+    block.appendChild(t);
+    if (q.audio) block.appendChild(createAudioButton(q.audio, '音声を再生'));
+
+    const choicesDiv = document.createElement('div');
+    const letters = Object.keys(q.choices);
+    letters.forEach(letter => {
+      const btn = document.createElement('button');
+      btn.className = 'choice';
+      btn.textContent = `(${letter}) ${q.choices[letter]}`;
+      btn.addEventListener('click', () => {
+        choicesDiv.querySelectorAll('.choice').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        selections[q.number] = letter;
+        gradeBtn.disabled = Object.keys(selections).length < batch.length;
+      });
+      choicesDiv.appendChild(btn);
+    });
+    block.appendChild(choicesDiv);
+
+    const explainDiv = document.createElement('div');
+    explainDiv.className = 'explain-box';
+    explainDiv.style.display = 'none';
+    block.appendChild(explainDiv);
+
+    blocks[q.number] = { choicesDiv, explainDiv, letters };
+    wrap.appendChild(block);
+  });
+
+  const gradeBtn = document.createElement('button');
+  gradeBtn.textContent = `${batch.length}問まとめて採点する`;
+  gradeBtn.className = 'grade-btn';
+  gradeBtn.disabled = true;
+  gradeBtn.addEventListener('click', async () => {
+    gradeBtn.disabled = true;
+    gradeBtn.textContent = '採点中...';
+    batch.forEach(q => {
+      const { choicesDiv, explainDiv, letters } = blocks[q.number];
+      const buttons = choicesDiv.querySelectorAll('.choice');
+      buttons.forEach((b, i) => {
+        b.disabled = true;
+        if (letters[i] === q.answer) b.classList.add('correct');
+        else if (letters[i] === selections[q.number]) b.classList.add('wrong');
+      });
+      explainDiv.style.display = 'block';
+      explainDiv.textContent = '解説を生成中...';
+    });
+    gradeBtn.remove();
+    for (const q of batch) {
+      const { explainDiv } = blocks[q.number];
+      try {
+        const questionText = `${q.number}. ${q.sentence}\n選択肢: ${Object.entries(q.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${q.answer}) ${q.choices[q.answer]}`;
+        explainDiv.textContent = await getExplanation(`${state.test}-5-${q.number}`, questionText);
+      } catch (e) {
+        explainDiv.textContent = '解説の取得に失敗しました: ' + e.message;
+      }
+    }
+  });
+  wrap.appendChild(gradeBtn);
+
+  practiceBodyEl.appendChild(wrap);
 }
 
 function renderPart6() {

@@ -35,10 +35,25 @@
         <option value="T2-7">Part7 読解問題</option>
       </optgroup>
     </select>　<details class="help" id="setupDetails">
-      <summary>Box連携</summary>
-      <p id="status">確認中...</p>
-      <button id="login-btn">Boxにログイン</button>
-      <p id="result"></p>
+      <summary>設定</summary>
+
+      <details class="help sub-details" open>
+        <summary>① Box連携</summary>
+        <p id="status">確認中...</p>
+        <button id="login-btn">Boxにログイン</button>
+        <p id="result"></p>
+      </details>
+
+      <details class="help sub-details">
+        <summary>② Gemini APIキー(解説生成用・任意)</summary>
+        <div class="setup-fields">
+          <div class="field">
+            <label for="geminiKey">GEMINI API KEY(無料)</label>
+            <input id="geminiKey" type="password" placeholder="AIza...">
+          </div>
+        </div>
+        <p class="hint">未入力でも問題演習はできますが、AIによる解説は表示されません。<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>で無料取得できます。decode-toeicと同じキーを使っている場合は自動で反映されます。</p>
+      </details>
     </details>
   </header>
   </div>
