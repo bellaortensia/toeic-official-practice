@@ -219,6 +219,14 @@ audio{
   margin-bottom:6px;
 }
 
+.question-photo{
+  display:block;
+  max-width:100%;
+  border:1px solid var(--line);
+  border-radius:8px;
+  margin:8px 0;
+}
+
 .training-wrap{padding:4px 0;}
 .training-title{
   font-family:'Shippori Mincho',serif;

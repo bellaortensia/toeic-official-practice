@@ -604,6 +604,14 @@ function renderPart1or2() {
   title.textContent = `Q${q.number}` + (isPart1 ? '' : `　${q.question}`);
   wrap.appendChild(title);
 
+  if (isPart1 && q.image) {
+    const img = document.createElement('img');
+    img.src = q.image;
+    img.alt = `Q${q.number}の写真`;
+    img.className = 'question-photo';
+    wrap.appendChild(img);
+  }
+
   wrap.appendChild(createAudioButton(q.audio, '音声を再生'));
 
   const choiceTexts = isPart1 ? q.statements : q.responses;

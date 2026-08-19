@@ -5,37 +5,37 @@
   "note": "音声で読まれる4つの文は本紙に印刷されていないため、statements/statementsJaは別冊解答・解説(p.9-10)から書き起こしたもの。",
   "questions": [
     {
-      "number": 1, "audio": "013 T1 Pt1 Q1.mp3", "answer": "D",
+      "number": 1, "audio": "013 T1 Pt1 Q1.mp3", "answer": "D", "image": "images/test1/part1/q1.jpg",
       "statements": {"A":"He's pinning paper onto a wall.","B":"He's organizing items on a desk.","C":"He's emptying a paper tray.","D":"He's using a machine."},
       "statementsJa": {"A":"彼は紙を壁にピンで留めている。","B":"彼は机の上の物を整理している。","C":"彼は用紙トレーを空にしている。","D":"彼は機械を使用している。"},
       "explanation": "男性はコピー機に向かい、それを使用している。machine「機械」。\n(A) すでにピン留めされた状態の紙は確認できるが、男性が紙を壁にピン留めしているところではない。pin ~ onto …「~を…にピンで留める」。\n(B) 男性は机に向かってはいない。organize「~を整理する」、item「品物」。\n(C) 男性はpaper tray「用紙トレー」を空にしているところではない。empty「~を空にする」。"
     },
     {
-      "number": 2, "audio": "014 T1 Pt1 Q2.mp3", "answer": "B",
+      "number": 2, "audio": "014 T1 Pt1 Q2.mp3", "answer": "B", "image": "images/test1/part1/q2.jpg",
       "statements": {"A":"Some people are cleaning windows.","B":"Some people are boarding a bus.","C":"A signpost has been knocked over.","D":"A tire has been left on a curb."},
       "statementsJa": {"A":"人々が窓を掃除している。","B":"人々がバスに乗り込んでいる。","C":"標柱がひっくり返っている。","D":"タイヤが縁石に置かれている。"},
       "explanation": "複数の人がバスに乗車しようとしている。board「~(乗り物)に乗り込む」。\n(A) 窓は写っているが、それを掃除している人は見当たらない。clean「~を掃除する」。\n(C) signpost「案内標識、標柱」らしきものは写っているが、ひっくり返っていない。〈have[has] been+過去分詞〉は「~された状態である」という意味。knock over ~「~をひっくり返す」。\n(D) tire「タイヤ」、curb「縁石」。"
     },
     {
-      "number": 3, "audio": "015 T1 Pt1 Q3.mp3", "answer": "A",
+      "number": 3, "audio": "015 T1 Pt1 Q3.mp3", "answer": "A", "image": "images/test1/part1/q3.jpg",
       "statements": {"A":"Some men are standing on a boat.","B":"Some men are carrying bundles of rope.","C":"Some men are repairing a roof.","D":"Some men are climbing a stairway."},
       "statementsJa": {"A":"男性たちは小舟の上に立っている。","B":"男性たちはロープの束を運んでいる。","C":"男性たちは屋根を修理している。","D":"男性たちは階段を上っている。"},
       "explanation": "2人の男性が小舟の上に立って、何らかの作業をしている。\n(B) 束ねられたロープは写っているが、男性たちはそれを運んでいるところではない。bundle「束」。\n(C) roof「屋根」は写っているが、男性たちはそれを修理していない。repair「~を修理する」。\n(D) stairway「階段」は写っているが、それを上っている人物は見当たらない。climb「~を上る」。"
     },
     {
-      "number": 4, "audio": "016 T1 Pt1 Q4.mp3", "answer": "C",
+      "number": 4, "audio": "016 T1 Pt1 Q4.mp3", "answer": "C", "image": "images/test1/part1/q4.jpg",
       "statements": {"A":"She's bending down to inspect the tire of a car.","B":"She's shoveling some snow off the road.","C":"She's brushing snow off of a car.","D":"She's adjusting the hood of her jacket."},
       "statementsJa": {"A":"彼女は車のタイヤを調べるためにかがんでいる。","B":"彼女はシャベルで道路から雪を取り除いている。","C":"彼女はブラシで車から雪を払いのけている。","D":"彼女は上着のフードを調節している。"},
       "explanation": "女性が車のそばに立ち、その上の雪をブラシで払いのけている。brush ~ off of …「…から~を(ブラシなどで)払いのける」。\n(A) 女性は立っており、タイヤに視線を向けてもいない。bend down「かがむ、腰をかがめる」、inspect「(問題などがないか)~を調べる」。\n(B) 女性が持っているのはシャベルではなく、また、雪を取り除いているのは道路からではない。shovel ~ off …「シャベルで…から~を取り除く」。\n(D) 女性は上着のhood「フード」をかぶっているが、それに触れてはいない。adjust「~を調節する」。"
     },
     {
-      "number": 5, "audio": "017 T1 Pt1 Q5.mp3", "answer": "A",
+      "number": 5, "audio": "017 T1 Pt1 Q5.mp3", "answer": "A", "image": "images/test1/part1/q5.jpg",
       "statements": {"A":"A ladder is leaning against a back wall.","B":"She's taking a bite of a fresh tomato.","C":"Tomatoes on a table are being sliced into a salad.","D":"She's tossing an item into a woven basket."},
       "statementsJa": {"A":"はしごが奥の壁に立て掛けてある。","B":"彼女は新鮮なトマトをひとかじりしている。","C":"テーブル上のトマトが薄切りにされたサラダにされているところである。","D":"彼女は品物を編み籠の中に放り込んでいる。"},
       "explanation": "奥の壁にladder「はしご」が立て掛けてある。lean against ~「~にもたれ掛かる」。\n(B) 女性の前にトマトはあるが、女性はそれをかじってはいない。take a bite of ~「~をひとかじりする」。\n(C) トマトは写っているが、薄切りにされているところではない。slice ~ into …「~を薄切りにして…にする」。\n(D) woven basket「編み籠」は写っているが、女性はその中に物を放り込んではいない。toss「~を放り投げる」。"
     },
     {
-      "number": 6, "audio": "018 T1 Pt1 Q6.mp3", "answer": "C",
+      "number": 6, "audio": "018 T1 Pt1 Q6.mp3", "answer": "C", "image": "images/test1/part1/q6.jpg",
       "statements": {"A":"Potted plants are being watered.","B":"Some light fixtures are being installed.","C":"Potted plants are displayed in front of a store.","D":"The doors of a store have been opened."},
       "statementsJa": {"A":"鉢植えが水やりされているところである。","B":"照明器具が取り付けられているところである。","C":"鉢植えが店先に陳列されている。","D":"店のドアが開け放たれている。"},
       "explanation": "多数の鉢植えが店らしき建物の入り口前に並べられている。potted plant「鉢植え」、display「~を陳列する」。\n(A) 鉢植えはあるが、水やりされているところではない。water「~に水やりをする」。\n(B) light fixture「照明器具」は確認できるが、どれも設置済みであり、取り付けの様子は写っていない。install「~を取り付ける」。\n(D) ドアは写っているが、いずれも閉まっている。"
