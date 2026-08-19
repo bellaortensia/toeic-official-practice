@@ -2,32 +2,182 @@
   "test": "T2",
   "part": 2,
   "type": "question_response",
-  "note": "Audio-only: a question/statement and three spoken responses (A)(B)(C), not printed in the book.",
+  "note": "質問と3つの応答は本紙に印刷されていないため、question/responses/JaはPart1と同様に別冊解答・解説(p.107-111)から書き起こしたもの。",
   "questions": [
-    { "number": 7, "audio": "159 T2 Pt2 Q7.mp3", "answer": "C" },
-    { "number": 8, "audio": "160 T2 Pt2 Q8.mp3", "answer": "B" },
-    { "number": 9, "audio": "161 T2 Pt2 Q9.mp3", "answer": "A" },
-    { "number": 10, "audio": "162 T2 Pt2 Q10.mp3", "answer": "C" },
-    { "number": 11, "audio": "163 T2 Pt2 Q11.mp3", "answer": "A" },
-    { "number": 12, "audio": "164 T2 Pt2 Q12.mp3", "answer": "B" },
-    { "number": 13, "audio": "165 T2 Pt2 Q13.mp3", "answer": "A" },
-    { "number": 14, "audio": "166 T2 Pt2 Q14.mp3", "answer": "A" },
-    { "number": 15, "audio": "167 T2 Pt2 Q15.mp3", "answer": "C" },
-    { "number": 16, "audio": "168 T2 Pt2 Q16.mp3", "answer": "C" },
-    { "number": 17, "audio": "169 T2 Pt2 Q17.mp3", "answer": "C" },
-    { "number": 18, "audio": "170 T2 Pt2 Q18.mp3", "answer": "A" },
-    { "number": 19, "audio": "171 T2 Pt2 Q19.mp3", "answer": "B" },
-    { "number": 20, "audio": "172 T2 Pt2 Q20.mp3", "answer": "A" },
-    { "number": 21, "audio": "173 T2 Pt2 Q21.mp3", "answer": "B" },
-    { "number": 22, "audio": "174 T2 Pt2 Q22.mp3", "answer": "B" },
-    { "number": 23, "audio": "175 T2 Pt2 Q23.mp3", "answer": "A" },
-    { "number": 24, "audio": "176 T2 Pt2 Q24.mp3", "answer": "C" },
-    { "number": 25, "audio": "177 T2 Pt2 Q25.mp3", "answer": "A" },
-    { "number": 26, "audio": "178 T2 Pt2 Q26.mp3", "answer": "B" },
-    { "number": 27, "audio": "179 T2 Pt2 Q27.mp3", "answer": "B" },
-    { "number": 28, "audio": "180 T2 Pt2 Q28.mp3", "answer": "C" },
-    { "number": 29, "audio": "181 T2 Pt2 Q29.mp3", "answer": "A" },
-    { "number": 30, "audio": "182 T2 Pt2 Q30.mp3", "answer": "A" },
-    { "number": 31, "audio": "183 T2 Pt2 Q31.mp3", "answer": "B" }
+    {
+      "number": 7, "audio": "159 T2 Pt2 Q7.mp3", "answer": "C",
+      "question": "When is Ms. Phillips going to pick up her computer?", "questionJa": "Phillipsさんはいつ、自分のコンピューターを受け取る予定ですか。",
+      "responses": {"A":"Yes, I had some.","B":"That's a new clock, isn't it?","C":"Not until next week."},
+      "responsesJa": {"A":"はい、私は幾らか食べました。","B":"それは新しい時計ですよね？","C":"来週になってからです。"},
+      "explanation": "When ~?でPhillipsさんがいつコンピューターを受け取るのかと尋ねているのに対し、来週になってからと時期を伝えている(C)が正解。not until next weekは「来週になるまではそうしない」、つまり「来週になってから(受け取る)」という意味。pick up ~「~を受け取る」。\n(A) 時が尋ねられているので、Yes/Noでは応答にならない。また、代名詞someが何を指すかも不明。\n(B) 時と関連する時計に言及しているが、時を答えていないので応答にならない。"
+    },
+    {
+      "number": 8, "audio": "160 T2 Pt2 Q8.mp3", "answer": "B",
+      "question": "Would you like me to help you hang the wallpaper?", "questionJa": "壁紙を貼るのをお手伝いしましょうか。",
+      "responses": {"A":"It's a striped pattern.","B":"Yes, I'd appreciate it.","C":"I'll print it out now."},
+      "responsesJa": {"A":"それはしま模様です。","B":"はい、そうしていただけるとありがたいです。","C":"今、それをプリントアウトします。"},
+      "explanation": "Would you like me to do ~?は「~しましょうか」と相手に申し出る表現。壁紙を貼る手伝いの申し出に対し、Yesと答え、「そうしてくれるとありがたい」と申し出を受け入れている(B)が正解。itは、壁紙を貼る手伝いを指す。I'dはI wouldの短縮形。appreciate「~をありがたく思う」。\n(A) Itがthe wallpaperを指すとしても、柄を答える発言は申し出に対する応答にならない。striped「しま模様の、ストライプの」、pattern「模様、柄」。\n(C) print out ~「~をプリントアウトする」。"
+    },
+    {
+      "number": 9, "audio": "161 T2 Pt2 Q9.mp3", "answer": "A",
+      "question": "Can you help me revise this budget report?", "questionJa": "この予算報告書を修正するのを手伝ってくれませんか。",
+      "responses": {"A":"Sure, I'm free this afternoon.","B":"A pair of sunglasses.","C":"That was a great book."},
+      "responsesJa": {"A":"いいですよ、今日の午後は手が空いています。","B":"サングラス1つです。","C":"それは素晴らしい本でした。"},
+      "explanation": "Can you ~?で、予算報告書の修正の手伝いを依頼しているのに対し、Sureと快諾し、「今日の午後は手が空いている」と、伝える時間帯を知らせている(A)が正解。revise「~を修正する」、budget「予算」、report「報告書」。\n(B) サングラスに関することは話題にされていない。a pair of ~「(2つの部分から成っている)1個の~」。\n(C) Thatがthis budget reportを指すとは考えにくく、何を指すか不明。また、本の感想は尋ねられていない。"
+    },
+    {
+      "number": 10, "audio": "162 T2 Pt2 Q10.mp3", "answer": "C",
+      "question": "Where will the sales staff be waiting for you?", "questionJa": "販売員はどこであなたを待つことになっていますか。",
+      "responses": {"A":"That's my favorite shop.","B":"I'll make the dinner reservations.","C":"In the lobby."},
+      "responsesJa": {"A":"それは私のお気に入りの店です。","B":"夕食の予約を取っておきます。","C":"ロビーです。"},
+      "explanation": "Where ~?で販売員が待つ予定の場所を尋ねているのに対し、位置を表す前置詞inを用いて「ロビーだ」と場所を答えている(C)が正解。sales staff「販売員」。\n(A) Thatが何を指すか不明であり、好きな店を伝える発言は応答にならない。\n(B) 夕食や予約に関することは話題にされていない。make a reservation「予約をする」。"
+    },
+    {
+      "number": 11, "audio": "163 T2 Pt2 Q11.mp3", "answer": "A",
+      "question": "When did Mr. Hang deliver the shipment?", "questionJa": "Hangさんはいつ発送品を配達しましたか。",
+      "responses": {"A":"Yesterday afternoon.","B":"These boxes are heavy.","C":"No, it's over there."},
+      "responsesJa": {"A":"昨日の午後です。","B":"これらの箱は重いです。","C":"いいえ、それは向こうにあります。"},
+      "explanation": "When ~?でHangさんが発送品を配達した時を尋ねているのに対し、「昨日の午後だ」と、時間帯を答えている(A)が正解。deliver「~を配達する」、shipment「発送品」。\n(B) 質問にあるshipmentに関連し得るboxesに惑わされないよう注意。\n(C) Noで何を否定しているか不明。また、itがthe shipmentを指すとしても、その位置を伝える発言は応答にならない。"
+    },
+    {
+      "number": 12, "audio": "164 T2 Pt2 Q12.mp3", "answer": "B",
+      "question": "Why do you want to go to the Japanese garden?", "questionJa": "あなたはなぜ、その日本庭園に行きたいのですか。",
+      "responses": {"A":"Yes, there's a map in here.","B":"Because it's quite famous.","C":"Around eleven o'clock."},
+      "responsesJa": {"A":"はい、ここに地図がありますよ。","B":"そこはとても有名だからです。","C":"11時ごろです。"},
+      "explanation": "Why ~?で日本庭園に行きたい理由を尋ねているのに対し、Because ~を用いて「そこはとても有名だから」と、訪れたいと思う理由を伝えている(B)が正解。quite「かなり、随分」。\n(A) 理由が尋ねられているので、Yes/Noでは応答にならない。in here「(何かの中を指して)ここに」。\n(C) 時刻は尋ねられていない。"
+    },
+    {
+      "number": 13, "audio": "165 T2 Pt2 Q13.mp3", "answer": "A",
+      "question": "Who'll buy the tickets for the performance?", "questionJa": "誰がその公演のチケットを購入するのですか。",
+      "responses": {"A":"I can take care of that.","B":"No, Farida is a marketing specialist.","C":"Thanks, it'll be 30 dollars."},
+      "responsesJa": {"A":"私がそれを引き受けてもいいですよ。","B":"いいえ、Faridaはマーケティングの専門家です。","C":"ありがとうございます、30ドルになります。"},
+      "explanation": "Who'll ~?で公演のチケットを購入する人物を尋ねているのに対し、「私がそれを引き受けられる」と、自分が買うことを申し出ている(A)が正解。thatは、公演のチケットを購入することを指す。Who'llはWho willの短縮形。take care of ~「~を引き受ける」。\n(B) Noで何を否定しているか不明。Faridaという人物名を挙げているが、職業は尋ねられていない。\n(C) 購入するのは誰かという質問なので、金額を伝える発言は応答にならない。"
+    },
+    {
+      "number": 14, "audio": "166 T2 Pt2 Q14.mp3", "answer": "A",
+      "question": "The presentations will be in the afternoon, won't they?", "questionJa": "プレゼンは午後の予定ですよね？",
+      "responses": {"A":"No, they've been postponed.","B":"The flowers on the table look beautiful.","C":"The back entrance is open."},
+      "responsesJa": {"A":"いいえ、それは延期されました。","B":"卓上の花はきれいですね。","C":"裏口は開いています。"},
+      "explanation": "肯定文の文末に~, won't they?を付けて「~ですよね」と、プレゼンが午後に実施予定であることを確認している。これに対し、Noと否定し、「それは延期された」と午後には行われないことを伝えている(A)が正解。theyは質問にあるThe presentationsを指す。postpone「~を延期する」。\n(B) プレゼンの実施予定時期の確認に対し、花の感想を伝える発言は応答にならない。\n(C) back entrance「裏口」が開いているかどうかは関係がない。"
+    },
+    {
+      "number": 15, "audio": "167 T2 Pt2 Q15.mp3", "answer": "C",
+      "question": "Should we take the bus or the train downtown?", "questionJa": "私たちは中心街までバスを利用すべきですか、それとも電車を利用すべきですか。",
+      "responses": {"A":"Yes, they should.","B":"About every half an hour.","C":"The train seats are very comfortable."},
+      "responsesJa": {"A":"はい、彼らはそうすべきです。","B":"およそ30分おきに。","C":"電車の座席はとても快適ですよ。"},
+      "explanation": "A or B?の形で、中心街までの移動手段としてバスと電車のどちらにすべきかと尋ねている。これに対し、「電車の座席はとても快適だ」と、後者の移動手段を間接的に提案している(C)が正解。downtown「中心街へ」。seat「座席」、comfortable「快適な」。\n(A) 二者択一の質問に対し、Yesで何を肯定しているか不明。また、theyが誰を指すかも不明。\n(B) バスや電車の運行間隔は尋ねられていない。"
+    },
+    {
+      "number": 16, "audio": "168 T2 Pt2 Q16.mp3", "answer": "C",
+      "question": "How soon will my lunch order be ready?", "questionJa": "注文した私の昼食はあとどれくらいでできますか。",
+      "responses": {"A":"A large assortment.","B":"I'm feeling well, thanks.","C":"The chef just started preparing it."},
+      "responsesJa": {"A":"盛りだくさんの詰め合わせです。","B":"体調はいいです、ありがとう。","C":"シェフはちょうど、それを調理し始めたところです。"},
+      "explanation": "How soon ~?で注文した昼食があとどれくらいでできるかと尋ねている。これに対し、具体的な時間には言及せず、「シェフはちょうど、それを調理し始めたところだ」と伝えて用意ができるまでもう少し時間がかかることを示唆している(C)が正解。prepare「~を調理する」。\n(A) assortment「詰め合わせ」。\n(B) 体調や気分は尋ねられていない。"
+    },
+    {
+      "number": 17, "audio": "169 T2 Pt2 Q17.mp3", "answer": "C",
+      "question": "When is your daughter leaving for university?", "questionJa": "娘さんはいつ大学に出発しますか。",
+      "responses": {"A":"No, but thank you for offering.","B":"The Engineering Department.","C":"I'm driving her there on Friday."},
+      "responsesJa": {"A":"いいえ、でも申し出をありがとうございます。","B":"工学部です。","C":"私は金曜日に彼女をそこへ車で送ります。"},
+      "explanation": "When ~?で会話の相手の娘が大学に向かって出発する時を尋ねているのに対し、「私は金曜日に彼女をそこへ車で送る」と、娘が大学に行く具体的な曜日を答えている(C)が正解。herは質問にあるyour (= my) daughterを指す。drive「~を車で送る」。\n(A) Noで何を否定しているか不明。また、申し出に対する感謝では応答にならない。offer「(助けなどを)申し出る」。\n(B) 質問にあるuniversityと関連するDepartment「学部」を含むが、学部は尋ねられていない。"
+    },
+    {
+      "number": 18, "audio": "170 T2 Pt2 Q18.mp3", "answer": "A",
+      "question": "Aren't you looking forward to visiting Dubai?", "questionJa": "ドバイを訪れるのを楽しみにしているのではないのですか。",
+      "responses": {"A":"My trip was canceled.","B":"The international airport.","C":"That shirt does look nice."},
+      "responsesJa": {"A":"私の旅行は中止になりました。","B":"国際空港です。","C":"そのシャツは本当にすてきですね。"},
+      "explanation": "否定疑問文で、ドバイを訪れるのを楽しみにしているのではないのかと尋ねているのに対し、Yes/Noでは答えずに旅行自体が中止になったことを伝えている(A)が正解。look forward to doing「~することを心待ちにする」。cancel「~を中止する」。\n(B) 空港については尋ねられていない。international「国際的な」。\n(C) シャツは話題にされておらず、その感想を伝える発言は応答にならない。"
+    },
+    {
+      "number": 19, "audio": "171 T2 Pt2 Q19.mp3", "answer": "B",
+      "question": "Where is the history museum that Sandrine recommended?", "questionJa": "Sandrineが薦めてくれた歴史博物館はどこにあるのですか。",
+      "responses": {"A":"In the storage closet.","B":"Let's check online.","C":"Yes, at eleven thirty."},
+      "responsesJa": {"A":"物置の中です。","B":"オンラインで確認しましょう。","C":"はい、11時30分に。"},
+      "explanation": "歴史博物館の場所を尋ねているのに対し、Let's ~を用いて「オンラインで確認しよう」と、インターネットで調べることを提案している(B)が正解。recommend「~を推奨する、~を薦める」。online「オンラインで」。\n(A) 場所を答えているが、storage closet「物置」の中という返答はつじつまが合わない。\n(C) Yesで何を肯定しているか不明であり、また時刻は尋ねられていない。"
+    },
+    {
+      "number": 20, "audio": "172 T2 Pt2 Q20.mp3", "answer": "A",
+      "question": "How much longer will the flight be delayed?", "questionJa": "飛行機はあとどれくらい遅れそうですか。",
+      "responses": {"A":"The information desk is over there.","B":"I have a new monitor.","C":"No, it's quite far."},
+      "responsesJa": {"A":"案内所はあそこにありますよ。","B":"私は新しいモニターを持っています。","C":"いいえ、そこはかなり遠いです。"},
+      "explanation": "How much longer ~?で飛行機があとどれくらい遅れそうかと尋ねている。これに対し、予測される遅延時間を答えるのではなく、案内所の場所を伝えることで、そこで遅延時間を確認するよう示唆している(A)が正解。flight「飛行機の便」、delay「~を遅らせる」。information desk「案内所」。\n(B) モニターに関することは話題にされていない。\n(C) 遅延時間が尋ねられているので、Yes/Noでは応答にならない。"
+    },
+    {
+      "number": 21, "audio": "173 T2 Pt2 Q21.mp3", "answer": "B",
+      "question": "Is the lumber delivery arriving at the warehouse today?", "questionJa": "木材の配達物は今日、倉庫に到着しますか。",
+      "responses": {"A":"Smith's Marketing and Sales.","B":"The driver is out sick today.","C":"A multiyear contract."},
+      "responsesJa": {"A":"Smith'sマーケティング販売社です。","B":"担当ドライバーは今日、病欠です。","C":"複数年契約です。"},
+      "explanation": "木材の配達物が今日、倉庫に到着するかと尋ねているのに対し、担当ドライバーが病欠であることを知らせ、今日中に配達物が倉庫に到着しないことを示唆している(B)が正解。lumber「木材」、delivery「配達(物)」、warehouse「倉庫」。out sick「病気で休んで」。\n(A) 会社については尋ねられていない。\n(C) contract「契約」は話題にされていない。multiyear「複数年に及ぶ」。"
+    },
+    {
+      "number": 22, "audio": "174 T2 Pt2 Q22.mp3", "answer": "B",
+      "question": "Our department needs to place an order for office supplies this week.", "questionJa": "うちの部署は今週、オフィス用品を注文する必要があります。",
+      "responses": {"A":"My apartment's on the fifth floor.","B":"Do you need help making a list?","C":"A surprise party next week."},
+      "responsesJa": {"A":"マンションの私の部屋は5階にあります。","B":"リスト作成の手伝いが必要ですか。","C":"来週のサプライズパーティーです。"},
+      "explanation": "今週オフィス用品を注文する必要があるという発言に対し、リスト作成の手伝いが必要かと尋ねている(B)が正解。department「部署」、place an order for ~「~を注文する」、supplies「用品」。\n(A) 発言にあるdepartmentと似た音を含むapartment「共同住宅の住戸、マンションの一室」に惑わされないよう注意。\n(C) 発言にあるthis weekから連想され得るnext weekを含むが、応答になっていない。また、発言にあるsuppliesと(C)にあるsurpriseの音の類似性に注意。"
+    },
+    {
+      "number": 23, "audio": "175 T2 Pt2 Q23.mp3", "answer": "A",
+      "question": "Doesn't this train go all the way to Springdale?", "questionJa": "この電車はスプリングデールまで行くのではないのですか。",
+      "responses": {"A":"No, we have to transfer at the next stop.","B":"I'm going to the cafeteria too.","C":"The ticket counter on the left."},
+      "responsesJa": {"A":"いいえ、私たちは次の停車駅で乗り換えないといけません。","B":"私もカフェテリアに行きます。","C":"左手にある切符売り場です。"},
+      "explanation": "否定疑問文で、電車がスプリングデールまで行くのではないのかと尋ねているのに対し、Noと否定し、次の停車駅で乗り換えなければならないと伝えている(A)が正解。all the way「はるばる、最後までずっと」。transfer「乗り換える」。\n(B) カフェテリアは話題にされていない。\n(C) 質問にあるtrainと関連するticket counter「切符売り場」を含むが、電車の行き先についての質問への応答にならない。"
+    },
+    {
+      "number": 24, "audio": "176 T2 Pt2 Q24.mp3", "answer": "C",
+      "question": "How soon will the new sales staff be arriving?", "questionJa": "新しい販売員はあとどれくらいで到着しますか。",
+      "responses": {"A":"There's a bus stop out front.","B":"At the fitness center.","C":"In a few minutes."},
+      "responsesJa": {"A":"表にバス停があります。","B":"フィットネスセンターで。","C":"数分後です。"},
+      "explanation": "How soon ~?で、あとどれくらいで新しい販売員が到着するかと尋ねているのに対し、「数分後だ」と到着までの時間を伝えている(C)が正解。\n(A) 質問にあるarrivingから連想され得るbus stop「バス停」が含まれるが、応答になっていない。out front「表に、(建物の)前に」。\n(B) 場所は尋ねられていない。"
+    },
+    {
+      "number": 25, "audio": "177 T2 Pt2 Q25.mp3", "answer": "A",
+      "question": "What will you be presenting on at the conference?", "questionJa": "あなたは会議で何についてプレゼンする予定ですか。",
+      "responses": {"A":"Some of our recent engineering innovations.","B":"I've already bought a present.","C":"The conference center on Maple Street."},
+      "responsesJa": {"A":"当社の最近の工学技術革新です。","B":"私はすでに贈り物を購入しました。","C":"メープル通りの会議場です。"},
+      "explanation": "何についてプレゼンする予定かと尋ねているのに対し、「当社の最近の工学技術革新だ」と、発表のテーマを答えている(A)が正解。present「プレゼンテーションをする」、on ~「~に関して」、conference「会議」。recent「最近の」、engineering「工学技術」、innovation「革新」。\n(B) ここでのpresentは「贈り物」という意味の名詞。\n(C) 質問にあるconferenceを含むが、会議場の場所は尋ねられていない。"
+    },
+    {
+      "number": 26, "audio": "178 T2 Pt2 Q26.mp3", "answer": "B",
+      "question": "Do you have time to participate in a group interview tomorrow?", "questionJa": "明日の集団面接に参加する時間はありますか。",
+      "responses": {"A":"I really enjoyed them, thanks.","B":"My calendar is open all week.","C":"I've heard we received another delivery."},
+      "responsesJa": {"A":"それらを大いに満喫しました、ありがとう。","B":"私の予定は今週すっと空いています。","C":"私たちはもう一つ配達物を受け取ったと私は聞いています。"},
+      "explanation": "明日の集団面接に参加する時間があるかと尋ねているのに対し、「私の予定は今週ずっと空いている」と答え、明日の都合がつくことを暗に伝えている(B)が正解。participate in ~「~に参加する」、group interview「集団面接」。open「空いた、予定が入っていない」。\n(A) themが何を指すか不明。また、未来について尋ねられているので、過去の感想を伝える発言は応答にならない。\n(C) 配達物は話題にされていない。"
+    },
+    {
+      "number": 27, "audio": "179 T2 Pt2 Q27.mp3", "answer": "B",
+      "question": "We should hire another salesperson.", "questionJa": "当店は販売員をもう1人雇うべきです。",
+      "responses": {"A":"Several applications.","B":"The store has had a lot of customers lately.","C":"Yes, I'd like some coffee."},
+      "responsesJa": {"A":"複数の応募です。","B":"店には最近、たくさんの客が入っていますね。","C":"はい、コーヒーが飲みたいです。"},
+      "explanation": "販売員をもう1人雇うべきだという発言に対し、近頃の店の盛況ぶりを述べ、追加の雇用に婉曲的に賛成している(B)が正解。hire「~を雇う」。lately「最近」。\n(A) 発言にあるhireと関連し得るapplication「応募(書類)」を含むが、応募状況は尋ねられていない。\n(C) Yesで新規従業員の雇用に賛意を表しているとしても、コーヒーを希望する発言は応答にならない。"
+    },
+    {
+      "number": 28, "audio": "180 T2 Pt2 Q28.mp3", "answer": "C",
+      "question": "Will replacing the windows take more than a month or less than a month to do?", "questionJa": "窓を交換するのに1カ月以上かかりますか、それとも1カ月未満ですか。",
+      "responses": {"A":"That clock is quite impressive.","B":"A monthly budget.","C":"I'll need to check with the installers."},
+      "responsesJa": {"A":"その時計はとても印象的ですね。","B":"月単位の予算です。","C":"取り付け業者に確認する必要があるでしょうね。"},
+      "explanation": "A or B?の形で、窓の交換作業にかかるのは1カ月以上か1カ月未満かと尋ねている。これに対し、どちらとも答えずに「取り付け業者に確認する必要があるだろう」と述べ、所要期間は聞かないと分からないことを示唆している(C)が正解。replace「~を交換する」。check with ~「~に確認する」、installer「取り付け作業員」。\n(A) 時計には言及されていない。impressive「印象的な」。\n(B) 質問にあるmonthと関連するmonthlyに惑わされないよう注意。budget「予算」。"
+    },
+    {
+      "number": 29, "audio": "181 T2 Pt2 Q29.mp3", "answer": "A",
+      "question": "Can you come and fix the printer?", "questionJa": "プリンターを修理しに来てもらえますか。",
+      "responses": {"A":"I'm just about to set up some teleconferencing equipment.","B":"It was only about 30 copies.","C":"It's very bright in here."},
+      "responsesJa": {"A":"私はちょうど今、テレビ会議用の機器をセッティングしようとしているところなのです。","B":"それはわずか30部ほどでした。","C":"ここはとても明るいですね。"},
+      "explanation": "Can you ~?でプリンターを修理しに来るよう依頼しているのに対し、「私はちょうど今、テレビ会議用の機器をセッティングしようとしているところだ」と答え、今は別の用件のため対応できないことを示唆している(A)が正解。come and do「~しに来る」、fix「~を修理する」、be about to do「~しようとするところである」、teleconferencing「テレビ会議」、equipment「機器」。\n(B) 質問にあるprinterと関連するcopiesを含むが、書類などの部数は尋ねられていない。\n(C) 依頼に対し明るさを述べる発言は応答にならない。bright「明るい」。"
+    },
+    {
+      "number": 30, "audio": "182 T2 Pt2 Q30.mp3", "answer": "A",
+      "question": "We spend almost half of the workday in meetings!", "questionJa": "私たちは一日の勤務時間の半分近くを会議に費やしていますね！",
+      "responses": {"A":"I wish we had fewer of them.","B":"Sure, I'll send you the file beforehand.","C":"From nine to ten o'clock."},
+      "responsesJa": {"A":"それらがもっと少ないといいのですが。","B":"はい、事前にそのファイルをお送りしますね。","C":"9時から10時までです。"},
+      "explanation": "勤務時間の半分近くを会議に費やしているという発言に対し、「それらがもっと少ないといいのに」と、願望を述べて応答している(A)が正解。〈I wish+過去形の節〉は「~ならいいのに」と、現在に反する願望を述べる仮定法過去の表現。themは発言にあるmeetingsを指す。workday「就業日、一日の勤務時間」。\n(B) Sureが共感を示すとしても、ファイルを送るという発言は応答にならない。beforehand「事前に」。\n(C) 時間帯は尋ねられていない。"
+    },
+    {
+      "number": 31, "audio": "183 T2 Pt2 Q31.mp3", "answer": "A",
+      "question": "Would you like to look at the slides now or later?", "questionJa": "スライドを今見たいですか、それとも後で見たいですか。",
+      "responses": {"A":"This is a very busy time of day.","B":"Yes, I'm still looking for a new one.","C":"No, they're in the conference center."},
+      "responsesJa": {"A":"今は一日のうちでとても多忙な時間帯なのです。","B":"はい、私は今も新しいものを探しています。","C":"いいえ、それらは会議場にあります。"},
+      "explanation": "Would you like to do ~?「~したいですか」は丁寧に意向を尋ねる表現であり、A or Bの形で、今か後のどちらにスライドを見たいかと尋ねている。これに対し、「今は一日のうちでとても多忙な時間帯だ」と答え、後者の選択を示唆している(A)が正解。\n(B) 二者択一の質問なので、Yes/Noでは答えず、また、代名詞oneがslideを指すとしても応答にならない。look for ~「~を探す」。\n(C) theyがthe slidesを指すとしても、会議場にあるという発言は応答にならない。"
+    }
   ]
 }

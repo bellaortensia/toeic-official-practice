@@ -2,13 +2,43 @@
   "test": "T2",
   "part": 1,
   "type": "photograph",
-  "note": "Audio-only: four statements about a picture are spoken, not printed in the book. No choice text exists in print.",
+  "note": "音声で読まれる4つの文は本紙に印刷されていないため、statements/statementsJaは別冊解答・解説(p.105-106)から書き起こしたもの。",
   "questions": [
-    { "number": 1, "audio": "152 T2 Pt1 Q1.mp3", "answer": "D" },
-    { "number": 2, "audio": "153 T2 Pt1 Q2.mp3", "answer": "A" },
-    { "number": 3, "audio": "154 T2 Pt1 Q3.mp3", "answer": "B" },
-    { "number": 4, "audio": "155 T2 Pt1 Q4.mp3", "answer": "B" },
-    { "number": 5, "audio": "156 T2 Pt1 Q5.mp3", "answer": "A" },
-    { "number": 6, "audio": "157 T2 Pt1 Q6.mp3", "answer": "C" }
+    {
+      "number": 1, "audio": "152 T2 Pt1 Q1.mp3", "answer": "D",
+      "statements": {"A":"He's taking off some gloves.","B":"He's carrying some boots.","C":"He's sweeping a walkway.","D":"He's using a shovel."},
+      "statementsJa": {"A":"彼は手袋を外しているところである。","B":"彼は長靴を持ち歩いている。","C":"彼は歩道の掃き掃除をしている。","D":"彼はシャベルを使っている。"},
+      "explanation": "男性はshovel「シャベル」を使って雪かきをしている。\n(A) 男性はgloves「手袋」をはめた状態で作業をしており、外してはいない。take off ~「~を脱ぐ」。\n(B) 男性はboots「長靴」を履いているが、それらを持ち歩いてはいない。carry「~を運ぶ、~を持ち歩く」。\n(C) 男性はwalkway「歩行者専用通路、歩道」の掃き掃除はしていない。sweep「~を掃く、~の掃き掃除をする」。"
+    },
+    {
+      "number": 2, "audio": "153 T2 Pt1 Q2.mp3", "answer": "A",
+      "statements": {"A":"An airplane is flying overhead.","B":"A woman is riding a bike.","C":"A car is driving on a road.","D":"A woman is boarding an airplane."},
+      "statementsJa": {"A":"飛行機が上空を飛んでいる。","B":"女性が自転車に乗っている。","C":"車が道を走っている。","D":"女性が飛行機に搭乗しているところである。"},
+      "explanation": "上空を1機の飛行機が飛んでいる。airplane「飛行機」、overhead「頭上で、上空で」。\n(B) 自転車が写っているが、女性はその脇に立っており、乗ってはいない。\n(C) 自動車は確認できない。drive「(車が)走る」。\n(D) 飛行機は女性の頭上を飛行中であり、女性がそれに搭乗しているところではない。board「~に乗り込む」。"
+    },
+    {
+      "number": 3, "audio": "154 T2 Pt1 Q3.mp3", "answer": "B",
+      "statements": {"A":"The building is covered with snow.","B":"There are trees in front of the building.","C":"The walking path is lined with rocks.","D":"There are flags flying from a post."},
+      "statementsJa": {"A":"建物は雪で覆われている。","B":"建物の前には木々がある。","C":"歩道の縁には石が並んでいる。","D":"支柱から翻っている旗がある。"},
+      "explanation": "複数の木が建物の前に立っている。in front of ~「~の前に」。\n(A) 建物は写っているが、雪は見当たらない。be covered with ~「~で覆われている」。\n(C) 歩道は確認できるが、それに沿って石は並んでいない。path「小道」、line ~ with …「~に沿って…を並べる」。\n(D) post「柱、支柱」にflag「旗」は見当たらない。fly「(旗が)翻る」。"
+    },
+    {
+      "number": 4, "audio": "155 T2 Pt1 Q4.mp3", "answer": "B",
+      "statements": {"A":"Some bookshelves are being assembled.","B":"There are some light fixtures on the ceiling.","C":"A carpet is being vacuumed.","D":"Some books have been stacked on a chair."},
+      "statementsJa": {"A":"本棚が組み立てられているところである。","B":"天井に備え付けの照明器具がある。","C":"カーペットに掃除機がかけられているところである。","D":"本が椅子の上に積まれている。"},
+      "explanation": "部屋のceiling「天井」には、light fixture「(壁や天井に取り付けられた)照明器具」が幾つか見える。\n(A) 本棚が写っているが、それらは組み立てられているところではない。bookshelvesはbookshelf「本棚」の複数形。assemble「~を組み立てる」。\n(C) 掃除機は写っていない。vacuum「~を掃除機で掃除する」。\n(D) 本は机の上や棚に置かれており、椅子の上には積まれていない。stack「~を積み上げる」。"
+    },
+    {
+      "number": 5, "audio": "156 T2 Pt1 Q5.mp3", "answer": "A",
+      "statements": {"A":"Some windows overlook a fountain.","B":"Some people are sweeping around a fountain.","C":"Some people are laying bricks in a city square.","D":"Some umbrellas are being taken down."},
+      "statementsJa": {"A":"幾つかの窓が噴水を見下ろしている。","B":"何人かの人が噴水の周りで掃き掃除をしている。","C":"何人かの人が市の広場でれんがを積んでいる。","D":"幾つかのパラソルが降ろされているところである。"},
+      "explanation": "複数の窓がfountain「噴水」を見渡す位置にある。overlook「~を見渡す、~を見下ろす」。\n(B) 噴水の周囲で掃除をしている人々は写っていない。sweep「掃き掃除をする」。\n(C) square「広場」らしき場所が写っているが、れんがを積んでいる人々は見当たらない。lay bricks「れんがを積む」。\n(D) umbrella「パラソル」は写っているが、それらは設置されたままで、降ろされてはいない。take down ~「~を降ろす、~を解体する」。"
+    },
+    {
+      "number": 6, "audio": "157 T2 Pt1 Q6.mp3", "answer": "C",
+      "statements": {"A":"Some workers are stocking the shelves of a storage closet.","B":"Some customers are pushing shopping carts.","C":"Some customers are standing in front of a checkout counter.","D":"Some workers are hanging up some shopping bags."},
+      "statementsJa": {"A":"何人かの従業員が保管用戸棚に在庫を補充している。","B":"何人かの客がショッピングカートを押している。","C":"何人かの客がレジの前に立っている。","D":"何人かの従業員が買い物袋を掛けている。"},
+      "explanation": "複数のcustomer「客」が、checkout counter「レジ」の前に並んで立っている。\n(A) 在庫を補充している従業員は確認できない。shelvesはshelf「棚」の複数形。stock「~に在庫を補充する」、storage「保管」、closet「戸棚」。\n(B) ショッピングカートは写っていない。\n(D) 買い物袋らしきものは写っているが、すでに掛けられた状態であり、従業員はそれらに触れていない。hang up ~「~を掛ける」。"
+    }
   ]
 }
