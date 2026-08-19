@@ -19,7 +19,7 @@ function getGeminiKey() {
   return localStorage.getItem(GEMINI_KEY_LS) || geminiKeyInput.value.trim();
 }
 
-const GEMINI_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 
 async function callGemini(systemPrompt, userText) {
   const key = getGeminiKey();
