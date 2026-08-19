@@ -306,6 +306,7 @@ practiceSelectEl.addEventListener('change', async () => {
   state.part = Number(part);
   state.index = 0;
   p12 = null;
+  p34 = null;
   emptyStateEl.style.display = 'none';
   practiceEl.style.display = 'block';
   practiceBodyEl.innerHTML = '読み込み中...';
@@ -374,16 +375,16 @@ function createRevealButton(onReveal) {
 function renderPractice() {
   const footerEl = document.querySelector('.practice-footer');
   practiceBodyEl.innerHTML = '';
-  if (state.part === 1 || state.part === 2) {
+  if (state.part === 1 || state.part === 2 || state.part === 3 || state.part === 4) {
     footerEl.style.display = 'none';
     progressLabelEl.textContent = '';
-    renderPart1or2();
+    if (state.part === 1 || state.part === 2) renderPart1or2();
+    else renderPart3or4();
     return;
   }
   footerEl.style.display = 'flex';
   progressLabelEl.textContent = `${state.index + 1} / ${getItemCount()}`;
-  if (state.part === 3 || state.part === 4) renderPart3or4();
-  else if (state.part === 5) renderPart5();
+  if (state.part === 5) renderPart5();
   else if (state.part === 6) renderPart6();
   else if (state.part === 7) renderPart7();
 
@@ -671,8 +672,35 @@ function renderPart1or2() {
   if (autoPlayBtn) autoPlayBtn.click();
 }
 
+let p34 = null; // { groupIdx, phase, selections }
+
+function initP34IfNeeded() {
+  if (!p34) p34 = { groupIdx: 0, phase: 'question', selections: {} };
+}
+
+function p34BuildShadowingItems(g) {
+  const text = g.items.map(item => `${item.number}. ${item.text}`).join('\n');
+  return [{ label: `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`, text, audio: g.audioQuestions }];
+}
+
 function renderPart3or4() {
-  const g = state.data.groups[state.index];
+  initP34IfNeeded();
+  const g = state.data.groups[p34.groupIdx];
+
+  if (p34.phase === 'shadowing') {
+    renderShadowing(p34BuildShadowingItems(g), () => {
+      p34.groupIdx++;
+      p34.phase = 'question';
+      p34.selections = {};
+      if (p34.groupIdx >= state.data.groups.length) {
+        practiceBodyEl.innerHTML = '<p>このPartは終了です。上のプルダウンから次のPartを選んでください。</p>';
+      } else {
+        renderPart3or4();
+      }
+    });
+    return;
+  }
+
   const wrap = document.createElement('div');
   const audioLabel = document.createElement('div');
   audioLabel.className = 'audio-label';
@@ -686,6 +714,8 @@ function renderPart3or4() {
     gfx.textContent = '図表: ' + g.graphic;
     wrap.appendChild(gfx);
   }
+
+  const blocks = {};
   g.items.forEach(item => {
     const block = document.createElement('div');
     block.className = 'q-block';
@@ -693,11 +723,75 @@ function renderPart3or4() {
     t.className = 'q-text';
     t.textContent = `${item.number}. ${item.text}`;
     block.appendChild(t);
+
     const choicesDiv = document.createElement('div');
-    renderChoices(choicesDiv, item.choices, item.answer);
+    const letters = Object.keys(item.choices);
+    letters.forEach(letter => {
+      const btn = document.createElement('button');
+      btn.className = 'choice';
+      btn.textContent = `(${letter}) ${item.choices[letter]}`;
+      btn.addEventListener('click', () => {
+        choicesDiv.querySelectorAll('.choice').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        p34.selections[item.number] = letter;
+        nextBtn.disabled = Object.keys(p34.selections).length < g.items.length;
+      });
+      choicesDiv.appendChild(btn);
+    });
     block.appendChild(choicesDiv);
+
+    const explainDiv = document.createElement('div');
+    explainDiv.className = 'explain-box';
+    explainDiv.style.display = 'none';
+    block.appendChild(explainDiv);
+
+    blocks[item.number] = { choicesDiv, explainDiv, letters };
     wrap.appendChild(block);
   });
+
+  const nextBtn = document.createElement('button');
+  nextBtn.textContent = '次へ';
+  nextBtn.className = 'grade-btn';
+  nextBtn.disabled = true;
+  const revealed = { done: false };
+  nextBtn.addEventListener('click', async () => {
+    if (!revealed.done) {
+      revealed.done = true;
+      nextBtn.disabled = true;
+      nextBtn.textContent = '採点中...';
+      g.items.forEach(item => {
+        const { choicesDiv, explainDiv, letters } = blocks[item.number];
+        const isCorrect = p34.selections[item.number] === item.answer;
+        const buttons = choicesDiv.querySelectorAll('.choice');
+        buttons.forEach((b, i) => {
+          b.disabled = true;
+          if (letters[i] === item.answer) b.classList.add('correct');
+          else if (letters[i] === p34.selections[item.number]) b.classList.add('wrong');
+        });
+        explainDiv.style.display = 'block';
+        explainDiv.textContent = (isCorrect ? '正解です!\n\n' : '不正解です。\n\n') + '解説を生成中...';
+      });
+      for (const item of g.items) {
+        const { explainDiv } = blocks[item.number];
+        const isCorrect = p34.selections[item.number] === item.answer;
+        const prefix = isCorrect ? '正解です!\n\n' : '不正解です。\n\n';
+        try {
+          const questionText = `${item.number}. ${item.text}\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}`;
+          explainDiv.textContent = prefix + await getExplanation(`${state.test}-${state.part}-${item.number}`, questionText);
+        } catch (e) {
+          explainDiv.textContent = prefix + '解説の取得に失敗しました: ' + e.message;
+        }
+      }
+      nextBtn.disabled = false;
+      nextBtn.textContent = 'シャドーイングへ';
+    } else {
+      p34.phase = 'shadowing';
+      renderPart3or4();
+    }
+  });
+  wrap.appendChild(nextBtn);
+
+  practiceBodyEl.innerHTML = '';
   practiceBodyEl.appendChild(wrap);
 }
 
