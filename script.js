@@ -601,7 +601,7 @@ function renderPart1or2() {
 
   const title = document.createElement('div');
   title.className = 'q-text';
-  title.textContent = `Q${q.number}` + (isPart1 ? '' : `　${q.question}`);
+  title.textContent = `Q${q.number}`;
   wrap.appendChild(title);
 
   if (isPart1 && q.image) {
@@ -620,7 +620,7 @@ function renderPart1or2() {
   letters.forEach(letter => {
     const btn = document.createElement('button');
     btn.className = 'choice';
-    btn.textContent = `(${letter}) ${choiceTexts[letter]}`;
+    btn.textContent = `(${letter})`;
     btn.addEventListener('click', () => {
       choicesDiv.querySelectorAll('.choice').forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
@@ -653,8 +653,8 @@ function renderPart1or2() {
       });
       const jaTexts = isPart1 ? q.statementsJa : q.responsesJa;
       let text = '';
-      if (!isPart1) text += `質問: ${q.questionJa}\n\n`;
-      text += letters.map(l => `(${l}) ${jaTexts[l]}`).join('\n') + '\n\n' + q.explanation;
+      if (!isPart1) text += `質問: ${q.question}\n(${q.questionJa})\n\n`;
+      text += letters.map(l => `(${l}) ${choiceTexts[l]}\n　　${jaTexts[l]}`).join('\n') + '\n\n' + q.explanation;
       explainDiv.textContent = text;
       explainDiv.style.display = 'block';
       const isLast = p12.qIdx >= groupQuestions.length - 1;
