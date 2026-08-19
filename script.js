@@ -506,7 +506,7 @@ function renderShadowing(items, onComplete) {
   wrap.appendChild(textEl);
 
   const nextBtn = document.createElement('button');
-  nextBtn.textContent = '次の文へ';
+  nextBtn.textContent = '次へ';
   nextBtn.style.marginTop = '12px';
   wrap.appendChild(nextBtn);
 
@@ -556,30 +556,22 @@ function p12CurrentGroup() {
   return state.data.questions.slice(p12.groupStart, p12.groupStart + 3);
 }
 
-function p12BuildTrainingItems(groupQuestions) {
+function p12BuildShadowingItems(groupQuestions) {
   const isPart1 = state.part === 1;
-  const items = [];
-  groupQuestions.forEach(q => {
-    if (!isPart1) items.push({ label: `Q${q.number} 質問`, text: q.question, audio: q.audio });
+  return groupQuestions.map(q => {
     const choiceTexts = isPart1 ? q.statements : q.responses;
-    Object.keys(choiceTexts).forEach(l => {
-      items.push({ label: `Q${q.number} (${l})`, text: choiceTexts[l], audio: q.audio });
-    });
+    const letters = Object.keys(choiceTexts);
+    let text = '';
+    if (!isPart1) text += `${q.question}\n\n`;
+    text += letters.map(l => `(${l}) ${choiceTexts[l]}`).join('\n');
+    return { label: `Q${q.number}`, text, audio: q.audio };
   });
-  return items;
 }
 
 function renderPart1or2() {
   initP12IfNeeded();
-  if (p12.phase === 'dictation') {
-    renderDictation(p12BuildTrainingItems(p12CurrentGroup()), () => {
-      p12.phase = 'shadowing';
-      renderPart1or2();
-    });
-    return;
-  }
   if (p12.phase === 'shadowing') {
-    renderShadowing(p12BuildTrainingItems(p12CurrentGroup()), () => {
+    renderShadowing(p12BuildShadowingItems(p12CurrentGroup()), () => {
       p12.groupStart += 3;
       p12.qIdx = 0;
       p12.phase = 'question';
@@ -612,7 +604,8 @@ function renderPart1or2() {
     wrap.appendChild(img);
   }
 
-  wrap.appendChild(createAudioButton(q.audio, '音声を再生'));
+  const audioWrap = createAudioButton(q.audio, '音声を再生');
+  wrap.appendChild(audioWrap);
 
   const choiceTexts = isPart1 ? q.statements : q.responses;
   const letters = Object.keys(choiceTexts);
@@ -652,18 +645,19 @@ function renderPart1or2() {
         else if (letters[i] === p12.selected) b.classList.add('wrong');
       });
       const jaTexts = isPart1 ? q.statementsJa : q.responsesJa;
-      let text = '';
+      const isCorrect = p12.selected === q.answer;
+      let text = isCorrect ? '正解です！\n\n' : '不正解です。\n\n';
       if (!isPart1) text += `質問: ${q.question}\n(${q.questionJa})\n\n`;
       text += letters.map(l => `(${l}) ${choiceTexts[l]}\n　　${jaTexts[l]}`).join('\n') + '\n\n' + q.explanation;
       explainDiv.textContent = text;
       explainDiv.style.display = 'block';
       const isLast = p12.qIdx >= groupQuestions.length - 1;
-      nextBtn.textContent = isLast ? 'ディクテーションへ' : '次の問題へ';
+      nextBtn.textContent = isLast ? 'シャドーイングへ' : '次の問題へ';
     } else {
       p12.qIdx++;
       p12.selected = null;
       if (p12.qIdx >= groupQuestions.length) {
-        p12.phase = 'dictation';
+        p12.phase = 'shadowing';
       }
       renderPart1or2();
     }
@@ -672,6 +666,9 @@ function renderPart1or2() {
 
   practiceBodyEl.innerHTML = '';
   practiceBodyEl.appendChild(wrap);
+
+  const autoPlayBtn = audioWrap.querySelector('button');
+  if (autoPlayBtn) autoPlayBtn.click();
 }
 
 function renderPart3or4() {
