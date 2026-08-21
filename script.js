@@ -399,10 +399,10 @@ function buildLandingNav() {
       unitsDiv.appendChild(loadingEl);
       partDetails.appendChild(unitsDiv);
 
-      let loaded = false;
       partDetails.addEventListener('toggle', async () => {
-        if (!partDetails.open || loaded) return;
-        loaded = true;
+        if (!partDetails.open) return;
+        // loadPartData caches by test+part, so re-fetching on every open is
+        // effectively free and keeps attempt-count badges up to date.
         const data = await loadPartData(test, part);
         const units = buildUnitList(test, part, data);
         unitsDiv.innerHTML = '';
