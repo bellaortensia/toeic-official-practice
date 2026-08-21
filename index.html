@@ -6,7 +6,7 @@
 <title>TOEIC Official Practice</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 <div class="wrap">
@@ -14,26 +14,11 @@
   <header class="app-header">
     <h1><a href="https://bellaortensia.github.io/toeic-official-practice/">TOEIC Official Practice</a></h1>
 
-    <select class="sub-select" id="practiceSelect">
-      <option value="">問題を選ぶ...</option>
-      <optgroup label="TEST 1">
-        <option value="T1-1">Part1 写真描写</option>
-        <option value="T1-2">Part2 応答問題</option>
-        <option value="T1-3">Part3 会話問題</option>
-        <option value="T1-4">Part4 説明文問題</option>
-        <option value="T1-5">Part5 短文穴埋め</option>
-        <option value="T1-6">Part6 長文穴埋め</option>
-        <option value="T1-7">Part7 読解問題</option>
-      </optgroup>
-      <optgroup label="TEST 2">
-        <option value="T2-1">Part1 写真描写</option>
-        <option value="T2-2">Part2 応答問題</option>
-        <option value="T2-3">Part3 会話問題</option>
-        <option value="T2-4">Part4 説明文問題</option>
-        <option value="T2-5">Part5 短文穴埋め</option>
-        <option value="T2-6">Part6 長文穴埋め</option>
-        <option value="T2-7">Part7 読解問題</option>
-      </optgroup>
+    <select class="sub-select" id="appModeSelect">
+      <option value="normal">chunked literal translation / 英語を前から訳して英語脳を鍛える</option>
+      <option value="goldenPhrases">出る単特急　金のフレーズ</option>
+      <option value="vocabNotes">単語・熟語メモ</option>
+      <option value="toeicOfficial" selected>TOEIC Official Practice</option>
     </select>　<details class="help" id="setupDetails">
       <summary>設定</summary>
 
@@ -71,12 +56,12 @@
     </section>
 
     <section id="empty-state" class="panel">
-      <p>テスト・Partを選んで学習を始めてください。音声の再生には、上の「設定」からBox連携でログインしてください。</p>
+      <p>下のリストからテスト・Part・問題を選んで学習を始めてください。音声の再生には、上の「設定」からBox連携でログインしてください。</p>
       <div class="landing-nav" id="landingNav"></div>
     </section>
   </main>
 </div>
 
-  <script src="script.js?v=13"></script>
+  <script src="script.js?v=14"></script>
 </body>
 </html>

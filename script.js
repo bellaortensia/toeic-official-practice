@@ -167,17 +167,7 @@ async function getValidAccessToken() {
 }
 
 function updateButtons() {
-  const practiceSelect = document.getElementById('practiceSelect');
-  if (isLoggedIn()) {
-    loginBtn.style.display = 'none';
-    practiceSelect.disabled = false;
-  } else {
-    loginBtn.style.display = 'inline-block';
-    practiceSelect.disabled = true;
-    practiceSelect.value = '';
-    document.getElementById('practice').style.display = 'none';
-    document.getElementById('empty-state').style.display = 'block';
-  }
+  loginBtn.style.display = isLoggedIn() ? 'none' : 'inline-block';
 }
 
 function updateStatus() {
@@ -296,44 +286,68 @@ const practiceEl = document.getElementById('practice');
 const emptyStateEl = document.getElementById('empty-state');
 const practiceBodyEl = document.getElementById('practice-body');
 const progressLabelEl = document.getElementById('progress-label');
-const practiceSelectEl = document.getElementById('practiceSelect');
+const appModeSelectEl = document.getElementById('appModeSelect');
 
-function buildLandingNav() {
-  const container = document.getElementById('landingNav');
-  if (!container) return;
-  practiceSelectEl.querySelectorAll('optgroup').forEach((group, gi) => {
-    const details = document.createElement('details');
-    details.className = 'landing-test';
-    if (gi === 0) details.open = true;
-    const summary = document.createElement('summary');
-    summary.textContent = group.label;
-    details.appendChild(summary);
+// ---------- 他アプリへの切り替え(decode-toeicと共通のメニュー) ----------
 
-    const partsDiv = document.createElement('div');
-    partsDiv.className = 'landing-parts';
-    group.querySelectorAll('option').forEach(opt => {
-      const a = document.createElement('a');
-      a.href = '#';
-      a.textContent = opt.textContent;
-      a.addEventListener('click', e => {
-        e.preventDefault();
-        practiceSelectEl.value = opt.value;
-        practiceSelectEl.dispatchEvent(new Event('change'));
-      });
-      partsDiv.appendChild(a);
-    });
-    details.appendChild(partsDiv);
-    container.appendChild(details);
-  });
+appModeSelectEl.addEventListener('change', () => {
+  const mode = appModeSelectEl.value;
+  if (mode === 'toeicOfficial') return;
+  const url = new URL('https://bellaortensia.github.io/decode-toeic/');
+  url.searchParams.set('mode', mode);
+  window.location.href = url.toString();
+});
+
+// ---------- 挑戦回数トラッキング ----------
+
+const ATTEMPTS_LS = 'toeicOfficialPractice.attempts';
+function getAttemptsStore() {
+  try { return JSON.parse(localStorage.getItem(ATTEMPTS_LS) || '{}'); } catch (e) { return {}; }
 }
-buildLandingNav();
+function getAttemptCount(key) {
+  return getAttemptsStore()[key] || 0;
+}
+function incrementAttempt(key) {
+  const store = getAttemptsStore();
+  store[key] = (store[key] || 0) + 1;
+  localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
+}
 
-practiceSelectEl.addEventListener('change', async () => {
-  const val = practiceSelectEl.value;
-  if (!val) return;
-  const [test, part] = val.split('-');
+// ---------- ランディングナビ(TEST → Part → 問題単位、挑戦回数バッジ付き) ----------
+
+const PART_LABELS = {
+  1: 'Part1 写真描写', 2: 'Part2 応答問題', 3: 'Part3 会話問題', 4: 'Part4 説明文問題',
+  5: 'Part5 短文穴埋め', 6: 'Part6 長文穴埋め', 7: 'Part7 読解問題'
+};
+
+function buildUnitList(test, part, data) {
+  if (part === 1 || part === 2) {
+    return data.questions.map((q, i) => ({ key: `${test}-${part}-${q.number}`, label: `Q${q.number}`, unitIndex: i }));
+  }
+  if (part === 3 || part === 4) {
+    return data.groups.map((g, i) => ({
+      key: `${test}-${part}-${g.questions[0]}`,
+      label: `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`,
+      unitIndex: i
+    }));
+  }
+  if (part === 5) {
+    return chunk(data.questions, 5).map((b, i) => ({
+      key: `${test}-5-${b[0].number}`,
+      label: `Q${b[0].number}-${b[b.length - 1].number}`,
+      unitIndex: i
+    }));
+  }
+  return data.passages.map((p, i) => ({
+    key: `${test}-${part}-${p.questions[0]}`,
+    label: `Q${p.questions[0]}-${p.questions[p.questions.length - 1]}${p.topic ? ' (' + p.topic + ')' : ''}`,
+    unitIndex: i
+  }));
+}
+
+async function jumpToUnit(test, part, unitIndex) {
   state.test = test;
-  state.part = Number(part);
+  state.part = part;
   state.index = 0;
   p12 = null;
   p34 = null;
@@ -342,9 +356,81 @@ practiceSelectEl.addEventListener('change', async () => {
   practiceEl.style.display = 'block';
   practiceBodyEl.innerHTML = '読み込み中...';
   document.getElementById('setupDetails').removeAttribute('open');
-  state.data = await loadPartData(state.test, state.part);
+  state.data = await loadPartData(test, part);
+  if (part === 1 || part === 2) {
+    const groupStart = Math.floor(unitIndex / 3) * 3;
+    p12 = { groupStart, qIdx: unitIndex - groupStart, phase: 'question', selected: null, explanations: {} };
+  } else if (part === 3 || part === 4) {
+    p34 = { groupIdx: unitIndex, phase: 'question', selections: {}, explanations: {} };
+  } else if (part === 5) {
+    state.index = unitIndex;
+  } else {
+    p67 = { idx: unitIndex, phase: 'question', selections: {}, explanations: {} };
+  }
   renderPractice();
-});
+}
+
+function buildLandingNav() {
+  const container = document.getElementById('landingNav');
+  if (!container) return;
+  ['T1', 'T2'].forEach((test, gi) => {
+    const testDetails = document.createElement('details');
+    testDetails.className = 'landing-test';
+    if (gi === 0) testDetails.open = true;
+    const testSummary = document.createElement('summary');
+    testSummary.textContent = test === 'T1' ? 'TEST 1' : 'TEST 2';
+    testDetails.appendChild(testSummary);
+
+    const partsDiv = document.createElement('div');
+    partsDiv.className = 'landing-parts';
+    for (let part = 1; part <= 7; part++) {
+      const partDetails = document.createElement('details');
+      partDetails.className = 'landing-part';
+      const partSummary = document.createElement('summary');
+      partSummary.textContent = PART_LABELS[part];
+      partDetails.appendChild(partSummary);
+
+      const unitsDiv = document.createElement('div');
+      unitsDiv.className = 'landing-units';
+      unitsDiv.style.display = 'none';
+      const loadingEl = document.createElement('div');
+      loadingEl.className = 'loading';
+      loadingEl.textContent = '読み込み中...';
+      unitsDiv.appendChild(loadingEl);
+      partDetails.appendChild(unitsDiv);
+
+      let loaded = false;
+      partDetails.addEventListener('toggle', async () => {
+        if (!partDetails.open || loaded) return;
+        loaded = true;
+        const data = await loadPartData(test, part);
+        const units = buildUnitList(test, part, data);
+        unitsDiv.innerHTML = '';
+        units.forEach(u => {
+          const a = document.createElement('a');
+          a.href = '#';
+          const count = getAttemptCount(u.key);
+          const badge = document.createElement('span');
+          badge.className = 'attempt-badge' + (count > 0 ? ' has-attempts' : '');
+          badge.textContent = String(count);
+          a.appendChild(document.createTextNode(u.label + ' '));
+          a.appendChild(badge);
+          a.addEventListener('click', e => {
+            e.preventDefault();
+            jumpToUnit(test, part, u.unitIndex);
+          });
+          unitsDiv.appendChild(a);
+        });
+        unitsDiv.style.display = 'flex';
+      });
+
+      partsDiv.appendChild(partDetails);
+    }
+    testDetails.appendChild(partsDiv);
+    container.appendChild(testDetails);
+  });
+}
+buildLandingNav();
 
 document.getElementById('prev-btn').addEventListener('click', () => {
   if (state.index > 0) { state.index--; renderPractice(); }
@@ -684,6 +770,7 @@ function renderPart1or2() {
       explainDiv.textContent = text;
       explainDiv.style.display = 'block';
       p12.explanations[q.number] = text;
+      incrementAttempt(`${state.test}-${state.part}-${q.number}`);
       const isLast = p12.qIdx >= groupQuestions.length - 1;
       nextBtn.textContent = isLast ? 'シャドーイングへ' : '次の問題へ';
     } else {
@@ -818,6 +905,7 @@ function renderPart3or4() {
         explainDiv.textContent = text;
         p34.explanations[item.number] = text;
       }
+      incrementAttempt(`${state.test}-${state.part}-${g.questions[0]}`);
       nextBtn.disabled = false;
       nextBtn.textContent = 'シャドーイングへ';
     } else {
@@ -899,6 +987,7 @@ function renderPart5() {
         explainDiv.textContent = '解説の取得に失敗しました: ' + e.message;
       }
     }
+    incrementAttempt(`${state.test}-5-${batch[0].number}`);
   });
   wrap.appendChild(gradeBtn);
 
@@ -982,7 +1071,7 @@ function p67RenderQuestionBlocks(wrap, items, getBlockLabel) {
   return { blocks, nextBtn: nextBtnRef };
 }
 
-async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, cacheKeyBuilder) {
+async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, cacheKeyBuilder, attemptKey) {
   nextBtn.disabled = true;
   nextBtn.textContent = '採点中...';
   items.forEach(item => {
@@ -1010,6 +1099,7 @@ async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, 
     explainDiv.textContent = text;
     p67.explanations[item.number] = text;
   }
+  incrementAttempt(attemptKey);
   nextBtn.disabled = false;
   nextBtn.textContent = 'シャドーイングへ';
 }
@@ -1048,7 +1138,8 @@ function renderPart6() {
       await p67RevealAndExplain(
         p.items, blocks, nextBtn,
         item => `文章:\n${p.text}\n\n設問(${item.number}): 空欄(${item.number})に入る最も適切な語句を選ぶ。\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}`,
-        item => `${state.test}-6-${item.number}`
+        item => `${state.test}-6-${item.number}`,
+        `${state.test}-6-${p.questions[0]}`
       );
     } else {
       p67.phase = 'shadowing';
@@ -1107,7 +1198,8 @@ function renderPart7() {
       await p67RevealAndExplain(
         p.items, blocks, nextBtn,
         item => `文書:\n${passageContext}\n\n設問${item.number}: ${item.text}\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}`,
-        item => `${state.test}-7-${item.number}`
+        item => `${state.test}-7-${item.number}`,
+        `${state.test}-7-${p.questions[0]}`
       );
     } else {
       p67.phase = 'shadowing';
