@@ -1556,6 +1556,10 @@ function renderPart3or4() {
     wrap.appendChild(gfx);
   }
 
+  const translateSlot = document.createElement('div');
+  translateSlot.style.display = 'none';
+  wrap.appendChild(translateSlot);
+
   const blocks = {};
   g.items.forEach(item => {
     const block = document.createElement('div');
@@ -1629,6 +1633,10 @@ function renderPart3or4() {
         p34.explanations[item.number] = html;
       }
       incrementAttempt(`${state.test}-${state.part}-${g.questions[0]}`);
+      if (g.conversationText) {
+        translateSlot.style.display = 'block';
+        translateSlot.appendChild(buildTranslatableBlock(g.conversationText, `${state.test}-${state.part}-${g.questions[0]}`));
+      }
       nextBtn.disabled = false;
       nextBtn.textContent = 'シャドーイングへ';
     } else {

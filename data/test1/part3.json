@@ -2,68 +2,95 @@
   "test": "T1",
   "part": 3,
   "type": "conversation",
+  "note": "conversationTextは別冊解答・解説(PDF p.140-155)から書き起こした会話全文。",
   "groups": [
-    { "questions": [32,33,34], "audioConversation": "046 T1 Pt3 Q32-34 会話.mp3", "audioQuestions": "047 T1 Pt3 Q32-34 設問.mp3", "items": [
+    { "questions": [32,33,34], "audioConversation": "046 T1 Pt3 Q32-34 会話.mp3", "audioQuestions": "047 T1 Pt3 Q32-34 設問.mp3",
+      "conversationText": "M: Hi. My name is Andrew, and I'll be your server today. Are you ready to order?\nW: Oh, not yet. I'm waiting for my colleague to arrive. She's running behind because of the construction on Lawrence Avenue — it's being repaved. There is one thing I wanted to ask about, though. I don't see the grilled swordfish listed on the menu.\nM: Sorry, that dish is offered only on weekends. But we do have a daily special that I can recommend.",
+      "items": [
       { "number": 32, "text": "Where does the conversation most likely take place?", "choices": {"A":"At a grocery store","B":"At a kitchen supply store","C":"At a restaurant","D":"At a cooking school"}, "answer": "C" },
       { "number": 33, "text": "What has caused a delay?", "choices": {"A":"Bad weather","B":"Roadwork","C":"An order error","D":"A staff shortage"}, "answer": "B" },
       { "number": 34, "text": "Why does the man apologize?", "choices": {"A":"An item is unavailable.","B":"A price has changed.","C":"A machine is not working.","D":"An explanation is incorrect."}, "answer": "A" }
     ]},
-    { "questions": [35,36,37], "audioConversation": "048 T1 Pt3 Q35-37 会話.mp3", "audioQuestions": "049 T1 Pt3 Q35-37 設問.mp3", "items": [
+    { "questions": [35,36,37], "audioConversation": "048 T1 Pt3 Q35-37 会話.mp3", "audioQuestions": "049 T1 Pt3 Q35-37 設問.mp3",
+      "conversationText": "M: Thanks for proofreading that copy of the newsletter that I left on your desk. Do you think it's final? Is it OK for me to go ahead and send it to the Spanish translator?\nW: I just noticed one small thing. The date of our company anniversary celebration is wrong. It says \"September,\" but the party is actually in October.\nM: Oh, thanks for catching that. I'll correct it later today and submit the translation request tomorrow.",
+      "items": [
       { "number": 35, "text": "What are the speakers preparing?", "choices": {"A":"A newsletter","B":"A sales report","C":"A presentation","D":"A production schedule"}, "answer": "C" },
       { "number": 36, "text": "What problem does the woman mention?", "choices": {"A":"Some pages are missing.","B":"A draft is late.","C":"A detail is inaccurate.","D":"The quality of a print job is poor."}, "answer": "B" },
       { "number": 37, "text": "What does the man say he will do tomorrow?", "choices": {"A":"Send an invitation","B":"Order a translation","C":"Request an extension","D":"Attend a party"}, "answer": "B" }
     ]},
-    { "questions": [38,39,40], "audioConversation": "050 T1 Pt3 Q38-40 会話.mp3", "audioQuestions": "051 T1 Pt3 Q38-40 設問.mp3", "items": [
+    { "questions": [38,39,40], "audioConversation": "050 T1 Pt3 Q38-40 会話.mp3", "audioQuestions": "051 T1 Pt3 Q38-40 設問.mp3",
+      "conversationText": "W: Hi. I'm Amina Haddad. I have an appointment for an oil change. But I was wondering if you could also look at my car's brakes. I think the brake pads may need to be replaced soon.\nM: Our brake specialists have a lot of work today, but if you don't mind waiting a bit, someone should be able to look at them in about an hour.\nW: Sure. I actually brought some work with me that I could do. Do you have a wireless Internet network for visitors?\nM: We do. The password is posted on the wall by the coffee machine.",
+      "items": [
       { "number": 38, "text": "Where are the speakers?", "choices": {"A":"At an electronics store","B":"At a parking garage","C":"At an auto repair shop","D":"At a coffee shop"}, "answer": "C" },
       { "number": 39, "text": "What does the man say about his employees?", "choices": {"A":"They are training now.","B":"They will leave early today.","C":"They work in pairs.","D":"They are busy."}, "answer": "D" },
       { "number": 40, "text": "What is posted on a wall?", "choices": {"A":"A password","B":"A list of prices","C":"A refund policy","D":"A service agreement"}, "answer": "A" }
     ]},
-    { "questions": [41,42,43], "audioConversation": "052 T1 Pt3 Q41-43 会話.mp3", "audioQuestions": "053 T1 Pt3 Q41-43 設問.mp3", "items": [
+    { "questions": [41,42,43], "audioConversation": "052 T1 Pt3 Q41-43 会話.mp3", "audioQuestions": "053 T1 Pt3 Q41-43 設問.mp3",
+      "conversationText": "W: Murat, thanks for meeting with me. I was hoping to get your feedback on the new packaging for our tea biscuits.\nM: Hi, Ayaka. I really like the look of the new box. But I have one concern. Will it keep the biscuits fresh longer?\nW: Yes. Our product testing team will send me their report soon. We expect the new packaging will improve product shelf life by at least five days.\nM: Great! Hopefully you'll receive it before our meeting with investors next week. They'll want to have that information before committing to continuing their support.",
+      "items": [
       { "number": 41, "text": "What does the speakers' company produce?", "choices": {"A":"Frozen vegetables","B":"Biscuits","C":"Juices","D":"Breakfast cereals"}, "answer": "B" },
       { "number": 42, "text": "What is the man concerned about?", "choices": {"A":"Attracting new customers","B":"Keeping a product fresh","C":"Reducing environmental impact","D":"Staying within a budget"}, "answer": "B" },
       { "number": 43, "text": "Who will the speakers meet with next week?", "choices": {"A":"A sales director","B":"A marketing team","C":"Some investors","D":"Some store owners"}, "answer": "C" }
     ]},
-    { "questions": [44,45,46], "audioConversation": "054 T1 Pt3 Q44-46 会話.mp3", "audioQuestions": "055 T1 Pt3 Q44-46 設問.mp3", "items": [
+    { "questions": [44,45,46], "audioConversation": "054 T1 Pt3 Q44-46 会話.mp3", "audioQuestions": "055 T1 Pt3 Q44-46 設問.mp3",
+      "conversationText": "M: Hi, Melissa. I just spoke with Alberto on the phone. He doesn't feel well, so he won't be able to work the Hassoun Motor Company event tonight. I need you to cover for him.\nW: Oh. But I've never photographed a corporate event. I'm usually here in the studio for individual or family portraits. It would be a new challenge for me, but I could use the experience.\nM: Well, you have a keen eye. I know you'll do great. The event starts at seven in the banquet hall of the Norris Hotel. Remember, there's a formal dress code. You should probably wear a suit.\nW: Of course. I'll go home to get ready now.",
+      "items": [
       { "number": 44, "text": "According to the man, why is Alberto unavailable?", "choices": {"A":"He has left the company.","B":"He is meeting with a client.","C":"He is sick.","D":"He is on vacation."}, "answer": "C" },
       { "number": 45, "text": "What is the woman's job?", "choices": {"A":"Musician","B":"Caterer","C":"Event planner","D":"Photographer"}, "answer": "D" },
       { "number": 46, "text": "What does the man remind the woman to do?", "choices": {"A":"Pick up some supplies","B":"Wear formal clothes","C":"Complete a checklist","D":"Keep some receipts"}, "answer": "B" }
     ]},
-    { "questions": [47,48,49], "audioConversation": "056 T1 Pt3 Q47-49 会話.mp3", "audioQuestions": "057 T1 Pt3 Q47-49 設問.mp3", "items": [
+    { "questions": [47,48,49], "audioConversation": "056 T1 Pt3 Q47-49 会話.mp3", "audioQuestions": "057 T1 Pt3 Q47-49 設問.mp3",
+      "conversationText": "M: Hi, Xinyu. How was the budget meeting this morning?\nW: Well, it was a long meeting, but the board of directors finally agreed that we don't have enough employees.\nM: Finally — that's good news. We're getting lots of new clients, and we need people to work on their accounts. By the way, the possible logo designs for the Jefferson account were just sent over from the art department. Want to come to my office to look at them?\nW: I have to go to another meeting right now.\nM: OK, well, we have until next week to provide feedback.",
+      "items": [
       { "number": 47, "text": "What did the board of directors most likely agree to do?", "choices": {"A":"Renovate an office space","B":"Hire some staff members","C":"Begin an advertising campaign","D":"Purchase better equipment"}, "answer": "B" },
       { "number": 48, "text": "What did the man just receive?", "choices": {"A":"An employment contract","B":"A sales report","C":"Some logo designs","D":"Some shipping supplies"}, "answer": "C" },
       { "number": 49, "text": "Why does the woman say, \"I have to go to another meeting right now\"?", "choices": {"A":"To decline an invitation","B":"To correct a misunderstanding","C":"To express excitement","D":"To explain a schedule change"}, "answer": "A" }
     ]},
-    { "questions": [50,51,52], "audioConversation": "058 T1 Pt3 Q50-52 会話.mp3", "audioQuestions": "059 T1 Pt3 Q50-52 設問.mp3", "items": [
+    { "questions": [50,51,52], "audioConversation": "058 T1 Pt3 Q50-52 会話.mp3", "audioQuestions": "059 T1 Pt3 Q50-52 設問.mp3",
+      "conversationText": "W: Excuse me. I recently moved into a new apartment, and it doesn't have many windows. Do you have any houseplants that grow well in low light?\nM1: We have some ferns and peace lilies over in the next aisle. I'd recommend a fern. It's the easiest one to take care of. Right, Kavi?\nM2: I think so. Although if you buy one, you should probably replant it in a larger pot soon.\nW: OK. A friend of mine has some large flowerpots. I could ask her for one.\nM1: Oh, and we're holding a workshop here on Saturday on how best to care for indoor plants.\nW: That sounds interesting, and I'm free on Saturday.",
+      "items": [
       { "number": 50, "text": "What does the woman say she did recently?", "choices": {"A":"She moved to a new home.","B":"She opened a store.","C":"She planted a garden.","D":"She took a vacation."}, "answer": "A" },
       { "number": 51, "text": "What will the woman ask her friend for?", "choices": {"A":"A book about plants","B":"A flowerpot","C":"A pair of gloves","D":"A watering can"}, "answer": "B" },
       { "number": 52, "text": "What will the woman most likely do on Saturday?", "choices": {"A":"Tour a park","B":"Go to a library","C":"Attend a workshop","D":"Watch a video"}, "answer": "C" }
     ]},
-    { "questions": [53,54,55], "audioConversation": "060 T1 Pt3 Q53-55 会話.mp3", "audioQuestions": "061 T1 Pt3 Q53-55 設問.mp3", "items": [
+    { "questions": [53,54,55], "audioConversation": "060 T1 Pt3 Q53-55 会話.mp3", "audioQuestions": "061 T1 Pt3 Q53-55 設問.mp3",
+      "conversationText": "M: So-Jin, I saw that you're volunteering for the financial education event at the community center. I signed up too, but I don't know what to expect. Do you know what it'll be like?\nW: Yes, I participate every year. Financial planners from around town sign up for four hours of work. We have short meetings with members of the community to talk with them about investments, money management, things like that.\nM: Oh, that sounds great. I have a commitment in the afternoon, but I signed up for a morning session. I bet more people come before lunch anyway.",
+      "items": [
       { "number": 53, "text": "What industry do the speakers most likely work in?", "choices": {"A":"Publishing","B":"Entertainment","C":"Finance","D":"Fitness"}, "answer": "C" },
       { "number": 54, "text": "What have the speakers volunteered to do?", "choices": {"A":"Distribute some books","B":"Speak at a local school","C":"Clean up a neighborhood park","D":"Advise community members"}, "answer": "D" },
       { "number": 55, "text": "When will the man volunteer?", "choices": {"A":"In the morning","B":"During lunchtime","C":"In the afternoon","D":"In the evening"}, "answer": "A" }
     ]},
-    { "questions": [56,57,58], "audioConversation": "062 T1 Pt3 Q56-58 会話.mp3", "audioQuestions": "063 T1 Pt3 Q56-58 設問.mp3", "items": [
+    { "questions": [56,57,58], "audioConversation": "062 T1 Pt3 Q56-58 会話.mp3", "audioQuestions": "063 T1 Pt3 Q56-58 設問.mp3",
+      "conversationText": "W1: Thanks for coming in, Vivek. As we discussed on the phone, I'm looking for an assistant to help my manager, Jessica, run the farm. She'll be participating in the interview.\nM: Hello. Nice to meet you, Jessica.\nW2: Same here. I was happy to see on your application that you have quite a bit of experience growing vegetables.\nM: Yes. When I was in school, I worked on a vegetable farm during the summer. I know that for this job, I'd be expected to help create the planting and harvesting schedules, though. I haven't done much of that.\nW1: No problem — Jessica will train you to do that.\nW2: I'll show you the spreadsheets that we use.",
+      "items": [
       { "number": 56, "text": "Where do the women most likely work?", "choices": {"A":"At a marketing firm","B":"At a hospital","C":"At a grocery store","D":"At a farm"}, "answer": "D" },
       { "number": 57, "text": "Which of the man's qualifications is mentioned?", "choices": {"A":"His work experience","B":"His university degree","C":"His community service","D":"His writing ability"}, "answer": "A" },
       { "number": 58, "text": "What will Jessica do?", "choices": {"A":"Provide training","B":"Arrange transportation","C":"Order equipment","D":"Lead a team project"}, "answer": "A" }
     ]},
-    { "questions": [59,60,61], "audioConversation": "064 T1 Pt3 Q59-61 会話.mp3", "audioQuestions": "065 T1 Pt3 Q59-61 設問.mp3", "items": [
+    { "questions": [59,60,61], "audioConversation": "064 T1 Pt3 Q59-61 会話.mp3", "audioQuestions": "065 T1 Pt3 Q59-61 設問.mp3",
+      "conversationText": "W: Olivier — thank you for volunteering to organize our quarterly managers' meeting. I appreciate you taking time out of your regular work schedule to do this. Speaking of which, any updates on the lunch plans?\nM: Well, I just heard from the restaurant we went to last quarter. Unfortunately, they're fully booked that day.\nW: Too bad. I was hoping they'd be available. Well, an Italian restaurant just opened nearby.\nM: I'll look into it. Also, I just received an e-mail from the print shop. They're waiting for the presentation schedule to add to the program. I'll send them an updated version shortly.",
+      "items": [
       { "number": 59, "text": "What does the woman thank the man for doing?", "choices": {"A":"Hanging up some posters","B":"Organizing an event","C":"Repairing a machine","D":"Cooking a meal"}, "answer": "B" },
       { "number": 60, "text": "Why does the woman say, \"an Italian restaurant just opened nearby\"?", "choices": {"A":"To complain about traffic","B":"To identify a job opportunity","C":"To extend an invitation","D":"To make a suggestion"}, "answer": "D" },
       { "number": 61, "text": "What will the man send to a print shop?", "choices": {"A":"A schedule","B":"A map","C":"A company logo","D":"A list of sponsors"}, "answer": "A" }
     ]},
-    { "questions": [62,63,64], "audioConversation": "066 T1 Pt3 Q62-64 会話.mp3", "audioQuestions": "067 T1 Pt3 Q62-64 設問.mp3", "graphic": "Promotion table: 1 Shirt 5% off, 2 Shirts 10% off, 3 Shirts 20% off, 4 Shirts 35% off - not yet captured as image", "items": [
+    { "questions": [62,63,64], "audioConversation": "066 T1 Pt3 Q62-64 会話.mp3", "audioQuestions": "067 T1 Pt3 Q62-64 設問.mp3", "graphic": "Promotion table: 1 Shirt 5% off, 2 Shirts 10% off, 3 Shirts 20% off, 4 Shirts 35% off - not yet captured as image",
+      "conversationText": "W: Hi there. Can I help you find anything today?\nM: I begin a new job next week, and I want to get some clothes. I was just looking at this shirt — I really like the material. It's such good quality.\nW: Yes. These shirts are very popular. Actually, this weekend we're running a promotion on men's shirts. The more you buy, the greater the discount.\nM: Hmm. This is a good discount. I originally only wanted one shirt, but now I'll get three.",
+      "items": [
       { "number": 62, "text": "What does the man say he will do next week?", "choices": {"A":"Go on a trip","B":"Start a new job","C":"Attend a party","D":"Sign a contract"}, "answer": "B" },
       { "number": 63, "text": "What does the man say he likes about a shirt?", "choices": {"A":"The color","B":"The fabric","C":"The style","D":"The length"}, "answer": "B" },
       { "number": 64, "text": "Look at the graphic. What discount will the man receive on his purchase?", "choices": {"A":"5%","B":"10%","C":"20%","D":"35%"}, "answer": "C" }
     ]},
-    { "questions": [65,66,67], "audioConversation": "068 T1 Pt3 Q65-67 会話.mp3", "audioQuestions": "069 T1 Pt3 Q65-67 設問.mp3", "graphic": "Materials table: Clay (low maintenance, available in many colors), Metal (durable, easy installation), Wood (lightweight, high quality), Asphalt (affordable, energy efficient); Q66 also references a location map [1]-[4] not yet captured as image", "items": [
+    { "questions": [65,66,67], "audioConversation": "068 T1 Pt3 Q65-67 会話.mp3", "audioQuestions": "069 T1 Pt3 Q65-67 設問.mp3", "graphic": "Materials table: Clay (low maintenance, available in many colors), Metal (durable, easy installation), Wood (lightweight, high quality), Asphalt (affordable, energy efficient); Q66 also references a location map [1]-[4] not yet captured as image",
+      "conversationText": "M: Amy, the parks and recreation department called about the public park that just opened — the one we designed last year.\nW: It was about the pumps we installed in the pond, right? I warned them that there may not be enough water circulation to prevent algae from growing.\nM: Right. They'd like to go with our original suggestion and add a fountain to the pond to keep the water circulating.\nW: We should contact our usual suppliers and get some estimates for materials. Do you know what the park's budget is?",
+      "items": [
       { "number": 65, "text": "Who most likely are the speakers?", "choices": {"A":"Landscape designers","B":"Maintenance staff","C":"Security guards","D":"Forest rangers"}, "answer": "A" },
       { "number": 66, "text": "Look at the graphic. Where will some work be done?", "choices": {"A":"In location 1","B":"In location 2","C":"In location 3","D":"In location 4"}, "answer": "C" },
       { "number": 67, "text": "What will the speakers most likely do next?", "choices": {"A":"Obtain some cost estimates","B":"Take some photographs","C":"File a permit application","D":"Review an environmental study"}, "answer": "A" }
     ]},
-    { "questions": [68,69,70], "audioConversation": "070 T1 Pt3 Q68-70 会話.mp3", "audioQuestions": "071 T1 Pt3 Q68-70 設問.mp3", "graphic": "Same materials table as Q65-67 (Clay/Metal/Wood/Asphalt)", "items": [
+    { "questions": [68,69,70], "audioConversation": "070 T1 Pt3 Q68-70 会話.mp3", "audioQuestions": "071 T1 Pt3 Q68-70 設問.mp3", "graphic": "Same materials table as Q65-67 (Clay/Metal/Wood/Asphalt)",
+      "conversationText": "M: Thanks for coming out to look at my roof. I got a little salary increase at my job recently, and I figured it was time to finally get this work done.\nW: Yes, it's best to replace roofing before you start to have big problems like leaks.\nM: So, when would your crew be able to begin?\nW: Around the end of the month. But you'll need to select a material. Here's a brochure that shows the materials we work with. You have asphalt now, but you could consider other options.\nM: I'm up for a change. I like the look of this one — I like that it doesn't require much maintenance and comes in a lot of colors.",
+      "items": [
       { "number": 68, "text": "According to the man, what recently happened?", "choices": {"A":"He moved into a new house.","B":"He received a pay raise.","C":"A storm damaged his roof.","D":"An addition was built on his home."}, "answer": "B" },
       { "number": 69, "text": "What does the man ask about?", "choices": {"A":"The cost of a service","B":"The length of a warranty","C":"The start date for a project","D":"The strength of a material"}, "answer": "C" },
       { "number": 70, "text": "Look at the graphic. Which material will the man most likely select?", "choices": {"A":"Clay","B":"Metal","C":"Wood","D":"Asphalt"}, "answer": "A" }
