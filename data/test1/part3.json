@@ -2,7 +2,7 @@
   "test": "T1",
   "part": 3,
   "type": "conversation",
-  "note": "conversationTextは別冊解答・解説(PDF p.140-155)から書き起こした会話全文。",
+  "note": "conversationTextは別冊解答・解説(PDF p.140-155)から書き起こした会話全文。書き起こしの過程で、Q35,36の正解が誤って記録されていたことが判明したため、本冊の設問ページの正解表示に基づき修正済み。",
   "groups": [
     { "questions": [32,33,34], "audioConversation": "046 T1 Pt3 Q32-34 会話.mp3", "audioQuestions": "047 T1 Pt3 Q32-34 設問.mp3",
       "conversationText": "M: Hi. My name is Andrew, and I'll be your server today. Are you ready to order?\nW: Oh, not yet. I'm waiting for my colleague to arrive. She's running behind because of the construction on Lawrence Avenue — it's being repaved. There is one thing I wanted to ask about, though. I don't see the grilled swordfish listed on the menu.\nM: Sorry, that dish is offered only on weekends. But we do have a daily special that I can recommend.",
@@ -14,8 +14,8 @@
     { "questions": [35,36,37], "audioConversation": "048 T1 Pt3 Q35-37 会話.mp3", "audioQuestions": "049 T1 Pt3 Q35-37 設問.mp3",
       "conversationText": "M: Thanks for proofreading that copy of the newsletter that I left on your desk. Do you think it's final? Is it OK for me to go ahead and send it to the Spanish translator?\nW: I just noticed one small thing. The date of our company anniversary celebration is wrong. It says \"September,\" but the party is actually in October.\nM: Oh, thanks for catching that. I'll correct it later today and submit the translation request tomorrow.",
       "items": [
-      { "number": 35, "text": "What are the speakers preparing?", "choices": {"A":"A newsletter","B":"A sales report","C":"A presentation","D":"A production schedule"}, "answer": "C" },
-      { "number": 36, "text": "What problem does the woman mention?", "choices": {"A":"Some pages are missing.","B":"A draft is late.","C":"A detail is inaccurate.","D":"The quality of a print job is poor."}, "answer": "B" },
+      { "number": 35, "text": "What are the speakers preparing?", "choices": {"A":"A newsletter","B":"A sales report","C":"A presentation","D":"A production schedule"}, "answer": "A" },
+      { "number": 36, "text": "What problem does the woman mention?", "choices": {"A":"Some pages are missing.","B":"A draft is late.","C":"A detail is inaccurate.","D":"The quality of a print job is poor."}, "answer": "C" },
       { "number": 37, "text": "What does the man say he will do tomorrow?", "choices": {"A":"Send an invitation","B":"Order a translation","C":"Request an extension","D":"Attend a party"}, "answer": "B" }
     ]},
     { "questions": [38,39,40], "audioConversation": "050 T1 Pt3 Q38-40 会話.mp3", "audioQuestions": "051 T1 Pt3 Q38-40 設問.mp3",
