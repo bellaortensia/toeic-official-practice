@@ -1633,9 +1633,10 @@ function renderPart3or4() {
         p34.explanations[item.number] = html;
       }
       incrementAttempt(`${state.test}-${state.part}-${g.questions[0]}`);
-      if (g.conversationText) {
+      const fullText = g.conversationText || g.talkText;
+      if (fullText) {
         translateSlot.style.display = 'block';
-        translateSlot.appendChild(buildTranslatableBlock(g.conversationText, `${state.test}-${state.part}-${g.questions[0]}`));
+        translateSlot.appendChild(buildTranslatableBlock(fullText, `${state.test}-${state.part}-${g.questions[0]}`));
       }
       nextBtn.disabled = false;
       nextBtn.textContent = 'シャドーイングへ';
