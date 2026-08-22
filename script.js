@@ -223,11 +223,19 @@ document.addEventListener('click', e => {
 });
 
 function showChunkPopup(seg, anchorEl, notesArea) {
-  const termsHtml = (seg.keyTerms || []).map(t =>
-    `<div class="chunk-popup-item"><strong>${escapeHtml(t.term || '')}</strong><div>${escapeHtml(t.meaning || '')}</div></div>`
+  const terms = seg.keyTerms || [];
+  const termsHtml = terms.map((t, i) =>
+    `<div class="chunk-popup-item chunk-popup-term" data-action="term" data-term-idx="${i}"><strong>${escapeHtml(t.term || '')}</strong><div>${escapeHtml(t.meaning || '')}</div></div>`
   ).join('');
   chunkPopupEl.innerHTML = termsHtml + '<div class="chunk-popup-item chunk-popup-explain" data-action="explain"><strong>この文を解説→ノートへ</strong></div>';
   chunkPopupEl.onclick = async e => {
+    const termTrigger = e.target.closest('[data-action="term"]');
+    if (termTrigger) {
+      const t = terms[Number(termTrigger.dataset.termIdx)];
+      if (t) appendToNotes(notesArea, t.term, t.meaning);
+      termTrigger.classList.add('added');
+      return;
+    }
     const trigger = e.target.closest('[data-action="explain"]');
     if (!trigger || trigger.dataset.loading === '1') return;
     trigger.dataset.loading = '1';
@@ -277,97 +285,119 @@ function renderTranslationChunks(container, segments, notesArea) {
 
 // 解説画面用の翻訳ウィジェット:「翻訳」ボタンで開き、直訳(チャンク表示)⇄意訳の
 // 切り替え、ワイド/トールモード、クリックしたチャンクの解説をノートへ書き写す機能を持つ。
+// 問題文の原文表示そのものを、decode-toeicの英文貼り付け欄のように
+// 「翻訳」ボタン1つでチャンク訳のワイド表示に置き換えるウィジェット。
 function buildTranslatableBlock(text, cacheKey) {
   const wrap = document.createElement('div');
   wrap.className = 'translate-block';
 
   const btn = document.createElement('button');
   btn.className = 'audio-btn';
-  btn.textContent = '訳 翻訳';
+  btn.textContent = '翻訳';
   wrap.appendChild(btn);
 
-  const panel = document.createElement('div');
-  panel.className = 'translate-panel';
-  panel.style.display = 'none';
-  wrap.appendChild(panel);
+  const box = document.createElement('div');
+  box.className = 'doc-box translate-box';
+  box.textContent = text;
+  wrap.appendChild(box);
 
-  const controls = document.createElement('div');
-  controls.className = 'translate-controls';
-  const wideBtn = document.createElement('button');
-  wideBtn.className = 'mode-toggle-btn';
-  wideBtn.textContent = '⛶ ワイドモード';
-  const tallBtn = document.createElement('button');
-  tallBtn.className = 'mode-toggle-btn';
-  tallBtn.textContent = '⬍ トールモード';
-  const modeLeftBtn = document.createElement('button');
-  modeLeftBtn.className = 'mode-toggle-btn edge-nav-btn';
-  modeLeftBtn.textContent = '◀';
-  const modeLabel = document.createElement('span');
-  modeLabel.className = 'translate-mode-label';
-  const modeRightBtn = document.createElement('button');
-  modeRightBtn.className = 'mode-toggle-btn edge-nav-btn';
-  modeRightBtn.textContent = '▶';
-  controls.appendChild(wideBtn);
-  controls.appendChild(tallBtn);
-  controls.appendChild(modeLeftBtn);
-  controls.appendChild(modeLabel);
-  controls.appendChild(modeRightBtn);
-  panel.appendChild(controls);
-
-  const chunkContainer = document.createElement('div');
-  panel.appendChild(chunkContainer);
-
-  const naturalContainer = document.createElement('div');
-  naturalContainer.className = 'natural-ja-box';
-  naturalContainer.style.display = 'none';
-  panel.appendChild(naturalContainer);
-
-  const notesWrap = document.createElement('div');
-  notesWrap.className = 'notes-wrap';
-  const notesLabel = document.createElement('div');
-  notesLabel.className = 'notes-label';
-  notesLabel.textContent = 'ノート(チャンクをクリック→「この文を解説→ノートへ」で書き写されます)';
-  const notesArea = document.createElement('div');
-  notesArea.className = 'notes-area';
-  notesWrap.appendChild(notesLabel);
-  notesWrap.appendChild(notesArea);
-  panel.appendChild(notesWrap);
-
-  let mode = 'literal'; // 'literal' | 'natural'
   let loaded = false;
+  let showing = false;
   let data = null;
+  let mode = 'literal'; // 'literal' | 'natural'
+  let wide = true; // デフォルトでワイドモード
+  let tall = false;
 
-  function renderMode() {
-    modeLabel.textContent = mode === 'literal' ? '直訳' : '意訳';
-    chunkContainer.style.display = mode === 'literal' ? 'block' : 'none';
-    naturalContainer.style.display = mode === 'natural' ? 'block' : 'none';
+  function renderChunkView() {
+    box.innerHTML = '';
+    box.classList.toggle('wide-mode', wide);
+    box.classList.toggle('tall-mode', tall);
+
+    const controls = document.createElement('div');
+    controls.className = 'translate-controls';
+    const wideBtn = document.createElement('button');
+    wideBtn.className = 'mode-toggle-btn';
+    const tallBtn = document.createElement('button');
+    tallBtn.className = 'mode-toggle-btn';
+    const modeLeftBtn = document.createElement('button');
+    modeLeftBtn.className = 'mode-toggle-btn edge-nav-btn';
+    modeLeftBtn.textContent = '◀';
+    const modeLabel = document.createElement('span');
+    modeLabel.className = 'translate-mode-label';
+    const modeRightBtn = document.createElement('button');
+    modeRightBtn.className = 'mode-toggle-btn edge-nav-btn';
+    modeRightBtn.textContent = '▶';
+    controls.appendChild(wideBtn);
+    controls.appendChild(tallBtn);
+    controls.appendChild(modeLeftBtn);
+    controls.appendChild(modeLabel);
+    controls.appendChild(modeRightBtn);
+    box.appendChild(controls);
+
+    const chunkContainer = document.createElement('div');
+    box.appendChild(chunkContainer);
+
+    const naturalContainer = document.createElement('div');
+    naturalContainer.className = 'natural-ja-box';
+    box.appendChild(naturalContainer);
+
+    const notesWrap = document.createElement('div');
+    notesWrap.className = 'notes-wrap';
+    const notesLabel = document.createElement('div');
+    notesLabel.className = 'notes-label';
+    notesLabel.textContent = 'ノート(単語や文をクリックすると意味・解説が書き写されます)';
+    const notesArea = document.createElement('div');
+    notesArea.className = 'notes-area';
+    notesWrap.appendChild(notesLabel);
+    notesWrap.appendChild(notesArea);
+    box.appendChild(notesWrap);
+
+    function refreshModeUI() {
+      wideBtn.textContent = wide ? '⛶ ワイド解除' : '⛶ ワイドモード';
+      tallBtn.textContent = tall ? '⬍ トール解除' : '⬍ トールモード';
+      modeLabel.textContent = mode === 'literal' ? '直訳' : '意訳';
+      chunkContainer.style.display = mode === 'literal' ? 'block' : 'none';
+      naturalContainer.style.display = mode === 'natural' ? 'block' : 'none';
+    }
+    modeLeftBtn.addEventListener('click', () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); });
+    modeRightBtn.addEventListener('click', () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); });
+    wideBtn.addEventListener('click', () => { wide = !wide; box.classList.toggle('wide-mode', wide); refreshModeUI(); });
+    tallBtn.addEventListener('click', () => { tall = !tall; box.classList.toggle('tall-mode', tall); refreshModeUI(); });
+
+    renderTranslationChunks(chunkContainer, data.segments, notesArea);
+    naturalContainer.textContent = data.naturalJa || '';
+    refreshModeUI();
   }
-  modeLeftBtn.addEventListener('click', () => { mode = mode === 'literal' ? 'natural' : 'literal'; renderMode(); });
-  modeRightBtn.addEventListener('click', () => { mode = mode === 'literal' ? 'natural' : 'literal'; renderMode(); });
-  wideBtn.addEventListener('click', () => panel.classList.toggle('wide-mode'));
-  tallBtn.addEventListener('click', () => panel.classList.toggle('tall-mode'));
+
+  function renderPlain() {
+    box.className = 'doc-box translate-box';
+    box.innerHTML = '';
+    box.textContent = text;
+  }
 
   btn.addEventListener('click', async () => {
-    if (panel.style.display === 'none') {
+    if (!showing) {
       if (!loaded) {
         btn.disabled = true;
         btn.textContent = '翻訳中...';
         try {
           data = await getTranslationChunks(cacheKey, text);
-          renderTranslationChunks(chunkContainer, data.segments, notesArea);
-          naturalContainer.textContent = data.naturalJa || '';
+          loaded = true;
         } catch (e) {
-          chunkContainer.innerHTML = `<p class="translate-error">翻訳に失敗しました: ${escapeHtml(e.message)}</p>`;
+          btn.disabled = false;
+          btn.textContent = '翻訳';
+          box.innerHTML = `<p class="translate-error">翻訳に失敗しました: ${escapeHtml(e.message)}</p>`;
+          return;
         }
-        loaded = true;
         btn.disabled = false;
       }
-      panel.style.display = 'block';
-      btn.textContent = '訳 翻訳を閉じる';
-      renderMode();
+      renderChunkView();
+      btn.textContent = '原文表示に戻す';
+      showing = true;
     } else {
-      panel.style.display = 'none';
-      btn.textContent = '訳 翻訳';
+      renderPlain();
+      btn.textContent = '翻訳';
+      showing = false;
     }
   });
 
@@ -622,12 +652,14 @@ function setAttemptCount(key, value) {
 }
 
 // ---------- 学習ログ(総学習時間・今週の学習状況・総学習回数・連続学習日数) ----------
-// スタディサプリのTOP画面を参考にした簡易版。学習時間は、採点イベント間の間隔が
-// 3分以内なら「学習が続いていた」とみなして加算する(バックグラウンドで開きっぱなしの
-// タブの時間を過大計上しないための簡易ヒューリスティック)。
+// スタディサプリENGLISHのTOP画面を参考にしたダッシュボード。学習時間は、採点イベント
+// 間の間隔が3分以内なら「学習が続いていた」とみなして加算する(バックグラウンドで
+// 開きっぱなしのタブの時間を過大計上しないための簡易ヒューリスティック)。
 
 const STUDY_LOG_LS = 'toeicOfficialPractice.studyLog';
+const STUDY_GOAL_LS = 'toeicOfficialPractice.studyGoalMinutes';
 const STUDY_GAP_MS = 3 * 60 * 1000;
+const DEFAULT_GOAL_MINUTES = 280; // 4時間40分
 
 function localDateKey(d = new Date()) {
   const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
@@ -637,21 +669,28 @@ function localDateKey(d = new Date()) {
 function getStudyLog() {
   try {
     const log = JSON.parse(localStorage.getItem(STUDY_LOG_LS) || '{}');
-    return { days: log.days || {}, totalSeconds: log.totalSeconds || 0, lastActivity: log.lastActivity || 0 };
+    return {
+      daySeconds: log.daySeconds || {},
+      dayCounts: log.dayCounts || {},
+      totalSeconds: log.totalSeconds || 0,
+      lastActivity: log.lastActivity || 0
+    };
   } catch (e) {
-    return { days: {}, totalSeconds: 0, lastActivity: 0 };
+    return { daySeconds: {}, dayCounts: {}, totalSeconds: 0, lastActivity: 0 };
   }
 }
 
 function recordStudyActivity() {
   const log = getStudyLog();
   const now = Date.now();
+  const dateKey = localDateKey();
   if (log.lastActivity && (now - log.lastActivity) < STUDY_GAP_MS) {
-    log.totalSeconds += Math.round((now - log.lastActivity) / 1000);
+    const elapsed = Math.round((now - log.lastActivity) / 1000);
+    log.totalSeconds += elapsed;
+    log.daySeconds[dateKey] = (log.daySeconds[dateKey] || 0) + elapsed;
   }
   log.lastActivity = now;
-  const dateKey = localDateKey();
-  log.days[dateKey] = (log.days[dateKey] || 0) + 1;
+  log.dayCounts[dateKey] = (log.dayCounts[dateKey] || 0) + 1;
   localStorage.setItem(STUDY_LOG_LS, JSON.stringify(log));
 }
 
@@ -660,11 +699,46 @@ function computeStreakDays(log) {
   const d = new Date();
   for (;;) {
     const key = localDateKey(d);
-    if (!log.days[key]) break;
+    if (!log.dayCounts[key]) break;
     streak++;
     d.setDate(d.getDate() - 1);
   }
   return streak;
+}
+
+// 記録がある日付を昇順に並べ、連続する日数の最長記録を求める(現在進行中の
+// 連続記録がその時点で最長であれば、この計算にも自然に含まれる)。
+function computeBestStreak(log) {
+  const dates = Object.keys(log.dayCounts).sort();
+  if (!dates.length) return 0;
+  let best = 1, cur = 1;
+  for (let i = 1; i < dates.length; i++) {
+    const diffDays = Math.round((new Date(dates[i]) - new Date(dates[i - 1])) / 86400000);
+    cur = diffDays === 1 ? cur + 1 : 1;
+    best = Math.max(best, cur);
+  }
+  return best;
+}
+
+function getWeekDates(reference = new Date()) {
+  const dow = (reference.getDay() + 6) % 7; // 0=月
+  const weekStart = new Date(reference);
+  weekStart.setDate(reference.getDate() - dow);
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    dates.push(d);
+  }
+  return { dates, dow };
+}
+
+function getStudyGoalMinutes() {
+  const v = Number(localStorage.getItem(STUDY_GOAL_LS));
+  return v > 0 ? v : DEFAULT_GOAL_MINUTES;
+}
+function setStudyGoalMinutes(minutes) {
+  localStorage.setItem(STUDY_GOAL_LS, String(Math.max(1, Math.round(minutes))));
 }
 
 function formatStudyTime(totalSeconds) {
@@ -674,75 +748,102 @@ function formatStudyTime(totalSeconds) {
   return h > 0 ? `${h}時間${m}分` : `${m}分`;
 }
 
+function formatClock(totalSeconds) {
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return `${h}:${String(m).padStart(2, '0')}`;
+}
+
 function renderStatsDashboard() {
   const container = document.getElementById('statsDashboard');
   if (!container) return;
   const log = getStudyLog();
-  const totalCount = Object.values(log.days).reduce((sum, c) => sum + c, 0);
+  const totalCount = Object.values(log.dayCounts).reduce((sum, c) => sum + c, 0);
   const streak = computeStreakDays(log);
+  const bestStreak = computeBestStreak(log);
+  const { dates: weekDates, dow } = getWeekDates();
+  const daySecondsThisWeek = weekDates.map(d => log.daySeconds[localDateKey(d)] || 0);
+  const weekSeconds = daySecondsThisWeek.reduce((a, b) => a + b, 0);
+  const bestDaySeconds = Math.max(0, ...Object.values(log.daySeconds));
+  const goalMinutes = getStudyGoalMinutes();
+  const goalSeconds = goalMinutes * 60;
+  const progress = Math.min(1, weekSeconds / goalSeconds);
 
   container.innerHTML = '';
-  const row = document.createElement('div');
-  row.className = 'stats-row';
-  [
-    ['総学習時間', formatStudyTime(log.totalSeconds)],
-    ['総学習回数', `${totalCount}回`],
-    ['連続学習日数', `${streak}日`]
-  ].forEach(([label, value]) => {
-    const tile = document.createElement('div');
-    tile.className = 'stat-tile';
-    const v = document.createElement('div');
-    v.className = 'stat-value';
-    v.textContent = value;
-    const l = document.createElement('div');
-    l.className = 'stat-label';
-    l.textContent = label;
-    tile.appendChild(v);
-    tile.appendChild(l);
-    row.appendChild(tile);
-  });
-  container.appendChild(row);
+  const top = document.createElement('div');
+  top.className = 'dashboard-top';
 
-  const weekLabel = document.createElement('div');
-  weekLabel.className = 'week-chart-label';
-  weekLabel.textContent = '今週の学習状況';
-  container.appendChild(weekLabel);
+  // ---- 週間リング ----
+  const ringWrap = document.createElement('div');
+  ringWrap.className = 'week-ring-wrap';
+  const circumference = 2 * Math.PI * 52;
+  ringWrap.innerHTML = `
+    <svg class="week-ring-svg" viewBox="0 0 120 120">
+      <circle class="week-ring-track" cx="60" cy="60" r="52" />
+      <circle class="week-ring-progress" cx="60" cy="60" r="52"
+        style="stroke-dasharray:${circumference};stroke-dashoffset:${circumference * (1 - progress)}" />
+    </svg>
+    <div class="week-ring-center">
+      <div class="week-ring-value">${escapeHtml(formatStudyTime(weekSeconds))}</div>
+    </div>`;
+  const ringLegend = document.createElement('div');
+  ringLegend.className = 'week-ring-legend';
+  ringLegend.innerHTML = `<span class="legend-dot"></span>今週の学習時間 <span class="legend-goal">(目標: ${escapeHtml(formatStudyTime(goalSeconds))})</span>`;
+  const ringBox = document.createElement('div');
+  ringBox.className = 'week-ring-box';
+  ringBox.appendChild(ringWrap);
+  ringBox.appendChild(ringLegend);
+  top.appendChild(ringBox);
 
-  const weekChart = document.createElement('div');
-  weekChart.className = 'week-chart';
-  const dayLabels = ['月', '火', '水', '木', '金', '土', '日'];
-  const today = new Date();
-  const dow = (today.getDay() + 6) % 7; // 0=月
-  const weekStart = new Date(today);
-  weekStart.setDate(today.getDate() - dow);
-  const counts = [];
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(weekStart);
-    d.setDate(weekStart.getDate() + i);
-    counts.push(log.days[localDateKey(d)] || 0);
+  // ---- 統計カード2x2 ----
+  const grid = document.createElement('div');
+  grid.className = 'stats-grid';
+
+  function makeCard(icon, title, innerHtml) {
+    const card = document.createElement('div');
+    card.className = 'stat-card';
+    card.innerHTML = `<div class="stat-card-title">${icon} ${escapeHtml(title)}</div>${innerHtml}`;
+    return card;
   }
-  const max = Math.max(1, ...counts);
-  counts.forEach((c, i) => {
-    const col = document.createElement('div');
-    col.className = 'week-day';
-    const track = document.createElement('div');
-    track.className = 'week-bar-track';
-    const fill = document.createElement('div');
-    fill.className = 'week-bar-fill';
-    fill.style.height = Math.round((c / max) * 100) + '%';
-    track.appendChild(fill);
-    const countEl = document.createElement('div');
-    countEl.className = 'week-bar-count';
-    countEl.textContent = String(c);
-    const dayEl = document.createElement('div');
-    dayEl.className = 'week-day-label' + (i === dow ? ' today' : '');
-    dayEl.textContent = dayLabels[i];
-    col.appendChild(countEl);
-    col.appendChild(track);
-    col.appendChild(dayEl);
-    weekChart.appendChild(col);
+
+  grid.appendChild(makeCard('🕐', '総学習時間', `<div class="stat-card-value">${escapeHtml(formatStudyTime(log.totalSeconds))}</div>`));
+  grid.appendChild(makeCard('↻', '総学習回数', `<div class="stat-card-value">${totalCount}回</div>`));
+
+  const dayLabels = ['月', '火', '水', '木', '金', '土', '日'];
+  const maxDaySec = Math.max(1, ...daySecondsThisWeek);
+  const weekBarsHtml = daySecondsThisWeek.map((sec, i) => `
+    <div class="week-day">
+      <div class="week-bar-count">${escapeHtml(formatClock(sec))}</div>
+      <div class="week-bar-track"><div class="week-bar-fill" style="height:${Math.round((sec / maxDaySec) * 100)}%"></div></div>
+      <div class="week-day-label${i === dow ? ' today' : ''}">${dayLabels[i]}</div>
+    </div>`).join('');
+  grid.appendChild(makeCard('📊', '今週の学習状況',
+    `<div class="week-chart">${weekBarsHtml}</div><div class="stat-card-best">自己ベスト ${escapeHtml(formatStudyTime(bestDaySeconds))}</div>`));
+
+  grid.appendChild(makeCard('🔥', '連続学習日数',
+    `<div class="stat-card-value">${streak}日</div><div class="stat-card-best">自己ベスト ${bestStreak}日</div>`));
+
+  top.appendChild(grid);
+  container.appendChild(top);
+
+  const actions = document.createElement('div');
+  actions.className = 'dashboard-actions';
+  const goalBtn = document.createElement('button');
+  goalBtn.className = 'reveal-btn';
+  goalBtn.textContent = '⚙ 目標設定';
+  goalBtn.addEventListener('click', () => {
+    const cur = getStudyGoalMinutes();
+    const input = window.prompt(`今週の学習目標を分単位で入力してください(現在: ${formatStudyTime(cur * 60)})`, String(cur));
+    if (input === null) return;
+    const mins = parseInt(input, 10);
+    if (!isNaN(mins) && mins > 0) {
+      setStudyGoalMinutes(mins);
+      renderStatsDashboard();
+    }
   });
-  container.appendChild(weekChart);
+  actions.appendChild(goalBtn);
+  container.appendChild(actions);
 }
 
 // ---------- ランディングナビ(TEST → Part → 問題単位、挑戦回数バッジ付き) ----------
