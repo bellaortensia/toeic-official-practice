@@ -164,17 +164,18 @@ function formatRichExplainHtml(text, keyPhrases) {
 const TRANSLATE_PROMPT = `あなたは英語学習者向けの解析エンジンです。与えられた英文全体を解析してください。
 1) 最初の1文字から最後の1文字まで省略せず、意味のまとまり(チャンク)ごとに分割し、各チャンクに英語の語順のまま前から順番に理解できる「直訳調」の日本語訳を付けてください(自然な日本語の語順に並べ替えないこと)。1チャンクの目安は英単語3〜8語程度です(1文をまるごと1つのチャンクにしないこと)。
 2) 各チャンクの中にTOEIC頻出の単語・熟語・言い回しがあれば、その語句を一字一句原文のまま抜き出し、keyTermsに追加してください(該当が無いチャンクではkeyTermsを空配列にする)。
-3) 英文全体の、自然な日本語の語順・言い回しでの意訳(naturalJa)も作成してください。
+3) 原文中でそのチャンクの直後に改行(\\n)がある場合(会話の話者交代や段落の変わり目など)は、そのチャンクに "lineBreak": true を付けてください(改行が無ければ省略またはfalseでよい)。
+4) 英文全体の、自然な日本語の語順・言い回しでの意訳(naturalJa)も作成してください。原文の改行位置に対応する箇所には、必ず\\nを入れて改行を再現すること。
 出力は必ず次のJSON形式のみを返し、説明文やコードフェンスは一切含めないこと。
 {
   "segments": [
-    { "en": "原文チャンク(原文から一字一句変えずに抜粋)", "ja": "直訳調の日本語訳チャンク", "keyTerms": [{"term":"抜き出した語句(原文表記のまま)","meaning":"意味(短く)"}] }
+    { "en": "原文チャンク(原文から一字一句変えずに抜粋)", "ja": "直訳調の日本語訳チャンク", "keyTerms": [{"term":"抜き出した語句(原文表記のまま)","meaning":"意味(短く)"}], "lineBreak": true }
   ],
-  "naturalJa": "英文全体の自然な日本語訳"
+  "naturalJa": "英文全体の自然な日本語訳(改行を\\nで保持する)"
 }
 segmentsの"en"を出現順にそのまま連結すると、空白の増減を除いて原文と完全に一致するようにしてください。`;
 
-const TRANSLATE_PROMPT_VERSION = 'v2';
+const TRANSLATE_PROMPT_VERSION = 'v3';
 async function getTranslationChunks(cacheKey, text) {
   const lsKey = 'toeicTranslate.' + TRANSLATE_PROMPT_VERSION + '.' + cacheKey;
   const cached = localStorage.getItem(lsKey);
@@ -277,6 +278,10 @@ function renderTranslationChunks(container, segments, notesArea) {
     });
     enCol.appendChild(enSpan);
     jaCol.appendChild(jaSpan);
+    if (seg.lineBreak) {
+      enCol.appendChild(document.createElement('br'));
+      jaCol.appendChild(document.createElement('br'));
+    }
   });
   wideWrap.appendChild(enCol);
   wideWrap.appendChild(jaCol);
