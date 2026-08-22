@@ -87,7 +87,7 @@ const EXPLAIN_PROMPT_READING = `あなたはTOEIC対策の講師です。以下�
 ▲(B) ~という意味
 
 次の行: ■根拠・解説 とだけ書く。
-続けて、なぜその選択肢が正解で、他の選択肢がなぜ誤りなのかを説明する。本文中の根拠となる箇所を引用する際は①②③...の番号を付け、直後に「」で該当箇所を引用すること(例: ①「the delivery will be delayed」)。
+続けて、必ず最初の文で「正解は(X)です。」と正解の記号を明記すること。入力に「あなたの回答」が含まれ、それが正解と異なる場合は、その回答がなぜ誤りなのかを具体的に説明すること(単に不正解と述べるだけでなく、その選択肢のどこが本文の内容と合わないのかを明記する)。その後、なぜ正解の選択肢が正しいのかを説明する。本文中の根拠となる箇所を引用する際は①②③...の番号を付け、直後に「」で該当箇所を引用すること(例: ①「the delivery will be delayed」)。
 
 最後の行: ★知らないと解けない要素 に続けて、この問題を解くために知っておく必要がある文法・語彙・表現を1〜2行で書く。
 
@@ -161,19 +161,20 @@ function formatRichExplainHtml(text, keyPhrases) {
 
 // ---------- Part6/7用の簡易チャンク翻訳(decode-toeicの直訳表示のスコープを絞った版) ----------
 
-const TRANSLATE_PROMPT = `あなたは英語学習者向けの解析エンジンです。与えられた英文全体を、最初の1文字から最後の1文字まで省略せず、意味のまとまり(チャンク)ごとに分割してください。
-各チャンクには、英語の語順のまま前から順番に理解できる「直訳調」の日本語訳を付けてください(自然な日本語の語順に並べ替えないこと)。
-1チャンクの目安は英単語3〜8語程度です(1文をまるごと1つのチャンクにしないこと)。
-さらに、各チャンクの中にTOEIC頻出の単語・熟語・言い回しがあれば、その語句を一字一句原文のまま抜き出し、keyTermsに追加してください(該当が無いチャンクではkeyTermsを空配列にする)。
+const TRANSLATE_PROMPT = `あなたは英語学習者向けの解析エンジンです。与えられた英文全体を解析してください。
+1) 最初の1文字から最後の1文字まで省略せず、意味のまとまり(チャンク)ごとに分割し、各チャンクに英語の語順のまま前から順番に理解できる「直訳調」の日本語訳を付けてください(自然な日本語の語順に並べ替えないこと)。1チャンクの目安は英単語3〜8語程度です(1文をまるごと1つのチャンクにしないこと)。
+2) 各チャンクの中にTOEIC頻出の単語・熟語・言い回しがあれば、その語句を一字一句原文のまま抜き出し、keyTermsに追加してください(該当が無いチャンクではkeyTermsを空配列にする)。
+3) 英文全体の、自然な日本語の語順・言い回しでの意訳(naturalJa)も作成してください。
 出力は必ず次のJSON形式のみを返し、説明文やコードフェンスは一切含めないこと。
 {
   "segments": [
     { "en": "原文チャンク(原文から一字一句変えずに抜粋)", "ja": "直訳調の日本語訳チャンク", "keyTerms": [{"term":"抜き出した語句(原文表記のまま)","meaning":"意味(短く)"}] }
-  ]
+  ],
+  "naturalJa": "英文全体の自然な日本語訳"
 }
 segmentsの"en"を出現順にそのまま連結すると、空白の増減を除いて原文と完全に一致するようにしてください。`;
 
-const TRANSLATE_PROMPT_VERSION = 'v1';
+const TRANSLATE_PROMPT_VERSION = 'v2';
 async function getTranslationChunks(cacheKey, text) {
   const lsKey = 'toeicTranslate.' + TRANSLATE_PROMPT_VERSION + '.' + cacheKey;
   const cached = localStorage.getItem(lsKey);
@@ -181,9 +182,35 @@ async function getTranslationChunks(cacheKey, text) {
   const outText = await callGemini(TRANSLATE_PROMPT, text, { responseMimeType: 'application/json', maxOutputTokens: 4096 });
   let parsed;
   try { parsed = JSON.parse(outText); } catch (e) { throw new Error('翻訳結果の解析に失敗しました'); }
-  const segments = Array.isArray(parsed.segments) ? parsed.segments : [];
-  try { localStorage.setItem(lsKey, JSON.stringify(segments)); } catch (e) { /* 保存容量オーバー等は無視 */ }
-  return segments;
+  const result = { segments: Array.isArray(parsed.segments) ? parsed.segments : [], naturalJa: parsed.naturalJa || '' };
+  try { localStorage.setItem(lsKey, JSON.stringify(result)); } catch (e) { /* 保存容量オーバー等は無視 */ }
+  return result;
+}
+
+// クリックしたチャンクを1文として、TOEIC講師視点の文法・語彙解説を生成する
+// (decode-toeicの「この文を解説→学習メモ」と同じ発想。単語の意味だけでなく文単位の解説)。
+const CLAUSE_EXPLAIN_PROMPT_READING = `あなたはTOEIC満点を何度も取得し、初心者指導歴20年以上の英語講師です。
+まず1行目に、入力された英文をそのまま「■」に続けて書くこと。次の行に、その日本語訳を（）で囲んで書くこと。
+その次の行から、この文に含まれる、TOEICで狙われやすい、あるいは「これを知っておかないと絶対正しく読めない」であろう文法・語彙・構文・表現の知識について、簡潔に日本語で解説してください。
+装飾やMarkdown記号(**など)は使わず、プレーンテキストのみで出力してください。`;
+
+async function getClauseExplanation(clauseText) {
+  return await callGemini(CLAUSE_EXPLAIN_PROMPT_READING, clauseText, { maxOutputTokens: 800 });
+}
+
+function appendToNotes(notesArea, enText, explanation) {
+  const block = document.createElement('div');
+  block.className = 'notes-entry';
+  const quote = document.createElement('div');
+  quote.className = 'notes-entry-quote';
+  quote.textContent = enText;
+  const body = document.createElement('div');
+  body.className = 'notes-entry-body';
+  body.textContent = explanation;
+  block.appendChild(quote);
+  block.appendChild(body);
+  notesArea.appendChild(block);
+  notesArea.scrollTop = notesArea.scrollHeight;
 }
 
 const chunkPopupEl = document.createElement('div');
@@ -195,21 +222,32 @@ document.addEventListener('click', e => {
   }
 });
 
-function showChunkPopup(seg, anchorEl) {
-  if (!seg.keyTerms || !seg.keyTerms.length) {
-    chunkPopupEl.classList.remove('show');
-    return;
-  }
-  chunkPopupEl.innerHTML = seg.keyTerms.map(t =>
+function showChunkPopup(seg, anchorEl, notesArea) {
+  const termsHtml = (seg.keyTerms || []).map(t =>
     `<div class="chunk-popup-item"><strong>${escapeHtml(t.term || '')}</strong><div>${escapeHtml(t.meaning || '')}</div></div>`
   ).join('');
+  chunkPopupEl.innerHTML = termsHtml + '<div class="chunk-popup-item chunk-popup-explain" data-action="explain"><strong>この文を解説→ノートへ</strong></div>';
+  chunkPopupEl.onclick = async e => {
+    const trigger = e.target.closest('[data-action="explain"]');
+    if (!trigger || trigger.dataset.loading === '1') return;
+    trigger.dataset.loading = '1';
+    trigger.querySelector('strong').textContent = '解説中...';
+    try {
+      const explanation = await getClauseExplanation(seg.en);
+      appendToNotes(notesArea, seg.en, explanation);
+      trigger.querySelector('strong').textContent = 'ノートに追記しました';
+    } catch (err) {
+      trigger.querySelector('strong').textContent = '解説の生成に失敗しました: ' + err.message;
+      trigger.dataset.loading = '0';
+    }
+  };
   const rect = anchorEl.getBoundingClientRect();
   chunkPopupEl.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 268)) + 'px';
   chunkPopupEl.style.top = (rect.bottom + window.scrollY + 6) + 'px';
   chunkPopupEl.classList.add('show');
 }
 
-function renderTranslationChunks(container, segments) {
+function renderTranslationChunks(container, segments, notesArea) {
   container.innerHTML = '';
   const wideWrap = document.createElement('div');
   wideWrap.className = 'translate-wide';
@@ -217,7 +255,7 @@ function renderTranslationChunks(container, segments) {
   enCol.className = 'translate-col';
   const jaCol = document.createElement('div');
   jaCol.className = 'translate-col';
-  segments.forEach((seg, i) => {
+  segments.forEach(seg => {
     const enSpan = document.createElement('span');
     enSpan.className = 'chunk-seg';
     enSpan.textContent = seg.en + ' ';
@@ -227,7 +265,7 @@ function renderTranslationChunks(container, segments) {
     [[enSpan, jaSpan], [jaSpan, enSpan]].forEach(([self, partner]) => {
       self.addEventListener('mouseenter', () => { self.classList.add('chunk-hover'); partner.classList.add('chunk-hover'); });
       self.addEventListener('mouseleave', () => { self.classList.remove('chunk-hover'); partner.classList.remove('chunk-hover'); });
-      self.addEventListener('click', () => showChunkPopup(seg, self));
+      self.addEventListener('click', () => showChunkPopup(seg, self, notesArea));
     });
     enCol.appendChild(enSpan);
     jaCol.appendChild(jaSpan);
@@ -237,49 +275,99 @@ function renderTranslationChunks(container, segments) {
   container.appendChild(wideWrap);
 }
 
-// テキストブロック(Part6の本文、Part7の各文書)を、「翻訳」ボタン1つで
-// 原文表示 <-> チャンク訳のワイド表示に切り替えられるウィジェットとして返す。
+// 解説画面用の翻訳ウィジェット:「翻訳」ボタンで開き、直訳(チャンク表示)⇄意訳の
+// 切り替え、ワイド/トールモード、クリックしたチャンクの解説をノートへ書き写す機能を持つ。
 function buildTranslatableBlock(text, cacheKey) {
   const wrap = document.createElement('div');
+  wrap.className = 'translate-block';
+
   const btn = document.createElement('button');
   btn.className = 'audio-btn';
   btn.textContent = '訳 翻訳';
   wrap.appendChild(btn);
 
-  const doc = document.createElement('div');
-  doc.className = 'doc-box';
-  doc.textContent = text;
-  wrap.appendChild(doc);
+  const panel = document.createElement('div');
+  panel.className = 'translate-panel';
+  panel.style.display = 'none';
+  wrap.appendChild(panel);
 
-  const translateContainer = document.createElement('div');
-  translateContainer.style.display = 'none';
-  wrap.appendChild(translateContainer);
+  const controls = document.createElement('div');
+  controls.className = 'translate-controls';
+  const wideBtn = document.createElement('button');
+  wideBtn.className = 'mode-toggle-btn';
+  wideBtn.textContent = '⛶ ワイドモード';
+  const tallBtn = document.createElement('button');
+  tallBtn.className = 'mode-toggle-btn';
+  tallBtn.textContent = '⬍ トールモード';
+  const modeLeftBtn = document.createElement('button');
+  modeLeftBtn.className = 'mode-toggle-btn edge-nav-btn';
+  modeLeftBtn.textContent = '◀';
+  const modeLabel = document.createElement('span');
+  modeLabel.className = 'translate-mode-label';
+  const modeRightBtn = document.createElement('button');
+  modeRightBtn.className = 'mode-toggle-btn edge-nav-btn';
+  modeRightBtn.textContent = '▶';
+  controls.appendChild(wideBtn);
+  controls.appendChild(tallBtn);
+  controls.appendChild(modeLeftBtn);
+  controls.appendChild(modeLabel);
+  controls.appendChild(modeRightBtn);
+  panel.appendChild(controls);
 
+  const chunkContainer = document.createElement('div');
+  panel.appendChild(chunkContainer);
+
+  const naturalContainer = document.createElement('div');
+  naturalContainer.className = 'natural-ja-box';
+  naturalContainer.style.display = 'none';
+  panel.appendChild(naturalContainer);
+
+  const notesWrap = document.createElement('div');
+  notesWrap.className = 'notes-wrap';
+  const notesLabel = document.createElement('div');
+  notesLabel.className = 'notes-label';
+  notesLabel.textContent = 'ノート(チャンクをクリック→「この文を解説→ノートへ」で書き写されます)';
+  const notesArea = document.createElement('div');
+  notesArea.className = 'notes-area';
+  notesWrap.appendChild(notesLabel);
+  notesWrap.appendChild(notesArea);
+  panel.appendChild(notesWrap);
+
+  let mode = 'literal'; // 'literal' | 'natural'
   let loaded = false;
-  let showing = false;
+  let data = null;
+
+  function renderMode() {
+    modeLabel.textContent = mode === 'literal' ? '直訳' : '意訳';
+    chunkContainer.style.display = mode === 'literal' ? 'block' : 'none';
+    naturalContainer.style.display = mode === 'natural' ? 'block' : 'none';
+  }
+  modeLeftBtn.addEventListener('click', () => { mode = mode === 'literal' ? 'natural' : 'literal'; renderMode(); });
+  modeRightBtn.addEventListener('click', () => { mode = mode === 'literal' ? 'natural' : 'literal'; renderMode(); });
+  wideBtn.addEventListener('click', () => panel.classList.toggle('wide-mode'));
+  tallBtn.addEventListener('click', () => panel.classList.toggle('tall-mode'));
+
   btn.addEventListener('click', async () => {
-    if (!showing) {
+    if (panel.style.display === 'none') {
       if (!loaded) {
         btn.disabled = true;
         btn.textContent = '翻訳中...';
         try {
-          const segments = await getTranslationChunks(cacheKey, text);
-          renderTranslationChunks(translateContainer, segments);
+          data = await getTranslationChunks(cacheKey, text);
+          renderTranslationChunks(chunkContainer, data.segments, notesArea);
+          naturalContainer.textContent = data.naturalJa || '';
         } catch (e) {
-          translateContainer.innerHTML = `<p class="translate-error">翻訳に失敗しました: ${escapeHtml(e.message)}</p>`;
+          chunkContainer.innerHTML = `<p class="translate-error">翻訳に失敗しました: ${escapeHtml(e.message)}</p>`;
         }
         loaded = true;
         btn.disabled = false;
       }
-      doc.style.display = 'none';
-      translateContainer.style.display = 'block';
-      btn.textContent = '訳 原文表示に戻す';
-      showing = true;
+      panel.style.display = 'block';
+      btn.textContent = '訳 翻訳を閉じる';
+      renderMode();
     } else {
-      doc.style.display = 'block';
-      translateContainer.style.display = 'none';
+      panel.style.display = 'none';
       btn.textContent = '訳 翻訳';
-      showing = false;
     }
   });
 
@@ -523,8 +611,138 @@ function getAttemptCount(key) {
 }
 function incrementAttempt(key) {
   const store = getAttemptsStore();
-  store[key] = (store[key] || 0) + 1;
+  store[key] = Math.min(99, (store[key] || 0) + 1);
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
+  recordStudyActivity();
+}
+function setAttemptCount(key, value) {
+  const store = getAttemptsStore();
+  store[key] = Math.max(0, Math.min(99, value));
+  localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
+}
+
+// ---------- 学習ログ(総学習時間・今週の学習状況・総学習回数・連続学習日数) ----------
+// スタディサプリのTOP画面を参考にした簡易版。学習時間は、採点イベント間の間隔が
+// 3分以内なら「学習が続いていた」とみなして加算する(バックグラウンドで開きっぱなしの
+// タブの時間を過大計上しないための簡易ヒューリスティック)。
+
+const STUDY_LOG_LS = 'toeicOfficialPractice.studyLog';
+const STUDY_GAP_MS = 3 * 60 * 1000;
+
+function localDateKey(d = new Date()) {
+  const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function getStudyLog() {
+  try {
+    const log = JSON.parse(localStorage.getItem(STUDY_LOG_LS) || '{}');
+    return { days: log.days || {}, totalSeconds: log.totalSeconds || 0, lastActivity: log.lastActivity || 0 };
+  } catch (e) {
+    return { days: {}, totalSeconds: 0, lastActivity: 0 };
+  }
+}
+
+function recordStudyActivity() {
+  const log = getStudyLog();
+  const now = Date.now();
+  if (log.lastActivity && (now - log.lastActivity) < STUDY_GAP_MS) {
+    log.totalSeconds += Math.round((now - log.lastActivity) / 1000);
+  }
+  log.lastActivity = now;
+  const dateKey = localDateKey();
+  log.days[dateKey] = (log.days[dateKey] || 0) + 1;
+  localStorage.setItem(STUDY_LOG_LS, JSON.stringify(log));
+}
+
+function computeStreakDays(log) {
+  let streak = 0;
+  const d = new Date();
+  for (;;) {
+    const key = localDateKey(d);
+    if (!log.days[key]) break;
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  return streak;
+}
+
+function formatStudyTime(totalSeconds) {
+  const totalMinutes = Math.floor(totalSeconds / 60);
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return h > 0 ? `${h}時間${m}分` : `${m}分`;
+}
+
+function renderStatsDashboard() {
+  const container = document.getElementById('statsDashboard');
+  if (!container) return;
+  const log = getStudyLog();
+  const totalCount = Object.values(log.days).reduce((sum, c) => sum + c, 0);
+  const streak = computeStreakDays(log);
+
+  container.innerHTML = '';
+  const row = document.createElement('div');
+  row.className = 'stats-row';
+  [
+    ['総学習時間', formatStudyTime(log.totalSeconds)],
+    ['総学習回数', `${totalCount}回`],
+    ['連続学習日数', `${streak}日`]
+  ].forEach(([label, value]) => {
+    const tile = document.createElement('div');
+    tile.className = 'stat-tile';
+    const v = document.createElement('div');
+    v.className = 'stat-value';
+    v.textContent = value;
+    const l = document.createElement('div');
+    l.className = 'stat-label';
+    l.textContent = label;
+    tile.appendChild(v);
+    tile.appendChild(l);
+    row.appendChild(tile);
+  });
+  container.appendChild(row);
+
+  const weekLabel = document.createElement('div');
+  weekLabel.className = 'week-chart-label';
+  weekLabel.textContent = '今週の学習状況';
+  container.appendChild(weekLabel);
+
+  const weekChart = document.createElement('div');
+  weekChart.className = 'week-chart';
+  const dayLabels = ['月', '火', '水', '木', '金', '土', '日'];
+  const today = new Date();
+  const dow = (today.getDay() + 6) % 7; // 0=月
+  const weekStart = new Date(today);
+  weekStart.setDate(today.getDate() - dow);
+  const counts = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    counts.push(log.days[localDateKey(d)] || 0);
+  }
+  const max = Math.max(1, ...counts);
+  counts.forEach((c, i) => {
+    const col = document.createElement('div');
+    col.className = 'week-day';
+    const track = document.createElement('div');
+    track.className = 'week-bar-track';
+    const fill = document.createElement('div');
+    fill.className = 'week-bar-fill';
+    fill.style.height = Math.round((c / max) * 100) + '%';
+    track.appendChild(fill);
+    const countEl = document.createElement('div');
+    countEl.className = 'week-bar-count';
+    countEl.textContent = String(c);
+    const dayEl = document.createElement('div');
+    dayEl.className = 'week-day-label' + (i === dow ? ' today' : '');
+    dayEl.textContent = dayLabels[i];
+    col.appendChild(countEl);
+    col.appendChild(track);
+    col.appendChild(dayEl);
+    weekChart.appendChild(col);
+  });
+  container.appendChild(weekChart);
 }
 
 // ---------- ランディングナビ(TEST → Part → 問題単位、挑戦回数バッジ付き) ----------
@@ -584,6 +802,72 @@ async function jumpToUnit(test, part, unitIndex) {
   renderPractice();
 }
 
+// 1行1ユニット: リンク(ジャンプ)+挑戦回数メーター(5段階ドット+数字+-/+ボタン)。
+function buildUnitRow(container, u, onJump) {
+  const row = document.createElement('div');
+  row.className = 'unit-row';
+
+  const a = document.createElement('a');
+  a.href = '#';
+  a.className = 'unit-link';
+  a.textContent = u.label;
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    onJump();
+  });
+  row.appendChild(a);
+
+  const meter = document.createElement('div');
+  meter.className = 'attempt-meter';
+  const minusBtn = document.createElement('button');
+  minusBtn.type = 'button';
+  minusBtn.className = 'meter-btn';
+  minusBtn.textContent = '−';
+  const dotsWrap = document.createElement('span');
+  dotsWrap.className = 'meter-dots';
+  const countEl = document.createElement('span');
+  countEl.className = 'meter-count';
+  const plusBtn = document.createElement('button');
+  plusBtn.type = 'button';
+  plusBtn.className = 'meter-btn';
+  plusBtn.textContent = '＋';
+
+  function refreshMeter() {
+    const count = getAttemptCount(u.key);
+    dotsWrap.innerHTML = '';
+    for (let i = 0; i < 5; i++) {
+      const dot = document.createElement('span');
+      dot.className = 'meter-dot' + (i < Math.min(count, 5) ? ' filled' : '');
+      dotsWrap.appendChild(dot);
+    }
+    countEl.textContent = String(count);
+    minusBtn.disabled = count <= 0;
+    plusBtn.disabled = count >= 99;
+  }
+  refreshMeter();
+
+  minusBtn.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    setAttemptCount(u.key, getAttemptCount(u.key) - 1);
+    refreshMeter();
+  });
+  plusBtn.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    setAttemptCount(u.key, getAttemptCount(u.key) + 1);
+    refreshMeter();
+  });
+
+  meter.appendChild(minusBtn);
+  meter.appendChild(dotsWrap);
+  meter.appendChild(countEl);
+  meter.appendChild(plusBtn);
+  row.appendChild(meter);
+
+  container.appendChild(row);
+}
+
 function buildLandingNav() {
   const container = document.getElementById('landingNav');
   if (!container) return;
@@ -616,25 +900,11 @@ function buildLandingNav() {
       partDetails.addEventListener('toggle', async () => {
         if (!partDetails.open) return;
         // loadPartData caches by test+part, so re-fetching on every open is
-        // effectively free and keeps attempt-count badges up to date.
+        // effectively free and keeps attempt-count meters up to date.
         const data = await loadPartData(test, part);
         const units = buildUnitList(test, part, data);
         unitsDiv.innerHTML = '';
-        units.forEach(u => {
-          const a = document.createElement('a');
-          a.href = '#';
-          const count = getAttemptCount(u.key);
-          const badge = document.createElement('span');
-          badge.className = 'attempt-badge' + (count > 0 ? ' has-attempts' : '');
-          badge.textContent = String(count);
-          a.appendChild(document.createTextNode(u.label + ' '));
-          a.appendChild(badge);
-          a.addEventListener('click', e => {
-            e.preventDefault();
-            jumpToUnit(test, part, u.unitIndex);
-          });
-          unitsDiv.appendChild(a);
-        });
+        units.forEach(u => buildUnitRow(unitsDiv, u, () => jumpToUnit(test, part, u.unitIndex)));
         unitsDiv.style.display = 'flex';
       });
 
@@ -645,6 +915,7 @@ function buildLandingNav() {
   });
 }
 buildLandingNav();
+renderStatsDashboard();
 
 function chunk(arr, size) {
   const out = [];
@@ -832,6 +1103,13 @@ function renderDictation(items, onComplete) {
 }
 
 // items: [{ label, text, audio, explanation }]
+function formatPlayerTime(sec) {
+  if (!isFinite(sec) || sec < 0) sec = 0;
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 function renderShadowing(items, onComplete) {
   let idx = 0;
   let currentAudio = null;
@@ -842,9 +1120,30 @@ function renderShadowing(items, onComplete) {
   title.className = 'training-title';
   wrap.appendChild(title);
 
-  const playBtn = document.createElement('button');
-  playBtn.className = 'audio-btn';
-  wrap.appendChild(playBtn);
+  const player = document.createElement('div');
+  player.className = 'audio-player';
+  const toggleBtn = document.createElement('button');
+  toggleBtn.className = 'player-toggle';
+  toggleBtn.textContent = '▶️';
+  const curTimeEl = document.createElement('span');
+  curTimeEl.className = 'player-time';
+  const trackEl = document.createElement('div');
+  trackEl.className = 'player-track';
+  const fillEl = document.createElement('div');
+  fillEl.className = 'player-fill';
+  trackEl.appendChild(fillEl);
+  const totalTimeEl = document.createElement('span');
+  totalTimeEl.className = 'player-time';
+  player.appendChild(toggleBtn);
+  player.appendChild(curTimeEl);
+  player.appendChild(trackEl);
+  player.appendChild(totalTimeEl);
+  wrap.appendChild(player);
+
+  const hintEl = document.createElement('div');
+  hintEl.className = 'training-hint';
+  hintEl.textContent = 'Spaceキーで最初から再生できます。';
+  wrap.appendChild(hintEl);
 
   const textEl = document.createElement('div');
   textEl.className = 'shadowing-text';
@@ -860,31 +1159,58 @@ function renderShadowing(items, onComplete) {
   nextBtn.style.marginTop = '12px';
   wrap.appendChild(nextBtn);
 
-  function stopAudio() {
-    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+  function resetPlayerUI() {
+    toggleBtn.textContent = '▶️';
+    fillEl.style.width = '0%';
+    curTimeEl.textContent = '0:00';
+    totalTimeEl.textContent = '0:00';
   }
 
-  async function playCurrent() {
+  function stopAudio() {
+    if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    resetPlayerUI();
+  }
+
+  function attachAudioEvents(audio) {
+    audio.addEventListener('loadedmetadata', () => { totalTimeEl.textContent = formatPlayerTime(audio.duration); });
+    audio.addEventListener('timeupdate', () => {
+      curTimeEl.textContent = formatPlayerTime(audio.currentTime);
+      if (audio.duration) fillEl.style.width = Math.min(100, (audio.currentTime / audio.duration) * 100) + '%';
+    });
+    audio.addEventListener('ended', () => { toggleBtn.textContent = '▶️'; fillEl.style.width = '0%'; curTimeEl.textContent = '0:00'; });
+  }
+
+  async function playFromStart() {
     if (!items[idx].audio) return;
     stopAudio();
-    playBtn.disabled = true;
-    playBtn.textContent = '読み込み中...';
+    toggleBtn.disabled = true;
     const url = await getAudioUrl(items[idx].audio);
-    playBtn.disabled = false;
-    playBtn.textContent = '▶ 音声を再生 (Spaceキーでも再生できます)';
-    if (url) { currentAudio = new Audio(url); currentAudio.play(); }
+    toggleBtn.disabled = false;
+    if (!url) return;
+    currentAudio = new Audio(url);
+    attachAudioEvents(currentAudio);
+    currentAudio.play();
+    toggleBtn.textContent = '⏸️';
   }
-  playBtn.addEventListener('click', playCurrent);
+
+  toggleBtn.addEventListener('click', () => {
+    if (currentAudio && !currentAudio.paused) {
+      currentAudio.pause();
+      toggleBtn.textContent = '▶️';
+    } else if (currentAudio) {
+      currentAudio.play();
+      toggleBtn.textContent = '⏸️';
+    } else {
+      playFromStart();
+    }
+  });
 
   function render() {
     const item = items[idx];
     title.textContent = `シャドーイング (${idx + 1}/${items.length}) ${item.label || ''}`;
-    if (item.audio) {
-      playBtn.style.display = '';
-      playBtn.textContent = '▶ 音声を再生 (Spaceキーでも再生できます)';
-    } else {
-      playBtn.style.display = 'none';
-    }
+    player.style.display = item.audio ? 'flex' : 'none';
+    hintEl.style.display = item.audio ? 'block' : 'none';
+    resetPlayerUI();
     textEl.textContent = item.text;
     if (item.explanation) {
       explainEl.textContent = item.explanation;
@@ -895,7 +1221,7 @@ function renderShadowing(items, onComplete) {
   }
 
   function keyHandler(e) {
-    if (e.code === 'Space') { e.preventDefault(); playCurrent(); }
+    if (e.code === 'Space') { e.preventDefault(); playFromStart(); }
   }
   nextBtn.addEventListener('click', () => {
     stopAudio();
@@ -1361,7 +1687,14 @@ function renderPart6() {
   label.className = 'passage-topic';
   label.textContent = p.topic || '';
   wrap.appendChild(label);
-  wrap.appendChild(buildTranslatableBlock(p.text, `${state.test}-6-${p.questions[0]}`));
+  const doc = document.createElement('div');
+  doc.className = 'doc-box';
+  doc.textContent = p.text;
+  wrap.appendChild(doc);
+
+  const translateSlot = document.createElement('div');
+  translateSlot.style.display = 'none';
+  wrap.appendChild(translateSlot);
 
   const { blocks, nextBtn } = p67RenderQuestionBlocks(wrap, p.items, item => `(${item.number})`);
   const revealed = { done: false };
@@ -1370,10 +1703,12 @@ function renderPart6() {
       revealed.done = true;
       await p67RevealAndExplain(
         p.items, blocks, nextBtn,
-        item => `文章:\n${p.text}\n\n設問(${item.number}): 空欄(${item.number})に入る最も適切な語句を選ぶ。\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}`,
-        item => `${state.test}-6-${item.number}`,
+        item => `文章:\n${p.text}\n\n設問(${item.number}): 空欄(${item.number})に入る最も適切な語句を選ぶ。\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}\nあなたの回答: (${p67.selections[item.number]}) ${item.choices[p67.selections[item.number]]}`,
+        item => `${state.test}-6-${item.number}-${p67.selections[item.number]}`,
         `${state.test}-6-${p.questions[0]}`
       );
+      translateSlot.style.display = 'block';
+      translateSlot.appendChild(buildTranslatableBlock(p.text, `${state.test}-6-${p.questions[0]}`));
     } else {
       p67.phase = 'shadowing';
       renderPart6();
@@ -1405,13 +1740,23 @@ function renderPart7() {
   label.className = 'passage-topic';
   label.textContent = p.topic || '';
   wrap.appendChild(label);
+  const translateSlots = [];
   p.documents.forEach((doc, di) => {
-    const docWrap = buildTranslatableBlock(doc.text, `${state.test}-7-${p.questions[0]}-doc${di}`);
+    const docDiv = document.createElement('div');
+    docDiv.className = 'doc-box';
     const lbl = document.createElement('div');
     lbl.className = 'doc-label';
-    docWrap.insertBefore(lbl, docWrap.firstChild);
     lbl.textContent = doc.label;
-    wrap.appendChild(docWrap);
+    docDiv.appendChild(lbl);
+    const txt = document.createElement('div');
+    txt.textContent = doc.text;
+    docDiv.appendChild(txt);
+    wrap.appendChild(docDiv);
+
+    const slot = document.createElement('div');
+    slot.style.display = 'none';
+    wrap.appendChild(slot);
+    translateSlots.push({ slot, doc, di });
   });
 
   const { blocks, nextBtn } = p67RenderQuestionBlocks(wrap, p.items, item => `${item.number}. ${item.text}`);
@@ -1422,10 +1767,14 @@ function renderPart7() {
       const passageContext = p.documents.map(d => `【${d.label}】\n${d.text}`).join('\n\n');
       await p67RevealAndExplain(
         p.items, blocks, nextBtn,
-        item => `文書:\n${passageContext}\n\n設問${item.number}: ${item.text}\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}`,
-        item => `${state.test}-7-${item.number}`,
+        item => `文書:\n${passageContext}\n\n設問${item.number}: ${item.text}\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}\nあなたの回答: (${p67.selections[item.number]}) ${item.choices[p67.selections[item.number]]}`,
+        item => `${state.test}-7-${item.number}-${p67.selections[item.number]}`,
         `${state.test}-7-${p.questions[0]}`
       );
+      translateSlots.forEach(({ slot, doc, di }) => {
+        slot.style.display = 'block';
+        slot.appendChild(buildTranslatableBlock(doc.text, `${state.test}-7-${p.questions[0]}-doc${di}`));
+      });
     } else {
       p67.phase = 'shadowing';
       renderPart7();
