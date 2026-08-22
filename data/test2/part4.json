@@ -2,55 +2,76 @@
   "test": "T2",
   "part": 4,
   "type": "talk",
+  "note": "talkTextは別冊解答・解説(PDF p.252-263)から書き起こしたトーク全文。書き起こしの過程で、Q86,87,88,89,91,92,93,94,95,96,98,99の正解が誤って記録されていたことが判明したため、本冊の設問ページの正解表示に基づき修正済み。",
   "groups": [
-    { "questions": [71,72,73], "audioTalk": "212 T2 Pt4 Q71-73 トーク.mp3", "audioQuestions": "213 T2 Pt4 Q71-73 設問.mp3", "items": [
+    { "questions": [71,72,73], "audioTalk": "212 T2 Pt4 Q71-73 トーク.mp3", "audioQuestions": "213 T2 Pt4 Q71-73 設問.mp3",
+      "talkText": "Good afternoon, everyone. I hope all of you have read the product report I e-mailed yesterday. I'm very proud to announce that our refrigerator won last year's industry award for energy efficiency. I've also looked at the customer reviews. They were largely positive, with most users commenting on the large capacity of the refrigerator. One thing we could improve on is the selection of colors. Our marketing team thinks we'd sell more units if we made our refrigerator available in brighter colors.",
+      "items": [
       { "number": 71, "text": "What does the speaker feel proud about?", "choices": {"A":"A hiring decision","B":"A company's expansion","C":"An industry award","D":"A project's completion"}, "answer": "C" },
       { "number": 72, "text": "According to product reviews, what did customers like most about a product?", "choices": {"A":"The affordable price","B":"The storage capability","C":"The stylish design","D":"The ease of operation"}, "answer": "B" },
       { "number": 73, "text": "How will a product most likely change?", "choices": {"A":"Digital controls will be added.","B":"More colors will be offered.","C":"Stronger materials will be used.","D":"Adjustable shelves will be installed."}, "answer": "B" }
     ]},
-    { "questions": [74,75,76], "audioTalk": "214 T2 Pt4 Q74-76 トーク.mp3", "audioQuestions": "215 T2 Pt4 Q74-76 設問.mp3", "items": [
+    { "questions": [74,75,76], "audioTalk": "214 T2 Pt4 Q74-76 トーク.mp3", "audioQuestions": "215 T2 Pt4 Q74-76 設問.mp3",
+      "talkText": "Attention, passengers. The ten o'clock ferry to Backshire Island is delayed one hour because of unexpected construction at the destination port. We apologize for any inconvenience this delay might cause you. Passengers who show their boarding pass to the ticket agent will receive a complimentary food voucher to be used at any of the restaurants in the food court. And, just a reminder to all passengers: please follow all posted safety procedures while on the dock and aboard the boat. Failure to do so will result in a fine.",
+      "items": [
       { "number": 74, "text": "Where is the announcement most likely taking place?", "choices": {"A":"At a ferry station","B":"At an airport","C":"At a train depot","D":"At a taxi stand"}, "answer": "A" },
       { "number": 75, "text": "What will some of the listeners receive?", "choices": {"A":"A schedule","B":"A refund","C":"A food voucher","D":"An identification badge"}, "answer": "C" },
       { "number": 76, "text": "What does the speaker remind the listeners about?", "choices": {"A":"Luggage restrictions","B":"Safety procedures","C":"Entertainment options","D":"Building hours"}, "answer": "B" }
     ]},
-    { "questions": [77,78,79], "audioTalk": "216 T2 Pt4 Q77-79 トーク.mp3", "audioQuestions": "217 T2 Pt4 Q77-79 設問.mp3", "items": [
+    { "questions": [77,78,79], "audioTalk": "216 T2 Pt4 Q77-79 トーク.mp3", "audioQuestions": "217 T2 Pt4 Q77-79 設問.mp3",
+      "talkText": "Hi, Sahng-Hwan. It's Gabriela. I saw you sent the draft of your article for next month's magazine issue, and I had planned to give you my comments by this afternoon. Well, there's an error message when I try to download the files. We're scheduled to talk tomorrow afternoon, so let's assume the technical glitch will be fixed by then. Oh, and when we talk, I'd like to get an update about your research for your next article scheduled for the winter publication.",
+      "items": [
       { "number": 77, "text": "Where does the speaker most likely work?", "choices": {"A":"At a university","B":"At a technology firm","C":"At a magazine publisher","D":"At a public library"}, "answer": "C" },
       { "number": 78, "text": "Why does the speaker say, \"there's an error message when I try to download the files\"?", "choices": {"A":"To give an excuse","B":"To request assistance","C":"To express caution","D":"To correct a misunderstanding"}, "answer": "A" },
       { "number": 79, "text": "What does the speaker tell the listener to do?", "choices": {"A":"Prepare for a discussion","B":"Contact a computer store","C":"Reprint some articles","D":"Stop some research"}, "answer": "A" }
     ]},
-    { "questions": [80,81,82], "audioTalk": "218 T2 Pt4 Q80-82 トーク.mp3", "audioQuestions": "219 T2 Pt4 Q80-82 設問.mp3", "items": [
+    { "questions": [80,81,82], "audioTalk": "218 T2 Pt4 Q80-82 トーク.mp3", "audioQuestions": "219 T2 Pt4 Q80-82 設問.mp3",
+      "talkText": "Thank you for coming to today's all-staff meeting. As the chief production officer, I recently led an audit of our production strategy to ensure that our company stays competitive. After looking at the results, we are going to be cutting back on the manufacturing of our small electronics so that we can focus on more high-demand goods, like laptops. This is going to cause a change in our factory operations. Asako here is going to tell you what your job tasks and responsibilities will be going forward.",
+      "items": [
       { "number": 80, "text": "Who is the speaker?", "choices": {"A":"A sales representative","B":"A store manager","C":"A company executive","D":"A news reporter"}, "answer": "C" },
       { "number": 81, "text": "What type of product does the company make?", "choices": {"A":"Vehicles","B":"Furniture","C":"Dishware","D":"Electronics"}, "answer": "D" },
       { "number": 82, "text": "What will happen next?", "choices": {"A":"Some instructions will be given.","B":"Some uniforms will be distributed.","C":"Some questions will be collected.","D":"Some materials will be unpacked."}, "answer": "A" }
     ]},
-    { "questions": [83,84,85], "audioTalk": "220 T2 Pt4 Q83-85 トーク.mp3", "audioQuestions": "221 T2 Pt4 Q83-85 設問.mp3", "items": [
+    { "questions": [83,84,85], "audioTalk": "220 T2 Pt4 Q83-85 トーク.mp3", "audioQuestions": "221 T2 Pt4 Q83-85 設問.mp3",
+      "talkText": "Hi, Pauline. I'm calling to let you know that we finished working on the walkway at your new place. There are no more broken stones, and we replaced the filler between all the stones. I know you wanted your backyard deck done by the end of the week before you move in, but we have several new crew members on the project. I think you'll be very pleased with how everything looks so far, though. I'll send you some photographs this afternoon so you can see for yourself.",
+      "items": [
       { "number": 83, "text": "What is the speaker calling about?", "choices": {"A":"Car maintenance","B":"Boat renovations","C":"Park development","D":"Home repairs"}, "answer": "D" },
       { "number": 84, "text": "What does the speaker imply when he says, \"we have several new crew members on the project\"?", "choices": {"A":"The payroll needs to be updated.","B":"The crew's work is impressive.","C":"A requested due date cannot be met.","D":"Some colleagues will need driving directions."}, "answer": "C" },
       { "number": 85, "text": "What will the listener receive this afternoon?", "choices": {"A":"An inspection report","B":"Some photographs","C":"An invoice","D":"A delivery"}, "answer": "B" }
     ]},
-    { "questions": [86,87,88], "audioTalk": "222 T2 Pt4 Q86-88 トーク.mp3", "audioQuestions": "223 T2 Pt4 Q86-88 設問.mp3", "items": [
-      { "number": 86, "text": "What does the speaker say the company is passionate about?", "choices": {"A":"Keeping the oceans clean","B":"Reducing waste in landfills","C":"Stopping air pollution","D":"Preserving forests"}, "answer": "D" },
-      { "number": 87, "text": "According to the speaker, what does the company collect?", "choices": {"A":"Plastic packaging","B":"Soil samples","C":"Cash donations","D":"Electronic devices"}, "answer": "C" },
-      { "number": 88, "text": "What does the speaker say the listeners can request?", "choices": {"A":"A receipt","B":"A tour of a site","C":"A shipping label","D":"A free guidebook"}, "answer": "B" }
+    { "questions": [86,87,88], "audioTalk": "222 T2 Pt4 Q86-88 トーク.mp3", "audioQuestions": "223 T2 Pt4 Q86-88 設問.mp3",
+      "talkText": "At Chime Environmental, we are passionate about keeping waste out of landfills. We are deeply concerned that too many electronic devices, such as smartphones and personal computers, are being thrown away. That's why we've been working to find new ways to solve this environmental problem. Through our TechRecycle program, we collect and dismantle your old phones and laptops and recycle the parts. You'd be surprised at how many parts can be reused! To participate, visit our Web site and request a free shipping label. Then just package your old device and mail it to us. We'll take care of the rest.",
+      "items": [
+      { "number": 86, "text": "What does the speaker say the company is passionate about?", "choices": {"A":"Keeping the oceans clean","B":"Reducing waste in landfills","C":"Stopping air pollution","D":"Preserving forests"}, "answer": "B" },
+      { "number": 87, "text": "According to the speaker, what does the company collect?", "choices": {"A":"Plastic packaging","B":"Soil samples","C":"Cash donations","D":"Electronic devices"}, "answer": "D" },
+      { "number": 88, "text": "What does the speaker say the listeners can request?", "choices": {"A":"A receipt","B":"A tour of a site","C":"A shipping label","D":"A free guidebook"}, "answer": "C" }
     ]},
-    { "questions": [89,90,91], "audioTalk": "224 T2 Pt4 Q89-91 トーク.mp3", "audioQuestions": "225 T2 Pt4 Q89-91 設問.mp3", "items": [
-      { "number": 89, "text": "Where are the listeners?", "choices": {"A":"In a sports arena","B":"In a theater","C":"In a classroom","D":"In a bookstore"}, "answer": "D" },
+    { "questions": [89,90,91], "audioTalk": "224 T2 Pt4 Q89-91 トーク.mp3", "audioQuestions": "225 T2 Pt4 Q89-91 設問.mp3",
+      "talkText": "Good evening, everyone, and welcome to the Montreal Theater. My name is Marie Clement. On behalf of our local Young Performing Artists Coalition, it is an honor to host the performance of the original play titled The Three Doors. First, congratulations to the students performing tonight. They have worked long hours rehearsing to master their roles for you. I ask that you now put any devices into silent mode so that there will be no interruptions during the show. You are in for a wonderful evening watching stars in the making.",
+      "items": [
+      { "number": 89, "text": "Where are the listeners?", "choices": {"A":"In a sports arena","B":"In a theater","C":"In a classroom","D":"In a bookstore"}, "answer": "B" },
       { "number": 90, "text": "Why does the speaker praise some students?", "choices": {"A":"Their financial goals were met.","B":"Their project received many positive reviews.","C":"They solved a problem quickly.","D":"They dedicated a lot of time to a project."}, "answer": "D" },
-      { "number": 91, "text": "What does the speaker ask the listeners to do?", "choices": {"A":"Take their seats","B":"Gather in the lobby","C":"Enjoy some refreshments","D":"Silence electronic devices"}, "answer": "B" }
+      { "number": 91, "text": "What does the speaker ask the listeners to do?", "choices": {"A":"Take their seats","B":"Gather in the lobby","C":"Enjoy some refreshments","D":"Silence electronic devices"}, "answer": "D" }
     ]},
-    { "questions": [92,93,94], "audioTalk": "226 T2 Pt4 Q92-94 トーク.mp3", "audioQuestions": "227 T2 Pt4 Q92-94 設問.mp3", "items": [
-      { "number": 92, "text": "Where does the speaker work?", "choices": {"A":"At an architectural firm","B":"At a historical foundation","C":"At a construction company","D":"At a concert hall"}, "answer": "C" },
-      { "number": 93, "text": "Why does the speaker say, \"I just heard that there is fog at the airport\"?", "choices": {"A":"To suggest using alternate transportation","B":"To request help from the audience","C":"To explain a schedule change","D":"To complain about poor communication"}, "answer": "D" },
-      { "number": 94, "text": "Who does the speaker thank at the end of the speech?", "choices": {"A":"An archivist","B":"An event planner","C":"Some public officials","D":"Some restaurant owners"}, "answer": "B" }
+    { "questions": [92,93,94], "audioTalk": "226 T2 Pt4 Q92-94 トーク.mp3", "audioQuestions": "227 T2 Pt4 Q92-94 設問.mp3",
+      "talkText": "On behalf of the Woodlands Historical Foundation, I want to welcome you all to our fund-raiser. As you know, we're raising money to restore our archives building. In addition to holding priceless materials, it is one of the city's most beautiful structures. We had a string quartet flying in from Chicago to perform for us tonight, but I just heard that there is fog at the airport. So, we'll begin by presenting our proposal for the restoration. Please enjoy some refreshments, which were graciously donated by the owners of Olson's Restaurant.",
+      "items": [
+      { "number": 92, "text": "Where does the speaker work?", "choices": {"A":"At an architectural firm","B":"At a historical foundation","C":"At a construction company","D":"At a concert hall"}, "answer": "B" },
+      { "number": 93, "text": "Why does the speaker say, \"I just heard that there is fog at the airport\"?", "choices": {"A":"To suggest using alternate transportation","B":"To request help from the audience","C":"To explain a schedule change","D":"To complain about poor communication"}, "answer": "C" },
+      { "number": 94, "text": "Who does the speaker thank at the end of the speech?", "choices": {"A":"An archivist","B":"An event planner","C":"Some public officials","D":"Some restaurant owners"}, "answer": "D" }
     ]},
-    { "questions": [95,96,97], "audioTalk": "228 T2 Pt4 Q95-97 トーク.mp3", "audioQuestions": "229 T2 Pt4 Q95-97 設問.mp3", "graphic": "Map showing Food Market (212 Klein St.), City Hall (1 Main St.), Cobb Museum (555 1st St.), Seafront Park (1066 Grand St.) - not yet captured as image", "items": [
-      { "number": 95, "text": "What aspect of the city will the listeners learn about on the tour?", "choices": {"A":"Its industries","B":"Its history","C":"Its art","D":"Its parks"}, "answer": "A" },
-      { "number": 96, "text": "According to the speaker, what is included in the tickets?", "choices": {"A":"Meal discounts","B":"Free parking","C":"Complimentary photographs","D":"Museum admission"}, "answer": "C" },
+    { "questions": [95,96,97], "audioTalk": "228 T2 Pt4 Q95-97 トーク.mp3", "audioQuestions": "229 T2 Pt4 Q95-97 設問.mp3", "graphic": "Map: Food Market (212 Klein St.), City Hall (1 Main St.), Cobb Museum (555 1st St.), Seafront Park (1066 Grand St.) - not yet captured as image",
+      "talkText": "Thanks for joining our city tour. My name is Hector Flores, and I take great pride in all that Clearview has to offer. Over the coming hour, we'll be discussing the city's founding and historical development. Please feel free to ask me questions as we go. By the way, your tickets will get you a discount to be used at any of the eateries at Seafront Park. That's where we'll be ending our tour. Don't worry — you'll have plenty of time to enjoy your meal before you're due to get back on your cruise ship at eight P.M.",
+      "items": [
+      { "number": 95, "text": "What aspect of the city will the listeners learn about on the tour?", "choices": {"A":"Its industries","B":"Its history","C":"Its art","D":"Its parks"}, "answer": "B" },
+      { "number": 96, "text": "According to the speaker, what is included in the tickets?", "choices": {"A":"Meal discounts","B":"Free parking","C":"Complimentary photographs","D":"Museum admission"}, "answer": "A" },
       { "number": 97, "text": "Look at the graphic. Where did the tour end?", "choices": {"A":"At 212 Klein St.","B":"At 1 Main St.","C":"At 1066 Grand St.","D":"At 555 1st St."}, "answer": "C" }
     ]},
-    { "questions": [98,99,100], "audioTalk": "230 T2 Pt4 Q98-100 トーク.mp3", "audioQuestions": "231 T2 Pt4 Q98-100 設問.mp3", "graphic": "Project step timeline table: Model development (July 27), Client review, Prototype revisions (August 3), Production (August 8), [unlabeled step] (August 16) - not yet captured as image", "items": [
-      { "number": 98, "text": "Where does the speaker work?", "choices": {"A":"At a glass factory","B":"At an interior design firm","C":"At a perfume developer","D":"At a cosmetics store"}, "answer": "B" },
-      { "number": 99, "text": "Look at the graphic. By which date is the listener asked to complete a project?", "choices": {"A":"July 27","B":"August 3","C":"August 8","D":"August 16"}, "answer": "C" },
+    { "questions": [98,99,100], "audioTalk": "230 T2 Pt4 Q98-100 トーク.mp3", "audioQuestions": "231 T2 Pt4 Q98-100 設問.mp3", "graphic": "Project step / Beginning Date table: Model development (July 27), Client review (August 3), Prototype revisions (August 8), Production (August 16)",
+      "talkText": "Hi, Adisa. It's Rebecca Kwon. I'm calling because we've just completed development of a new fragrance line for J. M. Scents Incorporated, and now I need models of the bottles they'll be packaged in. Could you make 3-D prints of the perfume bottles, based on my digital renderings? The problem is that we have a very tight timeline. The client review is at the end of the week, so the bottles need to be ready by the day the clients start their review. I'll be happy to pay extra if you can make this project a priority.",
+      "items": [
+      { "number": 98, "text": "Where does the speaker work?", "choices": {"A":"At a glass factory","B":"At an interior design firm","C":"At a perfume developer","D":"At a cosmetics store"}, "answer": "C" },
+      { "number": 99, "text": "Look at the graphic. By which date is the listener asked to complete a project?", "choices": {"A":"July 27","B":"August 3","C":"August 8","D":"August 16"}, "answer": "B" },
       { "number": 100, "text": "What does the speaker say she will pay for?", "choices": {"A":"Additional materials","B":"Legal fees","C":"Expedited service","D":"Staff training"}, "answer": "C" }
     ]}
   ]
