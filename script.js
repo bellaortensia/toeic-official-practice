@@ -78,7 +78,7 @@ async function getExplanation(cacheKey, questionText) {
 
 // ---------- Part6/7用の装飾付き解説(選択肢の全訳+太字/下線/赤字/青字) ----------
 
-const EXPLAIN_PROMPT_READING = `あなたはTOEIC対策の講師です。以下のTOEIC Part6/7形式の設問について、日本語で解説してください。
+const EXPLAIN_PROMPT_READING = `あなたはTOEIC対策の講師です。以下のTOEICの設問について、日本語で解説してください。
 必ず次の構成・記号ルールに従ってください。
 
 1行目: ■選択肢の日本語訳 とだけ書く。
@@ -592,6 +592,42 @@ function createAudioButton(filename, label) {
     player.style.display = 'block';
     player.src = url;
     player.play();
+  });
+  wrap.appendChild(btn);
+  wrap.appendChild(player);
+  return wrap;
+}
+
+// 複数の音声ファイルを1つのボタンで連続再生する(Part3/4の「会話」→「設問」など、
+// 2回ボタンを押させないための連結再生用)。
+function createChainedAudioButton(filenames, label) {
+  const wrap = document.createElement('div');
+  const btn = document.createElement('button');
+  btn.textContent = '▶ ' + label;
+  btn.className = 'audio-btn';
+  const player = document.createElement('audio');
+  player.controls = true;
+  player.style.display = 'none';
+
+  async function playIndex(i) {
+    if (i >= filenames.length) return;
+    const url = await getAudioUrl(filenames[i]);
+    if (!url) {
+      btn.textContent = '音声が見つかりませんでした: ' + filenames[i];
+      return;
+    }
+    player.src = url;
+    player.play();
+    player.onended = () => playIndex(i + 1);
+  }
+
+  btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    btn.textContent = '読み込み中...';
+    btn.style.display = 'none';
+    player.style.display = 'block';
+    await playIndex(0);
+    btn.disabled = false;
   });
   wrap.appendChild(btn);
   wrap.appendChild(player);
@@ -1314,7 +1350,7 @@ function renderShadowing(items, onComplete) {
     resetPlayerUI();
     textEl.textContent = item.text;
     if (item.explanation) {
-      explainEl.textContent = item.explanation;
+      explainEl.innerHTML = item.explanation;
       explainEl.style.display = 'block';
     } else {
       explainEl.style.display = 'none';
@@ -1359,7 +1395,9 @@ function p12BuildShadowingItems(groupQuestions) {
     let text = '';
     if (!isPart1) text += `${q.question}\n\n`;
     text += letters.map(l => `(${l}) ${choiceTexts[l]}`).join('\n');
-    return { label: `Q${q.number}`, text, audio: q.audio, explanation: p12.explanations[q.number] };
+    const rawExplanation = p12.explanations[q.number];
+    const explanation = rawExplanation ? escapeHtml(rawExplanation).replace(/\n/g, '<br>') : '';
+    return { label: `Q${q.number}`, text, audio: q.audio, explanation };
   });
 }
 
@@ -1477,7 +1515,9 @@ function initP34IfNeeded() {
 
 function p34BuildShadowingItems(g) {
   const text = g.items.map(item => `${item.number}. ${item.text}`).join('\n');
-  const explanation = g.items.map(item => `【${item.number}】\n${p34.explanations[item.number] || ''}`).join('\n\n');
+  const explanation = g.items.map(item =>
+    `<div><strong>【${item.number}】</strong></div>${p34.explanations[item.number] || ''}`
+  ).join('<div><br></div>');
   return [{ label: `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`, text, audio: g.audioQuestions, explanation }];
 }
 
@@ -1505,8 +1545,10 @@ function renderPart3or4() {
   audioLabel.className = 'audio-label';
   audioLabel.textContent = `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`;
   wrap.appendChild(audioLabel);
-  wrap.appendChild(createAudioButton(g.audioConversation || g.audioTalk, state.part === 3 ? '会話を再生' : 'トークを再生'));
-  wrap.appendChild(createAudioButton(g.audioQuestions, '設問を再生'));
+  wrap.appendChild(createChainedAudioButton(
+    [g.audioConversation || g.audioTalk, g.audioQuestions],
+    '音声を再生(会話・設問)'
+  ));
   if (g.graphic) {
     const gfx = document.createElement('p');
     gfx.className = 'audio-label';
@@ -1573,16 +1615,18 @@ function renderPart3or4() {
       for (const item of g.items) {
         const { explainDiv } = blocks[item.number];
         const isCorrect = p34.selections[item.number] === item.answer;
-        const prefix = isCorrect ? '正解です!\n\n' : '不正解です。\n\n';
-        let text;
+        const prefixHtml = isCorrect
+          ? '<div><strong style="color:#2f9e4f">正解です!</strong></div><div><br></div>'
+          : '<div><strong style="color:#c1503f">不正解です。</strong></div><div><br></div>';
+        let html;
         try {
-          const questionText = `${item.number}. ${item.text}\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}`;
-          text = prefix + await getExplanation(`${state.test}-${state.part}-${item.number}`, questionText);
+          const questionText = `${item.number}. ${item.text}\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}\nあなたの回答: (${p34.selections[item.number]}) ${item.choices[p34.selections[item.number]]}`;
+          html = prefixHtml + await getRichExplanation(`${state.test}-${state.part}-${item.number}-${p34.selections[item.number]}`, questionText);
         } catch (e) {
-          text = prefix + '解説の取得に失敗しました: ' + e.message;
+          html = prefixHtml + `<div>解説の取得に失敗しました: ${escapeHtml(e.message)}</div>`;
         }
-        explainDiv.textContent = text;
-        p34.explanations[item.number] = text;
+        explainDiv.innerHTML = html;
+        p34.explanations[item.number] = html;
       }
       incrementAttempt(`${state.test}-${state.part}-${g.questions[0]}`);
       nextBtn.disabled = false;
