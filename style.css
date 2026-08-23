@@ -218,7 +218,7 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
 }
 .reveal-btn:hover{background:var(--accent-2-soft);filter:none;}
 
-header.app-header .header-save{margin-left:auto;align-self:center;}
+header.app-header .header-save{align-self:center;}
 .rc-save{display:flex;align-items:center;gap:8px;flex:0 0 auto;}
 .rc-save button{
   background:var(--accent-2);color:#fff;border:none;border-radius:8px;padding:6px 12px;
