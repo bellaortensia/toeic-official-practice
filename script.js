@@ -2182,14 +2182,24 @@ loginBtn.addEventListener('click', startLogin);
 handleRedirect();
 
 const saveNotesBtn = document.getElementById('saveNotesBtn');
+const notesSaveStatusEl = document.getElementById('notesSaveStatus');
+function setNotesSaveStatus(msg, isErr, isOk) {
+  if (!notesSaveStatusEl) return;
+  notesSaveStatusEl.textContent = msg || '';
+  notesSaveStatusEl.classList.toggle('err', !!isErr);
+  notesSaveStatusEl.classList.toggle('ok', !!isOk);
+}
 if (saveNotesBtn) {
   saveNotesBtn.addEventListener('click', async () => {
-    const original = saveNotesBtn.textContent;
     saveNotesBtn.disabled = true;
-    saveNotesBtn.textContent = '保存中...';
-    const count = await saveAllVisibleNotes();
+    setNotesSaveStatus('保存中…');
+    try {
+      const count = await saveAllVisibleNotes();
+      setNotesSaveStatus(count > 0 ? `保存済(${count}件)` : '保存するノートがありません', count === 0, count > 0);
+    } catch (e) {
+      setNotesSaveStatus('保存エラー: ' + e.message, true);
+    }
     saveNotesBtn.disabled = false;
-    saveNotesBtn.textContent = count > 0 ? `✓ 保存しました(${count}件)` : '保存するノートがありません';
-    setTimeout(() => { saveNotesBtn.textContent = original; }, 2000);
+    setTimeout(() => setNotesSaveStatus(''), 3000);
   });
 }

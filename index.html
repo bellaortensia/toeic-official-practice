@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=8">
+<link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 <div class="wrap">
@@ -120,7 +120,10 @@ function doPost(e) {
     .setMimeType(ContentService.MimeType.JSON);
 }</div>
       </details>
-    </details>　<button id="saveNotesBtn" class="reveal-btn" type="button" title="今開いているノートをすべて保存します">💾 保存</button>
+    </details>　<span class="rc-save header-save">
+      <button id="saveNotesBtn" type="button">この状態を保存</button>
+      <span class="save-status" id="notesSaveStatus"></span>
+    </span>
   </header>
   </div>
 
@@ -144,6 +147,6 @@ function doPost(e) {
   </main>
 </div>
 
-  <script src="script.js?v=27"></script>
+  <script src="script.js?v=28"></script>
 </body>
 </html>
