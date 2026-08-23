@@ -69,11 +69,37 @@ const EXPLAIN_PROMPT_READING = `あなたはTOEIC対策の講師です。以下�
 }`;
 
 const EXPLAIN_PROMPT_READING_VERSION = 'v1';
-async function getRichExplanation(cacheKey, questionText) {
-  const lsKey = 'toeicRichExplain.' + EXPLAIN_PROMPT_READING_VERSION + '.' + cacheKey;
+
+// Part5(短文穴埋め)専用: 読解の根拠引用①②③...は不要な代わりに、まず空所に正解を
+// 入れた完成文の直訳(語順そのまま)を先頭に置く。
+const EXPLAIN_PROMPT_PART5 = `あなたはTOEIC対策の講師です。以下のTOEIC Part5(短文穴埋め問題)について、日本語で解説してください。
+必ず次の構成・記号ルールに従ってください。
+
+1行目: ■全文の直訳 とだけ書く。
+次の行: 空所に正解の選択肢を入れた完成文を、英語の語順のまま前から訳す直訳調で日本語訳したものを書く(自然な日本語の語順に並べ替えないこと)。
+
+次の行: ■選択肢 とだけ書く。
+続けて、すべての選択肢(A)(B)(C)(D)を1行ずつ、必ず▲から始めて日本語訳を書く。
+
+次の行: ■根拠・解説 とだけ書く。
+続けて、必ず最初の文で「正解は(X)です。」と正解の記号を明記し、なぜ正解が正しく他の選択肢が誤りなのかを文法・語彙の観点から説明する。
+
+最後の行: ★知らないと解けない要素 に続けて、この問題を解くために知っておく必要がある文法・語彙・表現を1〜2行で書く。
+
+出力は必ず次のJSON形式のみを返し、説明文やコードフェンスは一切含めないこと。
+{
+  "explainText": "上記ルールに従ったプレーンテキスト。■と★の行は単独の見出し行にし、選択肢の行は必ず▲から始めること。Markdown記号(**など)は使わないこと。",
+  "keyPhraseQuotes": []
+}`;
+const EXPLAIN_PROMPT_PART5_VERSION = 'v1';
+
+async function getRichExplanation(cacheKey, questionText, promptOverride, versionOverride) {
+  const prompt = promptOverride || EXPLAIN_PROMPT_READING;
+  const version = versionOverride || EXPLAIN_PROMPT_READING_VERSION;
+  const lsKey = 'toeicRichExplain.' + version + '.' + cacheKey;
   const cached = localStorage.getItem(lsKey);
   if (cached) return cached;
-  const outText = await callGemini(EXPLAIN_PROMPT_READING, questionText, { responseMimeType: 'application/json', maxOutputTokens: 2048 });
+  const outText = await callGemini(prompt, questionText, { responseMimeType: 'application/json', maxOutputTokens: 2048 });
   let parsed;
   try { parsed = JSON.parse(outText); } catch (e) { parsed = { explainText: outText, keyPhraseQuotes: [] }; }
   const html = formatRichExplainHtml(parsed.explainText || outText, parsed.keyPhraseQuotes || []);
@@ -144,8 +170,8 @@ function buildP12ExplainHtml(q, isPart1, choiceTexts, jaTexts, letters, selected
   if (!isPart1) {
     markup += `■設問文\n${q.question}\n（${q.questionJa || ''}）\n\n`;
   }
-  markup += '■選択肢の日本語訳\n';
-  markup += letters.map(l => `▲(${l}) ${jaTexts[l] || ''}`).join('\n') + '\n\n';
+  markup += '■選択肢\n';
+  markup += letters.map(l => `▲(${l}) ${choiceTexts[l] || ''}\n　　${jaTexts[l] || ''}`).join('\n') + '\n\n';
   markup += `■根拠・解説\n正解は(${q.answer})です。\n${q.explanation || ''}`;
   return correctBannerHtml(selectedLetter === q.answer) + formatRichExplainHtml(markup, []);
 }
@@ -166,7 +192,24 @@ const TRANSLATE_PROMPT = `あなたは英語学習者向けの解析エンジン
 }
 segmentsの"en"を出現順にそのまま連結すると、空白の増減を除いて原文と完全に一致するようにしてください。`;
 
-const TRANSLATE_PROMPT_VERSION = 'v3';
+const TRANSLATE_PROMPT_VERSION = 'v4';
+
+// AIが返すlineBreakは「ピリオドの直後」など原文に無い位置でもtrueを付けがちで、
+// EN/JA両カラムの改行位置がずれる原因になる。原文中の実際の改行位置とチャンクの
+// 出現位置を突き合わせて、lineBreakをこちら側で確定し直す(AIの判断は信用しない)。
+function reconcileLineBreaks(segments, sourceText) {
+  if (!sourceText) return segments;
+  let cursor = 0;
+  return segments.map(seg => {
+    const idx = sourceText.indexOf(seg.en, cursor);
+    if (idx === -1) return { ...seg, lineBreak: false };
+    let i = idx + seg.en.length;
+    cursor = i;
+    while (i < sourceText.length && (sourceText[i] === ' ' || sourceText[i] === '\t')) i++;
+    return { ...seg, lineBreak: sourceText[i] === '\n' };
+  });
+}
+
 async function getTranslationChunks(cacheKey, text) {
   const lsKey = 'toeicTranslate.' + TRANSLATE_PROMPT_VERSION + '.' + cacheKey;
   const cached = localStorage.getItem(lsKey);
@@ -174,7 +217,8 @@ async function getTranslationChunks(cacheKey, text) {
   const outText = await callGemini(TRANSLATE_PROMPT, text, { responseMimeType: 'application/json', maxOutputTokens: 4096 });
   let parsed;
   try { parsed = JSON.parse(outText); } catch (e) { throw new Error('翻訳結果の解析に失敗しました'); }
-  const result = { segments: Array.isArray(parsed.segments) ? parsed.segments : [], naturalJa: parsed.naturalJa || '' };
+  const segments = reconcileLineBreaks(Array.isArray(parsed.segments) ? parsed.segments : [], text);
+  const result = { segments, naturalJa: parsed.naturalJa || '' };
   try { localStorage.setItem(lsKey, JSON.stringify(result)); } catch (e) { /* 保存容量オーバー等は無視 */ }
   return result;
 }
@@ -209,7 +253,7 @@ const chunkPopupEl = document.createElement('div');
 chunkPopupEl.className = 'chunk-popup';
 document.body.appendChild(chunkPopupEl);
 document.addEventListener('click', e => {
-  if (!chunkPopupEl.contains(e.target) && !e.target.closest('.chunk-seg')) {
+  if (!chunkPopupEl.contains(e.target) && !e.target.closest('.chunk-seg') && !e.target.closest('.translate-col-ja')) {
     chunkPopupEl.classList.remove('show');
   }
 });
@@ -247,36 +291,69 @@ function showChunkPopup(seg, anchorEl, notesArea) {
   chunkPopupEl.classList.add('show');
 }
 
+// decode-toeicと同じ操作方式: マウスホイールの上下でハイライト位置(curSeg)が
+// EN/JA両カラム同時に動く(実際のカーソル位置とは無関係)。直訳(JA)側は現在位置でも
+// クリックされるまで背景色=文字色(var(--text))で塗りつぶして読めなくし、クリックで
+// EN側と同じアクセント色にめくれて読めるようになる(単語帳・自己テスト的な体験)。
 function renderTranslationChunks(container, segments, notesArea) {
   container.innerHTML = '';
+  let curSeg = -1;
+
   const wideWrap = document.createElement('div');
   wideWrap.className = 'translate-wide';
   const enCol = document.createElement('div');
-  enCol.className = 'translate-col';
+  enCol.className = 'translate-col translate-col-en';
   const jaCol = document.createElement('div');
-  jaCol.className = 'translate-col';
-  segments.forEach(seg => {
+  jaCol.className = 'translate-col translate-col-ja';
+
+  const jaSpans = [];
+  segments.forEach((seg, i) => {
     const enSpan = document.createElement('span');
     enSpan.className = 'chunk-seg';
+    enSpan.dataset.seg = i;
     enSpan.textContent = seg.en + ' ';
     const jaSpan = document.createElement('span');
     jaSpan.className = 'chunk-seg';
+    jaSpan.dataset.seg = i;
     jaSpan.textContent = seg.ja + ' ';
-    [[enSpan, jaSpan], [jaSpan, enSpan]].forEach(([self, partner]) => {
-      self.addEventListener('mouseenter', () => { self.classList.add('chunk-hover'); partner.classList.add('chunk-hover'); });
-      self.addEventListener('mouseleave', () => { self.classList.remove('chunk-hover'); partner.classList.remove('chunk-hover'); });
-      self.addEventListener('click', () => showChunkPopup(seg, self, notesArea));
-    });
     enCol.appendChild(enSpan);
     jaCol.appendChild(jaSpan);
+    jaSpans.push(jaSpan);
     if (seg.lineBreak) {
       enCol.appendChild(document.createElement('br'));
       jaCol.appendChild(document.createElement('br'));
     }
   });
+
+  function setSeg(i) {
+    i = Math.max(0, Math.min(segments.length - 1, i));
+    if (i === curSeg) return;
+    const wasInit = curSeg < 0;
+    wideWrap.querySelectorAll('.chunk-seg.seg-hover').forEach(n => n.classList.remove('seg-hover'));
+    wideWrap.querySelectorAll('.chunk-seg.seg-revealed').forEach(n => n.classList.remove('seg-revealed'));
+    curSeg = i;
+    const hovered = wideWrap.querySelectorAll(`.chunk-seg[data-seg="${i}"]`);
+    hovered.forEach(n => n.classList.add('seg-hover'));
+    if (hovered[0] && !wasInit) hovered[0].scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+
+  function revealCurrent() {
+    if (curSeg < 0) return;
+    if (jaSpans[curSeg].classList.contains('seg-revealed')) return;
+    wideWrap.querySelectorAll(`.chunk-seg[data-seg="${curSeg}"]`).forEach(n => n.classList.add('seg-revealed'));
+    showChunkPopup(segments[curSeg], jaSpans[curSeg], notesArea);
+  }
+
+  wideWrap.addEventListener('wheel', e => {
+    e.preventDefault();
+    setSeg((curSeg < 0 ? 0 : curSeg) + (e.deltaY > 0 ? 1 : -1));
+  }, { passive: false });
+  jaCol.addEventListener('click', revealCurrent);
+
   wideWrap.appendChild(enCol);
   wideWrap.appendChild(jaCol);
   container.appendChild(wideWrap);
+  setSeg(0);
 }
 
 // 解説画面用の翻訳ウィジェット:「翻訳」ボタンで開き、直訳(チャンク表示)⇄意訳の
@@ -301,7 +378,7 @@ function buildTranslatableBlock(text, cacheKey) {
   let showing = false;
   let data = null;
   let mode = 'literal'; // 'literal' | 'natural'
-  let wide = true; // デフォルトでワイドモード
+  let wide = false; // デフォルトで通常モード
   let tall = false;
 
   function renderChunkView() {
@@ -341,9 +418,10 @@ function buildTranslatableBlock(text, cacheKey) {
     notesWrap.className = 'notes-wrap';
     const notesLabel = document.createElement('div');
     notesLabel.className = 'notes-label';
-    notesLabel.textContent = 'ノート(単語や文をクリックすると意味・解説が書き写されます)';
+    notesLabel.textContent = 'ノート(単語や文をクリックすると意味・解説が書き写されます。自由に編集もできます)';
     const notesArea = document.createElement('div');
     notesArea.className = 'notes-area';
+    notesArea.contentEditable = 'true';
     notesWrap.appendChild(notesLabel);
     notesWrap.appendChild(notesArea);
     box.appendChild(notesWrap);
@@ -565,33 +643,6 @@ async function getAudioUrl(filename) {
   const url = URL.createObjectURL(blob);
   audioUrlCache[filename] = url;
   return url;
-}
-
-function createAudioButton(filename, label) {
-  const wrap = document.createElement('div');
-  const btn = document.createElement('button');
-  btn.textContent = '▶ ' + label;
-  btn.className = 'audio-btn';
-  const player = document.createElement('audio');
-  player.controls = true;
-  player.style.display = 'none';
-  btn.addEventListener('click', async () => {
-    btn.disabled = true;
-    btn.textContent = '読み込み中...';
-    const url = await getAudioUrl(filename);
-    btn.disabled = false;
-    if (!url) {
-      btn.textContent = '音声が見つかりませんでした: ' + filename;
-      return;
-    }
-    btn.style.display = 'none';
-    player.style.display = 'block';
-    player.src = url;
-    player.play();
-  });
-  wrap.appendChild(btn);
-  wrap.appendChild(player);
-  return wrap;
 }
 
 // Part1/2/3/4の問題画面用の常設プレーヤー(シャドーイングと同じ▶️/⏸️+進捗バー表示)。
@@ -1567,7 +1618,7 @@ function renderPart3or4() {
   audioLabel.className = 'audio-label';
   audioLabel.textContent = `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`;
   wrap.appendChild(audioLabel);
-  wrap.appendChild(createAudioPlayerWidget([g.audioConversation || g.audioTalk, g.audioQuestions]));
+  wrap.appendChild(createAudioPlayerWidget([g.audioConversation || g.audioTalk, g.audioQuestions], { autoplay: true }));
   if (g.graphicImage) {
     const img = document.createElement('img');
     img.src = g.graphicImage;
@@ -1687,7 +1738,6 @@ function renderPart5() {
     t.className = 'q-text';
     t.textContent = `${q.number}. ${q.sentence}`;
     block.appendChild(t);
-    if (q.audio) block.appendChild(createAudioButton(q.audio, '音声を再生'));
 
     const choicesDiv = document.createElement('div');
     const letters = Object.keys(q.choices);
@@ -1739,7 +1789,7 @@ function renderPart5() {
       const prefixHtml = correctBannerHtml(isCorrect);
       try {
         const questionText = `${q.number}. ${q.sentence}\n選択肢: ${Object.entries(q.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${q.answer}) ${q.choices[q.answer]}\nあなたの回答: (${selections[q.number]}) ${q.choices[selections[q.number]]}`;
-        explainDiv.innerHTML = prefixHtml + await getRichExplanation(`${state.test}-5-${q.number}-${selections[q.number]}`, questionText);
+        explainDiv.innerHTML = prefixHtml + await getRichExplanation(`${state.test}-5-${q.number}-${selections[q.number]}`, questionText, EXPLAIN_PROMPT_PART5, EXPLAIN_PROMPT_PART5_VERSION);
       } catch (e) {
         explainDiv.innerHTML = prefixHtml + `<div>解説の取得に失敗しました: ${escapeHtml(e.message)}</div>`;
       }
@@ -1922,8 +1972,9 @@ function renderPart7() {
   label.className = 'passage-topic';
   label.textContent = p.topic || '';
   wrap.appendChild(label);
-  const translateSlots = [];
-  p.documents.forEach((doc, di) => {
+  // 複数文書のとき、画像と翻訳枠が縦に交互(画像→翻訳→画像→翻訳...)にならないよう、
+  // 先に全文書の画像をまとめて並べ、翻訳枠はその後にまとめて並べる。
+  p.documents.forEach(doc => {
     const docDiv = document.createElement('div');
     docDiv.className = 'doc-box';
     const lbl = document.createElement('div');
@@ -1942,7 +1993,10 @@ function renderPart7() {
       docDiv.appendChild(txt);
     }
     wrap.appendChild(docDiv);
+  });
 
+  const translateSlots = [];
+  p.documents.forEach((doc, di) => {
     const slot = document.createElement('div');
     slot.style.display = 'none';
     wrap.appendChild(slot);
