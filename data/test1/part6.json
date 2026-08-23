@@ -6,6 +6,7 @@
     {
       "questions": [131,132,133,134],
       "topic": "advertisement",
+      "textImage": "images/test1/part6/q131-134.jpg",
       "text": "Commemorations Gifts\n\nIs someone you know (131)_____ an important birthday, anniversary, or graduation? Help them mark the occasion with a unique present from Commemorations Gifts. We carry a large selection of handmade items and art, including scented candles, jewelry, pottery, photographs, and paintings. Shop online or visit (132)_____ gallery to choose a one-of-a-kind work by a local artist. (133)_____\n\nWe know it can be hard to choose the perfect gift, so we also offer digital gift cards in denominations of $20 to $200. These have no expiration date and may be used online or in the gallery, whichever is more (134)_____.",
       "items": [
         { "number": 131, "choices": {"A":"celebrate","B":"celebrating","C":"celebration","D":"celebrated"}, "answer": "B" },
@@ -17,6 +18,7 @@
     {
       "questions": [135,136,137,138],
       "topic": "e-mail",
+      "textImage": "images/test1/part6/q135-138.jpg",
       "text": "To: Wilson Jones <wjones@atterleyappliances.com>\nFrom: Javi Preston <javipreston@yukoandjavisplace.com>\nDate: April 22\nSubject: Appliance delivery\n\nDear Mr. Jones:\n\nI am sending this e-mail to (135)_____ Atterley Appliances for your delivery service. It was excellent and exceeded my (136)_____ in every way. My restaurant, Yuko and Javi's Place, is housed in a very old building with no elevator. The chest freezer I ordered from Atterley Appliances had to be delivered to the building's top floor. (137)_____ It took careful maneuvering to avoid damaging the stairway walls on the way up. Thanks to the team's patience and attention to detail, the new freezer was installed with no damage to the (138)_____ structure. Many thanks to Atterley Appliances for your quality service.\n\nYours truly,\nJavi Preston",
       "items": [
         { "number": 135, "choices": {"A":"praise","B":"reimburse","C":"charge","D":"forgive"}, "answer": "A" },
@@ -28,6 +30,7 @@
     {
       "questions": [139,140,141,142],
       "topic": "notice",
+      "textImage": "images/test1/part6/q139-142.jpg",
       "text": "Important Information from Well-Bright Electric\n\nWell-Bright Electric (139)_____ a new billing system. During the setup period, customers will not be able to access their accounts online. (140)_____ No late fees will be incurred for payments normally due on these dates. Please note that customers will (141)_____ be able to contact the billing department during this time. However, (142)_____ will have to call and speak to a representative directly instead of using the online chat feature. All customers should rest assured that the new billing system will enhance our customer service capabilities and allow us to provide bills that are easier to view and understand.",
       "items": [
         { "number": 139, "choices": {"A":"training","B":"investing","C":"promoting","D":"implementing"}, "answer": "D" },
@@ -39,6 +42,7 @@
     {
       "questions": [143,144,145,146],
       "topic": "article",
+      "textImage": "images/test1/part6/q143-146.jpg",
       "text": "Marfisa Fashions Acquires Corvak Group\n\nLOS ANGELES (May 11)—Marfisa Fashions, a leading designer of men's apparel, announced today that it has acquired the Tokyo-based Corvak Group. (143)_____ The news confirms speculation that Marfisa's executives (144)_____ a company with robust distribution channels in Asia.\n\n\"Corvak Group's reach in Asian markets will be a tremendous asset for us,\" said Jun-Young Min, Marfisa's CEO. \"Our clients have been telling us for years that we need a stronger presence in Asia. (145)_____ we are better able to meet their needs.\" While the press release did not specify the amount of the (146)_____, most analysts agree it was likely in the range of $100 to $150 million.",
       "items": [
         { "number": 143, "choices": {"A":"The deal was finalized last week.","B":"Corvak Group's 600 employees are mostly full-time.","C":"Marfisa Fashions will release its sales figures on Monday.","D":"Men's denim pants are no longer in style."}, "answer": "A" },

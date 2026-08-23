@@ -1568,7 +1568,13 @@ function renderPart3or4() {
   audioLabel.textContent = `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`;
   wrap.appendChild(audioLabel);
   wrap.appendChild(createAudioPlayerWidget([g.audioConversation || g.audioTalk, g.audioQuestions]));
-  if (g.graphic) {
+  if (g.graphicImage) {
+    const img = document.createElement('img');
+    img.src = g.graphicImage;
+    img.alt = '図表';
+    img.className = 'question-photo';
+    wrap.appendChild(img);
+  } else if (g.graphic) {
     const gfx = document.createElement('p');
     gfx.className = 'audio-label';
     gfx.textContent = '図表: ' + g.graphic;
@@ -1857,7 +1863,15 @@ function renderPart6() {
   wrap.appendChild(label);
   const doc = document.createElement('div');
   doc.className = 'doc-box';
-  doc.textContent = p.text;
+  if (p.textImage) {
+    const img = document.createElement('img');
+    img.src = p.textImage;
+    img.alt = p.topic || '本文';
+    img.className = 'passage-photo';
+    doc.appendChild(img);
+  } else {
+    doc.textContent = p.text;
+  }
   wrap.appendChild(doc);
 
   const translateSlot = document.createElement('div');
@@ -1916,9 +1930,17 @@ function renderPart7() {
     lbl.className = 'doc-label';
     lbl.textContent = doc.label;
     docDiv.appendChild(lbl);
-    const txt = document.createElement('div');
-    txt.textContent = doc.text;
-    docDiv.appendChild(txt);
+    if (doc.image) {
+      const img = document.createElement('img');
+      img.src = doc.image;
+      img.alt = doc.label || '文書';
+      img.className = 'passage-photo';
+      docDiv.appendChild(img);
+    } else {
+      const txt = document.createElement('div');
+      txt.textContent = doc.text;
+      docDiv.appendChild(txt);
+    }
     wrap.appendChild(docDiv);
 
     const slot = document.createElement('div');

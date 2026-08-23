@@ -344,6 +344,12 @@ audio{
   margin:8px 0;
 }
 
+.passage-photo{
+  display:block;
+  max-width:100%;
+  border-radius:4px;
+}
+
 .training-wrap{padding:4px 0;}
 .training-title{
   font-family:'Shippori Mincho',serif;
