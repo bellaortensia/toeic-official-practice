@@ -347,14 +347,18 @@ audio{
   max-width:100%;
   border:1px solid var(--line);
   border-radius:8px;
-  margin:8px 0;
+  margin:8px auto;
+  background:var(--paper-2);
 }
 
 .passage-photo{
   display:block;
   max-width:100%;
+  margin:0 auto;
   border-radius:4px;
+  background:var(--paper-2);
 }
+.doc-box.has-photo{background:var(--paper-2);}
 
 .training-wrap{padding:4px 0;}
 .training-title{

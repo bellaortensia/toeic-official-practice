@@ -210,9 +210,9 @@ function reconcileLineBreaks(segments, sourceText) {
   });
 }
 
-async function getTranslationChunks(cacheKey, text) {
+async function getTranslationChunks(cacheKey, text, forceRefresh) {
   const lsKey = 'toeicTranslate.' + TRANSLATE_PROMPT_VERSION + '.' + cacheKey;
-  const cached = localStorage.getItem(lsKey);
+  const cached = !forceRefresh && localStorage.getItem(lsKey);
   if (cached) return JSON.parse(cached);
   const outText = await callGemini(TRANSLATE_PROMPT, text, { responseMimeType: 'application/json', maxOutputTokens: 4096 });
   let parsed;
@@ -234,6 +234,21 @@ async function getClauseExplanation(clauseText) {
   return await callGemini(CLAUSE_EXPLAIN_PROMPT_READING, clauseText, { maxOutputTokens: 800 });
 }
 
+// 単語ポップアップから「用語を解説」した際に呼ぶ。意味だけでなく、その語(または熟語)の
+// コアイメージと、熟語・言い回しなら由来・成り立ちまで踏み込んで解説する。
+const TERM_EXPLAIN_PROMPT = `あなたはTOEIC満点を何度も取得し、初心者指導歴20年以上の英語講師です。
+入力される「語句」(単語または熟語・言い回し)と、それが使われている「文脈」の英文について、日本語で解説してください。
+必ず次の構成で、装飾やMarkdown記号(**など)は使わず、プレーンテキストで簡潔に(全体で4〜6行程度)出力してください。
+
+1行目: ■語句 に続けて、この文脈での意味を書く。
+次の行: ▲コアイメージ に続けて、この語・表現が持つ中心的なイメージ・語感を短く説明する。単語1つの場合でも、その語源的な核となるイメージを書くこと。
+次の行以降: 熟語・イディオム・言い回しの場合は、なぜその単語の組み合わせでその意味になるのか、由来や成り立ちを1〜2行で説明する。単純な基本単語の場合はこの行を省略してよい。`;
+
+async function getTermExplanation(term, meaning, contextSentence) {
+  const input = `語句: ${term}\n簡易な意味: ${meaning || '(不明)'}\n文脈: ${contextSentence || ''}`;
+  return await callGemini(TERM_EXPLAIN_PROMPT, input, { maxOutputTokens: 600 });
+}
+
 function appendToNotes(notesArea, enText, explanation) {
   const block = document.createElement('div');
   block.className = 'notes-entry';
@@ -247,6 +262,31 @@ function appendToNotes(notesArea, enText, explanation) {
   block.appendChild(body);
   notesArea.appendChild(block);
   notesArea.scrollTop = notesArea.scrollHeight;
+}
+
+// ヘッダーの「保存」ボタン用: ノート欄は(翻訳結果・解説と違ってAIキャッシュの対象外なので)
+// 明示的に保存しないと消えてしまう。保存時点で画面上に存在するノート欄をすべて
+// cacheKeyごとにlocalStorageへ書き出し、次にその問題/パッセージを開いたときに復元する。
+const NOTES_LS_PREFIX = 'toeicOfficialPractice.notes.';
+
+function restoreNotesIfSaved(notesArea, cacheKey) {
+  notesArea.dataset.notesKey = cacheKey;
+  try {
+    const saved = localStorage.getItem(NOTES_LS_PREFIX + cacheKey);
+    if (saved) notesArea.innerHTML = saved;
+  } catch (e) { /* ignore */ }
+}
+
+function saveAllVisibleNotes() {
+  const areas = document.querySelectorAll('.notes-area[data-notes-key]');
+  let count = 0;
+  areas.forEach(area => {
+    try {
+      localStorage.setItem(NOTES_LS_PREFIX + area.dataset.notesKey, area.innerHTML);
+      count++;
+    } catch (e) { /* 保存容量オーバー等は無視 */ }
+  });
+  return count;
 }
 
 const chunkPopupEl = document.createElement('div');
@@ -268,8 +308,20 @@ function showChunkPopup(seg, anchorEl, notesArea) {
     const termTrigger = e.target.closest('[data-action="term"]');
     if (termTrigger) {
       const t = terms[Number(termTrigger.dataset.termIdx)];
-      if (t) appendToNotes(notesArea, t.term, t.meaning);
-      termTrigger.classList.add('added');
+      if (!t || termTrigger.dataset.loading === '1') return;
+      termTrigger.dataset.loading = '1';
+      const strongEl = termTrigger.querySelector('strong');
+      const originalLabel = strongEl.textContent;
+      strongEl.textContent = originalLabel + '(解説中...)';
+      try {
+        const explanation = await getTermExplanation(t.term, t.meaning, seg.en);
+        appendToNotes(notesArea, t.term, explanation);
+        strongEl.textContent = originalLabel;
+        termTrigger.classList.add('added');
+      } catch (err) {
+        strongEl.textContent = originalLabel + '(解説の取得に失敗しました)';
+        termTrigger.dataset.loading = '0';
+      }
       return;
     }
     const trigger = e.target.closest('[data-action="explain"]');
@@ -339,7 +391,12 @@ function renderTranslationChunks(container, segments, notesArea) {
 
   function revealCurrent() {
     if (curSeg < 0) return;
-    if (jaSpans[curSeg].classList.contains('seg-revealed')) return;
+    if (jaSpans[curSeg].classList.contains('seg-revealed')) {
+      // もう一度クリック: ポップアップを閉じ、ハイライトも黒塗りに戻す
+      wideWrap.querySelectorAll(`.chunk-seg[data-seg="${curSeg}"]`).forEach(n => n.classList.remove('seg-revealed'));
+      chunkPopupEl.classList.remove('show');
+      return;
+    }
     wideWrap.querySelectorAll(`.chunk-seg[data-seg="${curSeg}"]`).forEach(n => n.classList.add('seg-revealed'));
     showChunkPopup(segments[curSeg], jaSpans[curSeg], notesArea);
   }
@@ -364,10 +421,49 @@ function buildTranslatableBlock(text, cacheKey) {
   const wrap = document.createElement('div');
   wrap.className = 'translate-block';
 
+  // 常設の操作バー: 翻訳⇄原文表示に戻す / 翻訳を再取得 / ワイドモード / トールモード / ◀ 直訳・意訳 ▶
+  // を1列に並べる。翻訳前は再取得・表示切り替え系のボタンは無効化しておく。
+  const controls = document.createElement('div');
+  controls.className = 'translate-controls';
+
   const btn = document.createElement('button');
   btn.className = 'audio-btn';
   btn.textContent = '翻訳';
-  wrap.appendChild(btn);
+  controls.appendChild(btn);
+
+  const refetchBtn = document.createElement('button');
+  refetchBtn.className = 'mode-toggle-btn';
+  refetchBtn.textContent = '翻訳を再取得';
+  refetchBtn.disabled = true;
+  controls.appendChild(refetchBtn);
+
+  const wideBtn = document.createElement('button');
+  wideBtn.className = 'mode-toggle-btn';
+  wideBtn.disabled = true;
+  controls.appendChild(wideBtn);
+
+  const tallBtn = document.createElement('button');
+  tallBtn.className = 'mode-toggle-btn';
+  tallBtn.disabled = true;
+  controls.appendChild(tallBtn);
+
+  const modeLeftBtn = document.createElement('button');
+  modeLeftBtn.className = 'mode-toggle-btn edge-nav-btn';
+  modeLeftBtn.textContent = '◀';
+  modeLeftBtn.disabled = true;
+  controls.appendChild(modeLeftBtn);
+
+  const modeLabel = document.createElement('span');
+  modeLabel.className = 'translate-mode-label';
+  controls.appendChild(modeLabel);
+
+  const modeRightBtn = document.createElement('button');
+  modeRightBtn.className = 'mode-toggle-btn edge-nav-btn';
+  modeRightBtn.textContent = '▶';
+  modeRightBtn.disabled = true;
+  controls.appendChild(modeRightBtn);
+
+  wrap.appendChild(controls);
 
   const box = document.createElement('div');
   box.className = 'doc-box translate-box';
@@ -381,31 +477,21 @@ function buildTranslatableBlock(text, cacheKey) {
   let wide = false; // デフォルトで通常モード
   let tall = false;
 
+  function refreshModeUI() {
+    wideBtn.textContent = wide ? '⛶ ワイド解除' : '⛶ ワイドモード';
+    tallBtn.textContent = tall ? '⬍ トール解除' : '⬍ トールモード';
+    modeLabel.textContent = mode === 'literal' ? '直訳' : '意訳';
+  }
+  refreshModeUI();
+
+  function setControlsEnabled(enabled) {
+    [refetchBtn, wideBtn, tallBtn, modeLeftBtn, modeRightBtn].forEach(b => b.disabled = !enabled);
+  }
+
   function renderChunkView() {
     box.innerHTML = '';
     box.classList.toggle('wide-mode', wide);
     box.classList.toggle('tall-mode', tall);
-
-    const controls = document.createElement('div');
-    controls.className = 'translate-controls';
-    const wideBtn = document.createElement('button');
-    wideBtn.className = 'mode-toggle-btn';
-    const tallBtn = document.createElement('button');
-    tallBtn.className = 'mode-toggle-btn';
-    const modeLeftBtn = document.createElement('button');
-    modeLeftBtn.className = 'mode-toggle-btn edge-nav-btn';
-    modeLeftBtn.textContent = '◀';
-    const modeLabel = document.createElement('span');
-    modeLabel.className = 'translate-mode-label';
-    const modeRightBtn = document.createElement('button');
-    modeRightBtn.className = 'mode-toggle-btn edge-nav-btn';
-    modeRightBtn.textContent = '▶';
-    controls.appendChild(wideBtn);
-    controls.appendChild(tallBtn);
-    controls.appendChild(modeLeftBtn);
-    controls.appendChild(modeLabel);
-    controls.appendChild(modeRightBtn);
-    box.appendChild(controls);
 
     const chunkContainer = document.createElement('div');
     box.appendChild(chunkContainer);
@@ -425,22 +511,21 @@ function buildTranslatableBlock(text, cacheKey) {
     notesWrap.appendChild(notesLabel);
     notesWrap.appendChild(notesArea);
     box.appendChild(notesWrap);
+    restoreNotesIfSaved(notesArea, cacheKey);
 
-    function refreshModeUI() {
-      wideBtn.textContent = wide ? '⛶ ワイド解除' : '⛶ ワイドモード';
-      tallBtn.textContent = tall ? '⬍ トール解除' : '⬍ トールモード';
-      modeLabel.textContent = mode === 'literal' ? '直訳' : '意訳';
+    function updateModeDisplay() {
       chunkContainer.style.display = mode === 'literal' ? 'block' : 'none';
       naturalContainer.style.display = mode === 'natural' ? 'block' : 'none';
     }
-    modeLeftBtn.addEventListener('click', () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); });
-    modeRightBtn.addEventListener('click', () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); });
-    wideBtn.addEventListener('click', () => { wide = !wide; box.classList.toggle('wide-mode', wide); refreshModeUI(); });
-    tallBtn.addEventListener('click', () => { tall = !tall; box.classList.toggle('tall-mode', tall); refreshModeUI(); });
+
+    modeLeftBtn.onclick = () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); updateModeDisplay(); };
+    modeRightBtn.onclick = () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); updateModeDisplay(); };
+    wideBtn.onclick = () => { wide = !wide; box.classList.toggle('wide-mode', wide); refreshModeUI(); };
+    tallBtn.onclick = () => { tall = !tall; box.classList.toggle('tall-mode', tall); refreshModeUI(); };
 
     renderTranslationChunks(chunkContainer, data.segments, notesArea);
     naturalContainer.textContent = data.naturalJa || '';
-    refreshModeUI();
+    updateModeDisplay();
   }
 
   function renderPlain() {
@@ -449,30 +534,40 @@ function buildTranslatableBlock(text, cacheKey) {
     box.textContent = text;
   }
 
+  async function doTranslate(forceRefresh) {
+    btn.disabled = true;
+    btn.textContent = forceRefresh ? '再取得中...' : '翻訳中...';
+    try {
+      data = await getTranslationChunks(cacheKey, text, forceRefresh);
+      loaded = true;
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = showing ? '原文表示に戻す' : '翻訳';
+      box.innerHTML = `<p class="translate-error">翻訳に失敗しました: ${escapeHtml(e.message)}</p>`;
+      return false;
+    }
+    btn.disabled = false;
+    return true;
+  }
+
   btn.addEventListener('click', async () => {
     if (!showing) {
-      if (!loaded) {
-        btn.disabled = true;
-        btn.textContent = '翻訳中...';
-        try {
-          data = await getTranslationChunks(cacheKey, text);
-          loaded = true;
-        } catch (e) {
-          btn.disabled = false;
-          btn.textContent = '翻訳';
-          box.innerHTML = `<p class="translate-error">翻訳に失敗しました: ${escapeHtml(e.message)}</p>`;
-          return;
-        }
-        btn.disabled = false;
-      }
+      if (!loaded && !(await doTranslate(false))) return;
       renderChunkView();
       btn.textContent = '原文表示に戻す';
       showing = true;
+      setControlsEnabled(true);
     } else {
       renderPlain();
       btn.textContent = '翻訳';
       showing = false;
+      setControlsEnabled(false);
     }
+  });
+
+  refetchBtn.addEventListener('click', async () => {
+    if (!(await doTranslate(true))) return;
+    if (showing) renderChunkView();
   });
 
   return wrap;
@@ -1914,6 +2009,7 @@ function renderPart6() {
   const doc = document.createElement('div');
   doc.className = 'doc-box';
   if (p.textImage) {
+    doc.classList.add('has-photo');
     const img = document.createElement('img');
     img.src = p.textImage;
     img.alt = p.topic || '本文';
@@ -1982,6 +2078,7 @@ function renderPart7() {
     lbl.textContent = doc.label;
     docDiv.appendChild(lbl);
     if (doc.image) {
+      docDiv.classList.add('has-photo');
       const img = document.createElement('img');
       img.src = doc.image;
       img.alt = doc.label || '文書';
@@ -2031,3 +2128,13 @@ function renderPart7() {
 
 loginBtn.addEventListener('click', startLogin);
 handleRedirect();
+
+const saveNotesBtn = document.getElementById('saveNotesBtn');
+if (saveNotesBtn) {
+  saveNotesBtn.addEventListener('click', () => {
+    const count = saveAllVisibleNotes();
+    const original = saveNotesBtn.textContent;
+    saveNotesBtn.textContent = count > 0 ? `✓ 保存しました(${count}件)` : '保存するノートがありません';
+    setTimeout(() => { saveNotesBtn.textContent = original; }, 2000);
+  });
+}
