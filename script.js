@@ -19,6 +19,30 @@ function getGeminiKey() {
   return localStorage.getItem(GEMINI_KEY_LS) || geminiKeyInput.value.trim();
 }
 
+// ---------- ノート保存用スプレッドシート(decode-toeicと同じApps Script Web Appブリッジ方式) ----------
+
+const SHEET_URL_LS = 'toeicOfficialPractice.sheetUrl';
+const sheetUrlInput = document.getElementById('sheetUrl');
+const savedSheetUrl = localStorage.getItem(SHEET_URL_LS);
+if (savedSheetUrl) sheetUrlInput.value = savedSheetUrl;
+sheetUrlInput.addEventListener('change', () => localStorage.setItem(SHEET_URL_LS, sheetUrlInput.value.trim()));
+
+function getSheetUrl() {
+  return localStorage.getItem(SHEET_URL_LS) || sheetUrlInput.value.trim();
+}
+
+const copyGasBtn = document.getElementById('copyGasBtn');
+if (copyGasBtn) {
+  copyGasBtn.addEventListener('click', () => {
+    const code = document.getElementById('gasCode').textContent;
+    navigator.clipboard.writeText(code).then(() => {
+      const orig = copyGasBtn.textContent;
+      copyGasBtn.textContent = 'コピーしました';
+      setTimeout(() => { copyGasBtn.textContent = orig; }, 1500);
+    });
+  });
+}
+
 const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 
 async function callGemini(systemPrompt, userText, options = {}) {
@@ -266,26 +290,54 @@ function appendToNotes(notesArea, enText, explanation) {
 
 // ヘッダーの「保存」ボタン用: ノート欄は(翻訳結果・解説と違ってAIキャッシュの対象外なので)
 // 明示的に保存しないと消えてしまう。保存時点で画面上に存在するノート欄をすべて
-// cacheKeyごとにlocalStorageへ書き出し、次にその問題/パッセージを開いたときに復元する。
+// cacheKeyごとにlocalStorageへ書き出し、Apps Script URLが設定されていればスプレッドシートへも
+// 同期する(decode-toeicと同じApps Script Web Appブリッジ方式)。次にその問題/パッセージを
+// 開いたときは、まずスプレッドシート側のキャッシュ→無ければlocalStorageの順に復元する。
 const NOTES_LS_PREFIX = 'toeicOfficialPractice.notes.';
 
-function restoreNotesIfSaved(notesArea, cacheKey) {
+let sheetNotesCachePromise = null;
+function getSheetNotesCache() {
+  if (!sheetNotesCachePromise) {
+    const url = getSheetUrl();
+    sheetNotesCachePromise = !url
+      ? Promise.resolve({})
+      : fetch(`${url}?action=getNotes`).then(r => r.json()).then(d => d.notes || {}).catch(() => ({}));
+  }
+  return sheetNotesCachePromise;
+}
+
+async function restoreNotesIfSaved(notesArea, cacheKey) {
   notesArea.dataset.notesKey = cacheKey;
+  try {
+    const sheetNotes = await getSheetNotesCache();
+    if (sheetNotes[cacheKey]) { notesArea.innerHTML = sheetNotes[cacheKey]; return; }
+  } catch (e) { /* ignore */ }
   try {
     const saved = localStorage.getItem(NOTES_LS_PREFIX + cacheKey);
     if (saved) notesArea.innerHTML = saved;
   } catch (e) { /* ignore */ }
 }
 
-function saveAllVisibleNotes() {
+async function saveAllVisibleNotes() {
   const areas = document.querySelectorAll('.notes-area[data-notes-key]');
-  let count = 0;
+  const notesMap = {};
   areas.forEach(area => {
-    try {
-      localStorage.setItem(NOTES_LS_PREFIX + area.dataset.notesKey, area.innerHTML);
-      count++;
-    } catch (e) { /* 保存容量オーバー等は無視 */ }
+    notesMap[area.dataset.notesKey] = area.innerHTML;
+    try { localStorage.setItem(NOTES_LS_PREFIX + area.dataset.notesKey, area.innerHTML); } catch (e) { /* 保存容量オーバー等は無視 */ }
   });
+  const count = areas.length;
+  const url = getSheetUrl();
+  if (url && count > 0) {
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'saveNotes', notes: notesMap })
+      });
+      const cache = await getSheetNotesCache();
+      Object.assign(cache, notesMap);
+    } catch (e) { /* オフライン等は無視。localStorageには保存済み */ }
+  }
   return count;
 }
 
@@ -2131,9 +2183,12 @@ handleRedirect();
 
 const saveNotesBtn = document.getElementById('saveNotesBtn');
 if (saveNotesBtn) {
-  saveNotesBtn.addEventListener('click', () => {
-    const count = saveAllVisibleNotes();
+  saveNotesBtn.addEventListener('click', async () => {
     const original = saveNotesBtn.textContent;
+    saveNotesBtn.disabled = true;
+    saveNotesBtn.textContent = '保存中...';
+    const count = await saveAllVisibleNotes();
+    saveNotesBtn.disabled = false;
     saveNotesBtn.textContent = count > 0 ? `✓ 保存しました(${count}件)` : '保存するノートがありません';
     setTimeout(() => { saveNotesBtn.textContent = original; }, 2000);
   });

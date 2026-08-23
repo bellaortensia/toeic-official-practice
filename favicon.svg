@@ -1,49 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
-  <defs>
-    <!-- Background Gradient -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#0F172A" />
-      <stop offset="100%" stop-color="#1E293B" />
-    </linearGradient>
-
-    <!-- Shield Primary Gradient -->
-    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#2563EB" />
-      <stop offset="100%" stop-color="#1D4ED8" />
-    </linearGradient>
-
-    <!-- Accent Emerald Gradient -->
-    <linearGradient id="accentGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#10B981" />
-      <stop offset="100%" stop-color="#059669" />
-    </linearGradient>
-
-    <!-- Drop Shadow Filter -->
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.35"/>
-    </filter>
-  </defs>
-
-  <!-- Card Frame (Rounded Rectangle) -->
-  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
-
-  <!-- Shield Shape (Official) -->
-  <path d="M256 68 L384 116 V228 C384 312 328 388 256 420 C184 388 128 312 128 228 V116 L256 68 Z" 
-        fill="url(#shieldGrad)" 
-        filter="url(#shadow)" />
-
-  <!-- Open Book (Practice) -->
-  <path d="M256 195 C230 180 190 180 156 192 V312 C190 300 230 300 256 315 C282 300 322 300 356 312 V192 C322 180 282 180 256 195 Z" 
-        fill="#FFFFFF" />
-  <path d="M256 195 V315" stroke="#94A3B8" stroke-width="4" stroke-linecap="round" />
-
-  <!-- Target / Checkmark Badge (Success) -->
-  <circle cx="360" cy="350" r="52" fill="#0F172A" />
-  <circle cx="360" cy="350" r="44" fill="url(#accentGrad)" filter="url(#shadow)" />
-  <path d="M342 350 L354 362 L378 338" 
-        fill="none" 
-        stroke="#FFFFFF" 
-        stroke-width="7" 
-        stroke-linecap="round" 
-        stroke-linejoin="round" />
+  <rect width="512" height="512" rx="112" fill="#f4efe2"/>
+  <circle cx="256" cy="256" r="172" fill="#1b222c"/>
+  <circle cx="256" cy="256" r="120" fill="#f4efe2"/>
+  <circle cx="256" cy="256" r="68" fill="#1b222c"/>
 </svg>

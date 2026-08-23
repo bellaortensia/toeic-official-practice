@@ -82,6 +82,16 @@ details.help .sub-details summary{font-size:13px;}
 .setup-fields input:focus{outline:2px solid var(--accent);border-color:transparent;}
 details.help .hint{font-size:11.5px;color:#9aa6b0;line-height:1.6;}
 details.help .hint a{color:var(--accent);}
+details.help ol, details.help ul{padding-left:18px;line-height:1.9;font-size:13px;color:#c7cfd6;}
+details.help strong{color:var(--paper);}
+details.help button{
+  margin-top:6px;background:var(--accent-2);color:#fff;border:none;border-radius:6px;
+  padding:6px 12px;font-size:12px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;
+}
+details.help .gas-code{
+  background:#10151b;color:#d7e6de;font-family:'JetBrains Mono',monospace;font-size:11.5px;
+  padding:12px;border-radius:8px;white-space:pre;overflow-x:auto;margin-top:8px;line-height:1.6;
+}
 
 main{margin-top:20px;}
 
