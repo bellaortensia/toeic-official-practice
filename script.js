@@ -94,13 +94,19 @@ const EXPLAIN_PROMPT_READING = `あなたはTOEIC対策の講師です。以下�
 
 const EXPLAIN_PROMPT_READING_VERSION = 'v1';
 
-// Part5(短文穴埋め)専用: 読解の根拠引用①②③...は不要な代わりに、まず空所に正解を
-// 入れた完成文の直訳(語順そのまま)を先頭に置く。
+// Part5(短文穴埋め)専用: 全文の直訳ではなく、①完成文そのもの→②SVOC分解(下線付き)→
+// ③スラッシュ区切りの意訳、という順で示す。
 const EXPLAIN_PROMPT_PART5 = `あなたはTOEIC対策の講師です。以下のTOEIC Part5(短文穴埋め問題)について、日本語で解説してください。
 必ず次の構成・記号ルールに従ってください。
 
-1行目: ■全文の直訳 とだけ書く。
-次の行: 空所に正解の選択肢を入れた完成文を、英語の語順のまま前から訳す直訳調で日本語訳したものを書く(自然な日本語の語順に並べ替えないこと)。
+1行目: ■英文 とだけ書く。
+次の行: 空所に正解の選択肢を入れた完成文を、そのまま英語で書く。
+
+次の行: ■SVOC とだけ書く。
+次の行: 直前の完成文をそのまま書き写しながら、主語(S)には単語や句の前後を「S[...]」、動詞(V)には「V[...]」、目的語(O)には「O[...]」、補語(C)には「C[...]」で囲むこと。該当しない語(冠詞・前置詞・接続詞・修飾語など)はそのまま前後に書く。1つの文にS・V・O・Cが複数ある場合はすべて囲むこと。
+
+次の行: ■意訳 とだけ書く。
+次の行: 完成文の自然な日本語訳(直訳ではなく意味の通った訳)を、意味のまとまりごとに「/」で区切って書く。
 
 次の行: ■選択肢 とだけ書く。
 続けて、すべての選択肢(A)(B)(C)(D)を1行ずつ、必ず▲から始めて日本語訳を書く。
@@ -112,10 +118,10 @@ const EXPLAIN_PROMPT_PART5 = `あなたはTOEIC対策の講師です。以下の
 
 出力は必ず次のJSON形式のみを返し、説明文やコードフェンスは一切含めないこと。
 {
-  "explainText": "上記ルールに従ったプレーンテキスト。■と★の行は単独の見出し行にし、選択肢の行は必ず▲から始めること。Markdown記号(**など)は使わないこと。",
+  "explainText": "上記ルールに従ったプレーンテキスト。■と★の行は単独の見出し行にし、選択肢の行は必ず▲から始めること。SVOCの行はS[...]/V[...]/O[...]/C[...]の記法をそのまま使うこと。Markdown記号(**など)は使わないこと。",
   "keyPhraseQuotes": []
 }`;
-const EXPLAIN_PROMPT_PART5_VERSION = 'v1';
+const EXPLAIN_PROMPT_PART5_VERSION = 'v2';
 
 async function getRichExplanation(cacheKey, questionText, promptOverride, versionOverride) {
   const prompt = promptOverride || EXPLAIN_PROMPT_READING;
@@ -171,6 +177,12 @@ function formatRichExplainHtml(text, keyPhrases) {
         escaped = escaped.split(escPhrase).join(`<span style="text-decoration:underline">${escPhrase}</span>`);
       }
     });
+
+    // Part5のSVOC行: S[...]/V[...]/O[...]/C[...] という記法を、下線+右下に
+    // S/V/O/Cラベルを添えた表示に変換する。
+    escaped = escaped.replace(/([SVOC])\[([^\]]+)\]/g, (m, label, word) =>
+      `<span style="text-decoration:underline;text-decoration-color:#2f5fa8;text-underline-offset:3px;">${word}</span><sub style="color:#2f5fa8;font-weight:700;font-size:9px;">${label}</sub>`
+    );
 
     let inner = escaped;
     if (prefix === 'bold') inner = `<strong>${escaped}</strong>`;
@@ -245,6 +257,17 @@ async function getTranslationChunks(cacheKey, text, forceRefresh) {
   const result = { segments, naturalJa: parsed.naturalJa || '' };
   try { localStorage.setItem(lsKey, JSON.stringify(result)); } catch (e) { /* 保存容量オーバー等は無視 */ }
   return result;
+}
+
+// 解説画面で既に「翻訳」を押していれば、その意訳(naturalJa)をシャドーイング画面の
+// 日本語訳としてそのまま使い回す(新たにAIを呼ばない)。未翻訳ならnullを返す。
+function getCachedNaturalJa(cacheKey) {
+  try {
+    const raw = localStorage.getItem('toeicTranslate.' + TRANSLATE_PROMPT_VERSION + '.' + cacheKey);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return parsed.naturalJa || null;
+  } catch (e) { return null; }
 }
 
 // クリックしたチャンクを1文として、TOEIC講師視点の文法・語彙解説を生成する
@@ -339,6 +362,82 @@ async function saveAllVisibleNotes() {
     } catch (e) { /* オフライン等は無視。localStorageには保存済み */ }
   }
   return count;
+}
+
+// シャドーイング画面・各Partの解説画面で共通に使う、自由記述のノート欄。
+// noteKeyが同じであれば同じ内容を共有する(例: シャドーイングと解説画面で同じノート)。
+function buildNotesWidget(noteKey, label) {
+  const wrap = document.createElement('div');
+  wrap.className = 'notes-wrap';
+  const lbl = document.createElement('div');
+  lbl.className = 'notes-label';
+  lbl.textContent = label || 'ノート(自由に書き込めます)';
+  const area = document.createElement('div');
+  area.className = 'notes-area';
+  area.contentEditable = 'true';
+  wrap.appendChild(lbl);
+  wrap.appendChild(area);
+  restoreNotesIfSaved(area, noteKey);
+  return wrap;
+}
+
+// ---------- 解説画面の「AIに質問する」欄 ----------
+
+const ASK_AI_PROMPT = `あなたはTOEIC対策の講師です。以下の問題とその解説を踏まえて、学習者からの追加の質問に日本語で分かりやすく答えてください。
+装飾やMarkdown記号(**など)は使わず、プレーンテキストで簡潔に答えてください。`;
+
+async function askAiAboutQuestion(questionContext, userQuestion) {
+  const input = `【問題】\n${questionContext}\n\n【学習者からの質問】\n${userQuestion}`;
+  return await callGemini(ASK_AI_PROMPT, input, { maxOutputTokens: 800 });
+}
+
+// questionContextは、その設問の問題文・選択肢・正解などを含むプレーンテキスト
+// (getRichExplanationに渡しているquestionTextと同じもので良い)。
+function buildAskAiWidget(questionContext) {
+  const wrap = document.createElement('div');
+  wrap.className = 'ask-ai-wrap';
+  const label = document.createElement('div');
+  label.className = 'notes-label';
+  label.textContent = 'AIに質問する';
+  wrap.appendChild(label);
+
+  const row = document.createElement('div');
+  row.className = 'ask-ai-row';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'ask-ai-input';
+  input.placeholder = '例: なぜBは不正解なんですか？';
+  const btn = document.createElement('button');
+  btn.className = 'mode-toggle-btn';
+  btn.textContent = '質問する';
+  row.appendChild(input);
+  row.appendChild(btn);
+  wrap.appendChild(row);
+
+  const answerArea = document.createElement('div');
+  answerArea.className = 'ask-ai-answer';
+  answerArea.style.display = 'none';
+  wrap.appendChild(answerArea);
+
+  async function ask() {
+    const q = input.value.trim();
+    if (!q) return;
+    btn.disabled = true;
+    btn.textContent = '質問中...';
+    answerArea.style.display = 'block';
+    answerArea.textContent = '回答を生成中...';
+    try {
+      answerArea.textContent = await askAiAboutQuestion(questionContext, q);
+    } catch (e) {
+      answerArea.textContent = '回答の取得に失敗しました: ' + e.message;
+    }
+    btn.disabled = false;
+    btn.textContent = '質問する';
+  }
+  btn.addEventListener('click', ask);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+
+  return wrap;
 }
 
 const chunkPopupEl = document.createElement('div');
@@ -792,7 +891,23 @@ async function getAudioUrl(filename) {
   return url;
 }
 
-// Part1/2/3/4の問題画面用の常設プレーヤー(シャドーイングと同じ▶️/⏸️+進捗バー表示)。
+// トラックのクリック/ドラッグでシーク移動できるようにする。getAudio()は現在の
+// Audioインスタンス(未再生ならnull)を返す関数。
+function attachSeekable(trackEl, getAudio) {
+  function seekToClientX(clientX) {
+    const audio = getAudio();
+    if (!audio || !audio.duration) return;
+    const rect = trackEl.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    audio.currentTime = ratio * audio.duration;
+  }
+  let dragging = false;
+  trackEl.addEventListener('mousedown', e => { dragging = true; seekToClientX(e.clientX); });
+  window.addEventListener('mousemove', e => { if (dragging) seekToClientX(e.clientX); });
+  window.addEventListener('mouseup', () => { dragging = false; });
+}
+
+// Part1/2/3/4の問題画面用の常設プレーヤー(シャドーイングと同じ▶/❚❚+進捗バー表示)。
 // 「音声を再生」ボタンを押して初めてプレーヤーが現れる、という中間ステップを無くし、
 // 最初からこの表示のままにする。filenamesは複数渡すと連続再生する(Part3/4の会話→設問)。
 function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
@@ -803,7 +918,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
   player.className = 'audio-player';
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'player-toggle';
-  toggleBtn.textContent = '▶️';
+  toggleBtn.textContent = '▶';
   const curTimeEl = document.createElement('span');
   curTimeEl.className = 'player-time';
   curTimeEl.textContent = '0:00';
@@ -820,9 +935,10 @@ function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
   player.appendChild(trackEl);
   player.appendChild(totalTimeEl);
   if (!list.length) player.style.display = 'none';
+  attachSeekable(trackEl, () => currentAudio);
 
   function resetUI() {
-    toggleBtn.textContent = '▶️';
+    toggleBtn.textContent = '▶';
     fillEl.style.width = '0%';
     curTimeEl.textContent = '0:00';
   }
@@ -845,7 +961,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
     attachEvents(currentAudio);
     currentAudio.addEventListener('ended', () => playIndex(i + 1));
     currentAudio.play();
-    toggleBtn.textContent = '⏸️';
+    toggleBtn.textContent = '❚❚';
   }
 
   function playFromStart() {
@@ -857,10 +973,10 @@ function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
   toggleBtn.addEventListener('click', () => {
     if (currentAudio && !currentAudio.paused) {
       currentAudio.pause();
-      toggleBtn.textContent = '▶️';
+      toggleBtn.textContent = '▶';
     } else if (currentAudio) {
       currentAudio.play();
-      toggleBtn.textContent = '⏸️';
+      toggleBtn.textContent = '❚❚';
     } else {
       playFromStart();
     }
@@ -909,18 +1025,28 @@ const ATTEMPTS_LS = 'toeicOfficialPractice.attempts';
 function getAttemptsStore() {
   try { return JSON.parse(localStorage.getItem(ATTEMPTS_LS) || '{}'); } catch (e) { return {}; }
 }
-function getAttemptCount(key) {
-  return getAttemptsStore()[key] || 0;
+// 各キーは {count, lastCorrect} で保持する(以前はcountだけの数値だったので、
+// 古い数値形式が残っていても壊れないように読み替える)。
+function getAttemptEntry(key) {
+  const raw = getAttemptsStore()[key];
+  if (raw == null) return { count: 0, lastCorrect: null };
+  if (typeof raw === 'number') return { count: raw, lastCorrect: null };
+  return { count: raw.count || 0, lastCorrect: raw.lastCorrect == null ? null : !!raw.lastCorrect };
 }
-function incrementAttempt(key) {
+function getAttemptCount(key) {
+  return getAttemptEntry(key).count;
+}
+function incrementAttempt(key, isCorrect) {
   const store = getAttemptsStore();
-  store[key] = Math.min(99, (store[key] || 0) + 1);
+  const prev = getAttemptEntry(key);
+  store[key] = { count: Math.min(99, prev.count + 1), lastCorrect: isCorrect == null ? prev.lastCorrect : !!isCorrect };
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
   recordStudyActivity();
 }
 function setAttemptCount(key, value) {
   const store = getAttemptsStore();
-  store[key] = Math.max(0, Math.min(99, value));
+  const prev = getAttemptEntry(key);
+  store[key] = { count: Math.max(0, Math.min(99, value)), lastCorrect: prev.lastCorrect };
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
 }
 
@@ -953,7 +1079,9 @@ function getStudyLog() {
   }
 }
 
-function recordStudyActivity() {
+// 経過時間だけを加算する(採点回数=dayCountsは増やさない)。解説を読んでいる間などの
+// 受動的な時間も学習時間に含めるための定期ハートビートから呼ばれる。
+function recordStudyTime() {
   const log = getStudyLog();
   const now = Date.now();
   const dateKey = localDateKey();
@@ -963,9 +1091,24 @@ function recordStudyActivity() {
     log.daySeconds[dateKey] = (log.daySeconds[dateKey] || 0) + elapsed;
   }
   log.lastActivity = now;
+  localStorage.setItem(STUDY_LOG_LS, JSON.stringify(log));
+  return log;
+}
+
+function recordStudyActivity() {
+  const log = recordStudyTime();
+  const dateKey = localDateKey();
   log.dayCounts[dateKey] = (log.dayCounts[dateKey] || 0) + 1;
   localStorage.setItem(STUDY_LOG_LS, JSON.stringify(log));
 }
+
+// 解説を読んでいるだけの時間も学習時間に含めるため、練習画面が表示されている間は
+// 1分おきに経過時間を加算する(採点イベントの間隔だけに頼らない)。
+setInterval(() => {
+  if (document.visibilityState === 'visible' && practiceEl && practiceEl.style.display !== 'none') {
+    recordStudyTime();
+  }
+}, 60000);
 
 function computeStreakDays(log) {
   let streak = 0;
@@ -1126,22 +1269,23 @@ const PART_LABELS = {
   5: 'Part5 短文穴埋め', 6: 'Part6 長文穴埋め', 7: 'Part7 読解問題'
 };
 
+// Part1/2/6/7は1ユニット=1行(単一のkey)。Part3/4/5は複数問題が1ユニットにまとまって
+// 採点されるが、挑戦回数メーターは問題ごとに個別表示したいので、questions配列を持つ
+// 「グループユニット」として返す(buildGroupedUnitRowで括弧付きの個別行として描画する)。
 function buildUnitList(test, part, data) {
   if (part === 1 || part === 2) {
     return data.questions.map((q, i) => ({ key: `${test}-${part}-${q.number}`, label: `Q${q.number}`, unitIndex: i }));
   }
   if (part === 3 || part === 4) {
     return data.groups.map((g, i) => ({
-      key: `${test}-${part}-${g.questions[0]}`,
-      label: `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`,
-      unitIndex: i
+      unitIndex: i,
+      questions: g.questions.map(qn => ({ number: qn, key: `${test}-${part}-${qn}` }))
     }));
   }
   if (part === 5) {
     return chunk(data.questions, 5).map((b, i) => ({
-      key: `${test}-5-${b[0].number}`,
-      label: `Q${b[0].number}-${b[b.length - 1].number}`,
-      unitIndex: i
+      unitIndex: i,
+      questions: b.map(q => ({ number: q.number, key: `${test}-5-${q.number}` }))
     }));
   }
   return data.passages.map((p, i) => ({
@@ -1176,21 +1320,36 @@ async function jumpToUnit(test, part, unitIndex) {
   renderPractice();
 }
 
-// 1行1ユニット: リンク(ジャンプ)+挑戦回数メーター(5段階ドット+数字+-/+ボタン)。
-function buildUnitRow(container, u, onJump) {
-  const row = document.createElement('div');
-  row.className = 'unit-row';
+// 現在のPartが終わったときの「次のPartへ」導線。ランディングのプルダウンはもう
+// 存在しないので、メッセージだけでなく直接ジャンプできるボタンを添える。
+async function jumpToNextPart() {
+  let nextPart = state.part + 1;
+  let nextTest = state.test;
+  if (nextPart > 7) { nextPart = 1; nextTest = state.test === 'T1' ? 'T2' : null; }
+  if (!nextTest) {
+    practiceBodyEl.innerHTML = '<p>お疲れ様でした。すべてのPartが終了しました。</p>';
+    return;
+  }
+  await jumpToUnit(nextTest, nextPart, 0);
+}
 
-  const a = document.createElement('a');
-  a.href = '#';
-  a.className = 'unit-link';
-  a.textContent = u.label;
-  a.addEventListener('click', e => {
-    e.preventDefault();
-    onJump();
-  });
-  row.appendChild(a);
+function showPartComplete() {
+  const wrap = document.createElement('div');
+  const p = document.createElement('p');
+  p.textContent = 'このPartは終了です。';
+  wrap.appendChild(p);
+  const btn = document.createElement('button');
+  btn.className = 'grade-btn';
+  btn.textContent = '次のPartへ';
+  btn.addEventListener('click', () => jumpToNextPart());
+  wrap.appendChild(btn);
+  practiceBodyEl.innerHTML = '';
+  practiceBodyEl.appendChild(wrap);
+}
 
+// 挑戦回数メーター(最大10段階の四角+数字+-/+ボタン)。直近の採点が正解なら緑、
+// 不正解なら赤で塗る。Part1/2/6/7の単一行にも、Part3/4/5の個別問題行にも使う。
+function buildMeterEl(key) {
   const meter = document.createElement('div');
   meter.className = 'attempt-meter';
   const minusBtn = document.createElement('button');
@@ -1206,12 +1365,14 @@ function buildUnitRow(container, u, onJump) {
   plusBtn.className = 'meter-btn';
   plusBtn.textContent = '＋';
 
+  const MAX_DOTS = 10;
   function refreshMeter() {
-    const count = getAttemptCount(u.key);
+    const { count, lastCorrect } = getAttemptEntry(key);
     dotsWrap.innerHTML = '';
-    for (let i = 0; i < 5; i++) {
+    const colorClass = lastCorrect === false ? ' wrong' : ' correct';
+    for (let i = 0; i < MAX_DOTS; i++) {
       const dot = document.createElement('span');
-      dot.className = 'meter-dot' + (i < Math.min(count, 5) ? ' filled' : '');
+      dot.className = 'meter-dot' + (i < Math.min(count, MAX_DOTS) ? ' filled' + colorClass : '');
       dotsWrap.appendChild(dot);
     }
     countEl.textContent = String(count);
@@ -1223,13 +1384,13 @@ function buildUnitRow(container, u, onJump) {
   minusBtn.addEventListener('click', e => {
     e.preventDefault();
     e.stopPropagation();
-    setAttemptCount(u.key, getAttemptCount(u.key) - 1);
+    setAttemptCount(key, getAttemptCount(key) - 1);
     refreshMeter();
   });
   plusBtn.addEventListener('click', e => {
     e.preventDefault();
     e.stopPropagation();
-    setAttemptCount(u.key, getAttemptCount(u.key) + 1);
+    setAttemptCount(key, getAttemptCount(key) + 1);
     refreshMeter();
   });
 
@@ -1237,9 +1398,50 @@ function buildUnitRow(container, u, onJump) {
   meter.appendChild(dotsWrap);
   meter.appendChild(countEl);
   meter.appendChild(plusBtn);
-  row.appendChild(meter);
+  return meter;
+}
+
+// 1行1ユニット: リンク(ジャンプ)+挑戦回数メーター。
+function buildUnitRow(container, u, onJump) {
+  const row = document.createElement('div');
+  row.className = 'unit-row';
+
+  const a = document.createElement('a');
+  a.href = '#';
+  a.className = 'unit-link';
+  a.textContent = u.label;
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    onJump();
+  });
+  row.appendChild(a);
+  row.appendChild(buildMeterEl(u.key));
 
   container.appendChild(row);
+}
+
+// Part3/4/5用: 1ユニット(まとめて採点される複数問題)を、括弧でグループ化しつつ
+// 問題番号ごとの個別行(個別メーター)として描画する。どの問題番号をクリックしても
+// 同じユニット(セット全体)にジャンプする。
+function buildGroupedUnitRow(container, u, onJump) {
+  const group = document.createElement('div');
+  group.className = 'unit-group';
+  u.questions.forEach(q => {
+    const row = document.createElement('div');
+    row.className = 'unit-row';
+    const a = document.createElement('a');
+    a.href = '#';
+    a.className = 'unit-link';
+    a.textContent = `Q${q.number}`;
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      onJump();
+    });
+    row.appendChild(a);
+    row.appendChild(buildMeterEl(q.key));
+    group.appendChild(row);
+  });
+  container.appendChild(group);
 }
 
 function buildLandingNav() {
@@ -1278,7 +1480,11 @@ function buildLandingNav() {
         const data = await loadPartData(test, part);
         const units = buildUnitList(test, part, data);
         unitsDiv.innerHTML = '';
-        units.forEach(u => buildUnitRow(unitsDiv, u, () => jumpToUnit(test, part, u.unitIndex)));
+        const grouped = part === 3 || part === 4 || part === 5;
+        units.forEach(u => {
+          if (grouped) buildGroupedUnitRow(unitsDiv, u, () => jumpToUnit(test, part, u.unitIndex));
+          else buildUnitRow(unitsDiv, u, () => jumpToUnit(test, part, u.unitIndex));
+        });
         unitsDiv.style.display = 'flex';
       });
 
@@ -1371,6 +1577,7 @@ function updateHeaderNav() {
 // ---------- Part別レンダリング ----------
 
 function renderPractice() {
+  saveAllVisibleNotes();
   practiceBodyEl.innerHTML = '';
   if (state.part === 1 || state.part === 2) renderPart1or2();
   else if (state.part === 3 || state.part === 4) renderPart3or4();
@@ -1504,7 +1711,7 @@ function renderShadowing(items, onComplete) {
   player.className = 'audio-player';
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'player-toggle';
-  toggleBtn.textContent = '▶️';
+  toggleBtn.textContent = '▶';
   const curTimeEl = document.createElement('span');
   curTimeEl.className = 'player-time';
   const trackEl = document.createElement('div');
@@ -1519,6 +1726,7 @@ function renderShadowing(items, onComplete) {
   player.appendChild(trackEl);
   player.appendChild(totalTimeEl);
   wrap.appendChild(player);
+  attachSeekable(trackEl, () => currentAudio);
 
   const hintEl = document.createElement('div');
   hintEl.className = 'training-hint';
@@ -1529,13 +1737,20 @@ function renderShadowing(items, onComplete) {
   textEl.className = 'shadowing-text';
   wrap.appendChild(textEl);
 
+  const jaEl = document.createElement('div');
+  jaEl.className = 'shadowing-text-ja';
+  wrap.appendChild(jaEl);
+
+  const notesSlot = document.createElement('div');
+  wrap.appendChild(notesSlot);
+
   const nextBtn = document.createElement('button');
   nextBtn.textContent = '次へ';
   nextBtn.style.marginTop = '12px';
   wrap.appendChild(nextBtn);
 
   function resetPlayerUI() {
-    toggleBtn.textContent = '▶️';
+    toggleBtn.textContent = '▶';
     fillEl.style.width = '0%';
     curTimeEl.textContent = '0:00';
     totalTimeEl.textContent = '0:00';
@@ -1552,7 +1767,7 @@ function renderShadowing(items, onComplete) {
       curTimeEl.textContent = formatPlayerTime(audio.currentTime);
       if (audio.duration) fillEl.style.width = Math.min(100, (audio.currentTime / audio.duration) * 100) + '%';
     });
-    audio.addEventListener('ended', () => { toggleBtn.textContent = '▶️'; fillEl.style.width = '0%'; curTimeEl.textContent = '0:00'; });
+    audio.addEventListener('ended', () => { toggleBtn.textContent = '▶'; fillEl.style.width = '0%'; curTimeEl.textContent = '0:00'; });
   }
 
   async function playFromStart() {
@@ -1565,16 +1780,16 @@ function renderShadowing(items, onComplete) {
     currentAudio = new Audio(url);
     attachAudioEvents(currentAudio);
     currentAudio.play();
-    toggleBtn.textContent = '⏸️';
+    toggleBtn.textContent = '❚❚';
   }
 
   toggleBtn.addEventListener('click', () => {
     if (currentAudio && !currentAudio.paused) {
       currentAudio.pause();
-      toggleBtn.textContent = '▶️';
+      toggleBtn.textContent = '▶';
     } else if (currentAudio) {
       currentAudio.play();
-      toggleBtn.textContent = '⏸️';
+      toggleBtn.textContent = '❚❚';
     } else {
       playFromStart();
     }
@@ -1587,12 +1802,18 @@ function renderShadowing(items, onComplete) {
     hintEl.style.display = item.audio ? 'block' : 'none';
     resetPlayerUI();
     textEl.textContent = item.text;
+    jaEl.textContent = item.ja || '';
+    jaEl.style.display = item.ja ? 'block' : 'none';
+    notesSlot.innerHTML = '';
+    if (item.noteKey) notesSlot.appendChild(buildNotesWidget(item.noteKey));
+    if (item.audio) playFromStart();
   }
 
   function keyHandler(e) {
     if (e.code === 'Space') { e.preventDefault(); playFromStart(); }
   }
   nextBtn.addEventListener('click', () => {
+    saveAllVisibleNotes();
     stopAudio();
     idx++;
     if (idx >= items.length) {
@@ -1619,20 +1840,24 @@ function p12CurrentGroup() {
   return state.data.questions.slice(p12.groupStart, p12.groupStart + 3);
 }
 
-// シャドーイングに正解/不正解の情報は不要なので、原文(と設問文)だけを渡す。
+// シャドーイングに正解/不正解の情報は不要なので、原文(と設問文)+日本語訳だけを渡す。
 function p12BuildShadowingItems(groupQuestions) {
   const isPart1 = state.part === 1;
   return groupQuestions.map(q => {
     const choiceTexts = isPart1 ? q.statements : q.responses;
+    const jaTexts = isPart1 ? q.statementsJa : q.responsesJa;
     const letters = Object.keys(choiceTexts);
     let text = '';
-    if (!isPart1) text += `${q.question}\n\n`;
+    let ja = '';
+    if (!isPart1) { text += `${q.question}\n\n`; ja += `${q.questionJa || ''}\n\n`; }
     text += letters.map(l => `(${l}) ${choiceTexts[l]}`).join('\n');
-    return { label: `Q${q.number}`, text, audio: q.audio };
+    ja += letters.map(l => `(${l}) ${jaTexts[l] || ''}`).join('\n');
+    return { label: `Q${q.number}`, text, ja, audio: q.audio, noteKey: `${state.test}-${state.part}-${q.number}` };
   });
 }
 
 function renderPart1or2() {
+  saveAllVisibleNotes();
   initP12IfNeeded();
   updateHeaderNav();
   if (p12.phase === 'shadowing') {
@@ -1642,7 +1867,7 @@ function renderPart1or2() {
       p12.phase = 'question';
       p12.selected = null;
       if (p12.groupStart >= state.data.questions.length) {
-        practiceBodyEl.innerHTML = '<p>このPartは終了です。上のプルダウンから次のPartを選んでください。</p>';
+        showPartComplete();
       } else {
         renderPart1or2();
       }
@@ -1693,6 +1918,11 @@ function renderPart1or2() {
   explainDiv.style.display = 'none';
   wrap.appendChild(explainDiv);
 
+  const notesSlot = document.createElement('div');
+  wrap.appendChild(notesSlot);
+  const askAiSlot = document.createElement('div');
+  wrap.appendChild(askAiSlot);
+
   const nextBtn = document.createElement('button');
   nextBtn.textContent = '次へ';
   nextBtn.style.display = 'block';
@@ -1711,7 +1941,11 @@ function renderPart1or2() {
       const jaTexts = isPart1 ? q.statementsJa : q.responsesJa;
       explainDiv.innerHTML = buildP12ExplainHtml(q, isPart1, choiceTexts, jaTexts, letters, p12.selected);
       explainDiv.style.display = 'block';
-      incrementAttempt(`${state.test}-${state.part}-${q.number}`);
+      const noteKey = `${state.test}-${state.part}-${q.number}`;
+      notesSlot.appendChild(buildNotesWidget(noteKey));
+      const questionContext = `Q${q.number}\n` + letters.map(l => `(${l}) ${choiceTexts[l]}`).join('\n') + `\n正解: (${q.answer})`;
+      askAiSlot.appendChild(buildAskAiWidget(questionContext));
+      incrementAttempt(noteKey, p12.selected === q.answer);
       const isLast = p12.qIdx >= groupQuestions.length - 1;
       nextBtn.textContent = isLast ? 'シャドーイングへ' : '次の問題へ';
     } else {
@@ -1735,13 +1969,17 @@ function initP34IfNeeded() {
   if (!p34) p34 = { groupIdx: 0, phase: 'question', selections: {} };
 }
 
-// シャドーイングに正解/不正解の情報は不要なので、原文だけを渡す。
+// シャドーイングに正解/不正解の情報は不要なので、原文だけを渡す。日本語訳は、解説画面で
+// 既に翻訳済みならそれを再利用する(未翻訳なら空のまま)。
 function p34BuildShadowingItems(g) {
   const text = g.items.map(item => `${item.number}. ${item.text}`).join('\n');
-  return [{ label: `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`, text, audio: g.audioQuestions }];
+  const noteKey = `${state.test}-${state.part}-${g.questions[0]}`;
+  const ja = getCachedNaturalJa(noteKey) || '';
+  return [{ label: `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`, text, ja, audio: g.audioQuestions, noteKey }];
 }
 
 function renderPart3or4() {
+  saveAllVisibleNotes();
   initP34IfNeeded();
   updateHeaderNav();
   const g = state.data.groups[p34.groupIdx];
@@ -1752,7 +1990,7 @@ function renderPart3or4() {
       p34.phase = 'question';
       p34.selections = {};
       if (p34.groupIdx >= state.data.groups.length) {
-        practiceBodyEl.innerHTML = '<p>このPartは終了です。上のプルダウンから次のPartを選んでください。</p>';
+        showPartComplete();
       } else {
         renderPart3or4();
       }
@@ -1813,7 +2051,10 @@ function renderPart3or4() {
     explainDiv.style.display = 'none';
     block.appendChild(explainDiv);
 
-    blocks[item.number] = { choicesDiv, explainDiv, letters };
+    const askAiSlot = document.createElement('div');
+    block.appendChild(askAiSlot);
+
+    blocks[item.number] = { choicesDiv, explainDiv, letters, askAiSlot };
     wrap.appendChild(block);
   });
 
@@ -1840,24 +2081,28 @@ function renderPart3or4() {
         explainDiv.textContent = (isCorrect ? '正解です!\n\n' : '不正解です。\n\n') + '解説を生成中...';
       });
       for (const item of g.items) {
-        const { explainDiv } = blocks[item.number];
+        const { explainDiv, askAiSlot } = blocks[item.number];
         const isCorrect = p34.selections[item.number] === item.answer;
         const prefixHtml = correctBannerHtml(isCorrect);
+        const questionText = `${item.number}. ${item.text}\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}\nあなたの回答: (${p34.selections[item.number]}) ${item.choices[p34.selections[item.number]]}`;
         let html;
         try {
-          const questionText = `${item.number}. ${item.text}\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}\nあなたの回答: (${p34.selections[item.number]}) ${item.choices[p34.selections[item.number]]}`;
           html = prefixHtml + await getRichExplanation(`${state.test}-${state.part}-${item.number}-${p34.selections[item.number]}`, questionText);
         } catch (e) {
           html = prefixHtml + `<div>解説の取得に失敗しました: ${escapeHtml(e.message)}</div>`;
         }
         explainDiv.innerHTML = html;
+        askAiSlot.appendChild(buildAskAiWidget(questionText));
       }
-      incrementAttempt(`${state.test}-${state.part}-${g.questions[0]}`);
+      g.items.forEach(item => {
+        incrementAttempt(`${state.test}-${state.part}-${item.number}`, p34.selections[item.number] === item.answer);
+      });
       const fullText = g.conversationText || g.talkText;
       if (fullText) {
         translateSlot.style.display = 'block';
         translateSlot.appendChild(buildTranslatableBlock(fullText, `${state.test}-${state.part}-${g.questions[0]}`));
       }
+      wrap.insertBefore(buildNotesWidget(`${state.test}-${state.part}-${g.questions[0]}`), nextBtn);
       nextBtn.disabled = false;
       nextBtn.textContent = 'シャドーイングへ';
     } else {
@@ -1872,6 +2117,7 @@ function renderPart3or4() {
 }
 
 function renderPart5() {
+  saveAllVisibleNotes();
   updateHeaderNav();
   const batch = getItemList()[state.index];
   const wrap = document.createElement('div');
@@ -1907,7 +2153,10 @@ function renderPart5() {
     explainDiv.style.display = 'none';
     block.appendChild(explainDiv);
 
-    blocks[q.number] = { choicesDiv, explainDiv, letters };
+    const askAiSlot = document.createElement('div');
+    block.appendChild(askAiSlot);
+
+    blocks[q.number] = { choicesDiv, explainDiv, letters, askAiSlot };
     wrap.appendChild(block);
   });
 
@@ -1931,17 +2180,21 @@ function renderPart5() {
     });
     gradeBtn.remove();
     for (const q of batch) {
-      const { explainDiv } = blocks[q.number];
+      const { explainDiv, askAiSlot } = blocks[q.number];
       const isCorrect = selections[q.number] === q.answer;
       const prefixHtml = correctBannerHtml(isCorrect);
+      const questionText = `${q.number}. ${q.sentence}\n選択肢: ${Object.entries(q.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${q.answer}) ${q.choices[q.answer]}\nあなたの回答: (${selections[q.number]}) ${q.choices[selections[q.number]]}`;
       try {
-        const questionText = `${q.number}. ${q.sentence}\n選択肢: ${Object.entries(q.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${q.answer}) ${q.choices[q.answer]}\nあなたの回答: (${selections[q.number]}) ${q.choices[selections[q.number]]}`;
         explainDiv.innerHTML = prefixHtml + await getRichExplanation(`${state.test}-5-${q.number}-${selections[q.number]}`, questionText, EXPLAIN_PROMPT_PART5, EXPLAIN_PROMPT_PART5_VERSION);
       } catch (e) {
         explainDiv.innerHTML = prefixHtml + `<div>解説の取得に失敗しました: ${escapeHtml(e.message)}</div>`;
       }
+      askAiSlot.appendChild(buildAskAiWidget(questionText));
     }
-    incrementAttempt(`${state.test}-5-${batch[0].number}`);
+    batch.forEach(q => {
+      incrementAttempt(`${state.test}-5-${q.number}`, selections[q.number] === q.answer);
+    });
+    wrap.appendChild(buildNotesWidget(`${state.test}-5-${batch[0].number}`));
   });
   wrap.appendChild(gradeBtn);
 
@@ -1961,7 +2214,7 @@ function p67AdvancePassage(renderFn) {
   p67.phase = 'question';
   p67.selections = {};
   if (p67.idx >= state.data.passages.length) {
-    practiceBodyEl.innerHTML = '<p>このPartは終了です。上のプルダウンから次のPartを選んでください。</p>';
+    showPartComplete();
   } else {
     renderFn();
   }
@@ -1998,7 +2251,10 @@ function p67RenderQuestionBlocks(wrap, items, getBlockLabel) {
     explainDiv.style.display = 'none';
     block.appendChild(explainDiv);
 
-    blocks[item.number] = { choicesDiv, explainDiv, letters };
+    const askAiSlot = document.createElement('div');
+    block.appendChild(askAiSlot);
+
+    blocks[item.number] = { choicesDiv, explainDiv, letters, askAiSlot };
     wrap.appendChild(block);
   });
 
@@ -2026,7 +2282,7 @@ async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, 
     explainDiv.textContent = (isCorrect ? '正解です!\n\n' : '不正解です。\n\n') + '解説を生成中...';
   });
   for (const item of items) {
-    const { explainDiv } = blocks[item.number];
+    const { explainDiv, askAiSlot } = blocks[item.number];
     const isCorrect = p67.selections[item.number] === item.answer;
     const prefixHtml = correctBannerHtml(isCorrect);
     let html;
@@ -2036,19 +2292,23 @@ async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, 
       html = prefixHtml + `<div>解説の取得に失敗しました: ${escapeHtml(e.message)}</div>`;
     }
     explainDiv.innerHTML = html;
+    askAiSlot.appendChild(buildAskAiWidget(questionTextBuilder(item)));
   }
-  incrementAttempt(attemptKey);
+  const allCorrect = items.every(item => p67.selections[item.number] === item.answer);
+  incrementAttempt(attemptKey, allCorrect);
   nextBtn.disabled = false;
   nextBtn.textContent = 'シャドーイングへ';
 }
 
 function renderPart6() {
+  saveAllVisibleNotes();
   initP67IfNeeded();
   updateHeaderNav();
   const p = state.data.passages[p67.idx];
 
   if (p67.phase === 'shadowing') {
-    const items = [{ label: '本文', text: p.text, audio: p.audio || null }];
+    const noteKey = `${state.test}-6-${p.questions[0]}`;
+    const items = [{ label: '本文', text: p.text, ja: getCachedNaturalJa(noteKey) || '', audio: p.audio || null, noteKey }];
     renderShadowing(items, () => p67AdvancePassage(renderPart6));
     return;
   }
@@ -2100,17 +2360,23 @@ function renderPart6() {
 }
 
 function renderPart7() {
+  saveAllVisibleNotes();
   initP67IfNeeded();
   updateHeaderNav();
   const p = state.data.passages[p67.idx];
 
   if (p67.phase === 'shadowing') {
     const audios = Array.isArray(p.audio) ? p.audio : (p.audio ? [p.audio] : []);
-    const items = p.documents.map((doc, di) => ({
-      label: doc.label || `文書${di + 1}`,
-      text: doc.text,
-      audio: audios[di] || audios[0] || null
-    }));
+    const items = p.documents.map((doc, di) => {
+      const noteKey = `${state.test}-7-${p.questions[0]}-doc${di}`;
+      return {
+        label: doc.label || `文書${di + 1}`,
+        text: doc.text,
+        ja: getCachedNaturalJa(noteKey) || '',
+        audio: audios[di] || audios[0] || null,
+        noteKey
+      };
+    });
     renderShadowing(items, () => p67AdvancePassage(renderPart7));
     return;
   }
