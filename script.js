@@ -1055,6 +1055,14 @@ function setAttemptCount(key, value) {
   store[key] = { count: Math.max(0, Math.min(99, value)), lastCorrect: prev.lastCorrect };
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
 }
+// Part6/7では挑戦回数(count)はパッセージ単位で共有するが、正誤の色分けは設問
+// ごとに分けたいので、countには触れずlastCorrectだけを別キーに記録する。
+function recordCorrectness(key, isCorrect) {
+  const store = getAttemptsStore();
+  const prev = getAttemptEntry(key);
+  store[key] = { count: prev.count, lastCorrect: !!isCorrect };
+  localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
+}
 
 // ---------- 学習ログ(総学習時間・今週の学習状況・総学習回数・連続学習日数) ----------
 // スタディサプリENGLISHのTOP画面を参考にしたダッシュボード。学習時間は、採点イベント
@@ -1295,11 +1303,16 @@ function buildUnitList(test, part, data) {
     }));
   }
   // Part6/7は採点(挑戦回数の記録)がパッセージ単位でまとめて行われるため、
-  // 個々の設問番号を括弧内に個別表示しつつ、メーターは同じキー(パッセージ
-  // 単位のattemptKey)を全問共有させることで、実際の記録粒度と表示を一致させる。
+  // 個々の設問番号を括弧内に個別表示しつつ、挑戦回数の数字はパッセージ単位の
+  // 共有キーを使う。一方、正誤の色分けだけは設問ごとに分けたいので、色用に
+  // 別キー(colorKey)を持たせ、buildMeterElで数字と色を別々のキーから読む。
   return data.passages.map((p, i) => ({
     unitIndex: i,
-    questions: p.questions.map(qn => ({ number: qn, key: `${test}-${part}-${p.questions[0]}` }))
+    questions: p.questions.map(qn => ({
+      number: qn,
+      key: `${test}-${part}-${p.questions[0]}`,
+      colorKey: `${test}-${part}-${qn}-correct`
+    }))
   }));
 }
 
@@ -1357,7 +1370,8 @@ function showPartComplete() {
 
 // 挑戦回数メーター(最大10段階の四角+数字+-/+ボタン)。直近の採点が正解なら緑、
 // 不正解なら赤で塗る。Part1/2/6/7の単一行にも、Part3/4/5の個別問題行にも使う。
-function buildMeterEl(key) {
+function buildMeterEl(key, colorKey) {
+  if (colorKey === undefined) colorKey = key;
   const meter = document.createElement('div');
   meter.className = 'attempt-meter';
   const minusBtn = document.createElement('button');
@@ -1375,7 +1389,8 @@ function buildMeterEl(key) {
 
   const MAX_DOTS = 5;
   function refreshMeter() {
-    const { count, lastCorrect } = getAttemptEntry(key);
+    const { count } = getAttemptEntry(key);
+    const { lastCorrect } = getAttemptEntry(colorKey);
     dotsWrap.innerHTML = '';
     const colorClass = lastCorrect === false ? ' wrong' : ' correct';
     for (let i = 0; i < MAX_DOTS; i++) {
@@ -1446,7 +1461,7 @@ function buildGroupedUnitRow(container, u, onJump) {
       onJump();
     });
     row.appendChild(a);
-    row.appendChild(buildMeterEl(q.key));
+    row.appendChild(buildMeterEl(q.key, q.colorKey));
     group.appendChild(row);
   });
   container.appendChild(group);
@@ -2321,6 +2336,9 @@ async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, 
   }
   const allCorrect = items.every(item => p67.selections[item.number] === item.answer);
   incrementAttempt(attemptKey, allCorrect);
+  items.forEach(item => {
+    recordCorrectness(`${state.test}-${state.part}-${item.number}-correct`, p67.selections[item.number] === item.answer);
+  });
   nextBtn.disabled = false;
   nextBtn.textContent = 'シャドーイングへ';
 }
