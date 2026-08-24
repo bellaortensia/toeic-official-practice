@@ -366,6 +366,10 @@ audio{
   background:#faf7ee;border:1px solid var(--line);border-radius:8px;
   padding:8px 14px;margin:4px 4px 4px 0;
 }
+.player-restart{
+  background:none;border:none;font-size:13px;line-height:1;cursor:pointer;padding:0;
+  color:var(--text-soft);width:18px;text-align:center;
+}
 .player-toggle{
   background:none;border:none;font-size:15px;line-height:1;cursor:pointer;padding:0;
   color:var(--accent-2);width:22px;text-align:center;

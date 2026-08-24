@@ -916,6 +916,10 @@ function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
 
   const player = document.createElement('div');
   player.className = 'audio-player';
+  const restartBtn = document.createElement('button');
+  restartBtn.className = 'player-restart';
+  restartBtn.textContent = '⏮';
+  restartBtn.title = '初めから再生';
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'player-toggle';
   toggleBtn.textContent = '▶';
@@ -930,6 +934,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
   const totalTimeEl = document.createElement('span');
   totalTimeEl.className = 'player-time';
   totalTimeEl.textContent = '0:00';
+  player.appendChild(restartBtn);
   player.appendChild(toggleBtn);
   player.appendChild(curTimeEl);
   player.appendChild(trackEl);
@@ -981,6 +986,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
       playFromStart();
     }
   });
+  restartBtn.addEventListener('click', () => playFromStart());
 
   if (autoplay && list.length) playFromStart();
 
@@ -1720,6 +1726,10 @@ function renderShadowing(items, onComplete) {
 
   const player = document.createElement('div');
   player.className = 'audio-player';
+  const restartBtn = document.createElement('button');
+  restartBtn.className = 'player-restart';
+  restartBtn.textContent = '⏮';
+  restartBtn.title = '初めから再生';
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'player-toggle';
   toggleBtn.textContent = '▶';
@@ -1732,6 +1742,7 @@ function renderShadowing(items, onComplete) {
   trackEl.appendChild(fillEl);
   const totalTimeEl = document.createElement('span');
   totalTimeEl.className = 'player-time';
+  player.appendChild(restartBtn);
   player.appendChild(toggleBtn);
   player.appendChild(curTimeEl);
   player.appendChild(trackEl);
@@ -1805,6 +1816,7 @@ function renderShadowing(items, onComplete) {
       playFromStart();
     }
   });
+  restartBtn.addEventListener('click', () => playFromStart());
 
   function render() {
     const item = items[idx];
