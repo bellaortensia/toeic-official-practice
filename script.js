@@ -923,6 +923,16 @@ function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'player-toggle';
   toggleBtn.textContent = '▶';
+  // 複数トラック(問題文→設問)の場合のみ、問題文だけを繰り返し再生するボタンを出す。
+  let loopFirst = false;
+  const loopBtn = document.createElement('button');
+  loopBtn.className = 'player-loop';
+  loopBtn.textContent = '🔁';
+  loopBtn.title = '問題文を繰り返し再生';
+  loopBtn.addEventListener('click', () => {
+    loopFirst = !loopFirst;
+    loopBtn.classList.toggle('active', loopFirst);
+  });
   const curTimeEl = document.createElement('span');
   curTimeEl.className = 'player-time';
   curTimeEl.textContent = '0:00';
@@ -936,6 +946,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
   totalTimeEl.textContent = '0:00';
   player.appendChild(restartBtn);
   player.appendChild(toggleBtn);
+  if (list.length > 1) player.appendChild(loopBtn);
   player.appendChild(curTimeEl);
   player.appendChild(trackEl);
   player.appendChild(totalTimeEl);
@@ -964,7 +975,10 @@ function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
     if (!url) return;
     currentAudio = new Audio(url);
     attachEvents(currentAudio);
-    currentAudio.addEventListener('ended', () => playIndex(i + 1));
+    currentAudio.addEventListener('ended', () => {
+      if (i === 0 && loopFirst) playIndex(0);
+      else playIndex(i + 1);
+    });
     currentAudio.play();
     toggleBtn.textContent = '❚❚';
   }
@@ -1308,6 +1322,7 @@ function buildUnitList(test, part, data) {
   // 別キー(colorKey)を持たせ、buildMeterElで数字と色を別々のキーから読む。
   return data.passages.map((p, i) => ({
     unitIndex: i,
+    label: p.topic || '',
     questions: p.questions.map(qn => ({
       number: qn,
       key: `${test}-${part}-${p.questions[0]}`,
@@ -1449,6 +1464,12 @@ function buildUnitRow(container, u, onJump) {
 function buildGroupedUnitRow(container, u, onJump) {
   const group = document.createElement('div');
   group.className = 'unit-group';
+  if (u.label) {
+    const labelEl = document.createElement('div');
+    labelEl.className = 'unit-group-label';
+    labelEl.textContent = u.label.toUpperCase();
+    group.appendChild(labelEl);
+  }
   u.questions.forEach(q => {
     const row = document.createElement('div');
     row.className = 'unit-row';
