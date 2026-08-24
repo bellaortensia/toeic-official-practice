@@ -952,7 +952,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
   }
 
   async function playIndex(i) {
-    if (i >= list.length) { resetUI(); return; }
+    if (i >= list.length) { currentAudio = null; resetUI(); return; }
     toggleBtn.disabled = true;
     const url = await getAudioUrl(list[i]);
     toggleBtn.disabled = false;
