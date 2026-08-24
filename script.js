@@ -1294,10 +1294,12 @@ function buildUnitList(test, part, data) {
       questions: b.map(q => ({ number: q.number, key: `${test}-5-${q.number}` }))
     }));
   }
+  // Part6/7は採点(挑戦回数の記録)がパッセージ単位でまとめて行われるため、
+  // 個々の設問番号を括弧内に個別表示しつつ、メーターは同じキー(パッセージ
+  // 単位のattemptKey)を全問共有させることで、実際の記録粒度と表示を一致させる。
   return data.passages.map((p, i) => ({
-    key: `${test}-${part}-${p.questions[0]}`,
-    label: `Q${p.questions[0]}-${p.questions[p.questions.length - 1]}${p.topic ? ' (' + p.topic + ')' : ''}`,
-    unitIndex: i
+    unitIndex: i,
+    questions: p.questions.map(qn => ({ number: qn, key: `${test}-${part}-${p.questions[0]}` }))
   }));
 }
 
@@ -1486,7 +1488,7 @@ function buildLandingNav() {
         const data = await loadPartData(test, part);
         const units = buildUnitList(test, part, data);
         unitsDiv.innerHTML = '';
-        const grouped = part === 3 || part === 4 || part === 5;
+        const grouped = part === 3 || part === 4 || part === 5 || part === 6 || part === 7;
         // 縦に2列(左列を上から埋めてから右列)で並べるため、ここでJS側で
         // 半分に分割して2つの列コンテナに振り分ける(CSS column-countは
         // display:flex等と組み合わさると列数が崩れるため使わない)。
