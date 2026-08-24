@@ -1481,9 +1481,20 @@ function buildLandingNav() {
         const units = buildUnitList(test, part, data);
         unitsDiv.innerHTML = '';
         const grouped = part === 3 || part === 4 || part === 5;
-        units.forEach(u => {
-          if (grouped) buildGroupedUnitRow(unitsDiv, u, () => jumpToUnit(test, part, u.unitIndex));
-          else buildUnitRow(unitsDiv, u, () => jumpToUnit(test, part, u.unitIndex));
+        // 縦に2列(左列を上から埋めてから右列)で並べるため、ここでJS側で
+        // 半分に分割して2つの列コンテナに振り分ける(CSS column-countは
+        // display:flex等と組み合わさると列数が崩れるため使わない)。
+        const colLeft = document.createElement('div');
+        colLeft.className = 'landing-col';
+        const colRight = document.createElement('div');
+        colRight.className = 'landing-col';
+        unitsDiv.appendChild(colLeft);
+        unitsDiv.appendChild(colRight);
+        const half = Math.ceil(units.length / 2);
+        units.forEach((u, i) => {
+          const col = i < half ? colLeft : colRight;
+          if (grouped) buildGroupedUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex));
+          else buildUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex));
         });
         unitsDiv.style.display = 'flex';
       });
