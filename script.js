@@ -1365,7 +1365,7 @@ function buildMeterEl(key) {
   plusBtn.className = 'meter-btn';
   plusBtn.textContent = '＋';
 
-  const MAX_DOTS = 10;
+  const MAX_DOTS = 5;
   function refreshMeter() {
     const { count, lastCorrect } = getAttemptEntry(key);
     dotsWrap.innerHTML = '';
