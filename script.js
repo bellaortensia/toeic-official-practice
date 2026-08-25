@@ -1206,6 +1206,7 @@ function incrementAttempt(key, isCorrect) {
   store[key] = { count: Math.min(99, prev.count + 1), lastCorrect: isCorrect == null ? prev.lastCorrect : !!isCorrect };
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
   recordStudyActivity();
+  recordDailyQuestion(key, isCorrect);
 }
 function setAttemptCount(key, value) {
   const store = getAttemptsStore();
@@ -1343,6 +1344,196 @@ function formatClock(totalSeconds) {
   return `${h}:${String(m).padStart(2, '0')}`;
 }
 
+// ---------- 日別の学習内容ログ(コーチメッセージ用) ----------
+// 「前日」に固定すると勉強しない日があるとヒットしなくなるため、記録がある日付の
+// うち今日より前で一番新しい日を対象にする(dayCounts/daySecondsとは別に、
+// どの問題に取り組んだかをこちらに記録する)。
+
+const DAILY_QUESTIONS_LS = 'toeicOfficialPractice.dailyQuestions';
+
+function getDailyQuestionsLog() {
+  try { return JSON.parse(localStorage.getItem(DAILY_QUESTIONS_LS) || '{}'); }
+  catch (e) { return {}; }
+}
+
+function recordDailyQuestion(key, isCorrect) {
+  const log = getDailyQuestionsLog();
+  const dateKey = localDateKey();
+  if (!log[dateKey]) log[dateKey] = {};
+  log[dateKey][key] = isCorrect == null ? null : !!isCorrect;
+  try { localStorage.setItem(DAILY_QUESTIONS_LS, JSON.stringify(log)); } catch (e) { /* 保存容量オーバー等は無視 */ }
+}
+
+function getMostRecentStudyDateKey() {
+  const log = getDailyQuestionsLog();
+  const today = localDateKey();
+  const dates = Object.keys(log).filter(d => d < today && Object.keys(log[d]).length > 0).sort();
+  return dates.length ? dates[dates.length - 1] : null;
+}
+
+function stripHtmlToText(html) {
+  const div = document.createElement('div');
+  div.innerHTML = html || '';
+  return (div.textContent || '').replace(/\s+/g, ' ').trim();
+}
+
+// ---------- AIコーチメッセージ(1日1回、その日初めてトップを開いた時に自動生成) ----------
+
+const COACH_HISTORY_LS = 'toeicOfficialPractice.coachHistory';
+
+function getCoachHistory() {
+  try { return JSON.parse(localStorage.getItem(COACH_HISTORY_LS) || '{}'); }
+  catch (e) { return {}; }
+}
+
+function saveCoachHistoryEntry(generatedDateKey, entry) {
+  const history = getCoachHistory();
+  history[generatedDateKey] = entry;
+  try { localStorage.setItem(COACH_HISTORY_LS, JSON.stringify(history)); } catch (e) { /* 保存容量オーバー等は無視 */ }
+}
+
+const COACH_PROMPT = `あなたは、TOEIC800点を目指して6年間勉強を続けている50歳の学習者専属のコーチです。現在の自己ベストは700点です。
+以下に、学習者が直近に勉強した日の記録(取り組んだ問題数・正誤・書いたノート・AIへの質問)を渡します。これを踏まえて日本語でメッセージを書いてください。
+
+必ず守ること:
+- 冒頭は必ず励ましの言葉から始めること。長年努力を続けていることを労い、モチベーションを支える一言にすること。
+- その後、渡された記録の内容(語彙・文法・問題の話題など)に具体的に触れながら、学習者が「おそらく身についた・理解できたであろう内容」と「おそらくまだ曖昧・知らなかったであろう内容」をリマインドすること。抽象的な精神論だけで終わらせないこと。
+- 説教くさくならず、専属コーチとして自然に語りかける文体にすること。
+- 全体で日本語400〜500字程度に収めること。
+- Markdown記号(**など)や見出し記号、箇条書き記号は使わず、プレーンテキストの文章のみを書くこと。`;
+
+const COACH_PROMPT_NO_DATA = `あなたは、TOEIC800点を目指して6年間勉強を続けている50歳の学習者専属のコーチです。現在の自己ベストは700点です。
+今回はまだ学習記録が見当たりません(これから勉強を始める、または記録がリセットされた状態です)。励ましの言葉から始め、今日はどんなことに取り組むと良いか軽く後押しするメッセージを、日本語300字程度で書いてください。
+Markdown記号や見出し記号、箇条書き記号は使わず、プレーンテキストの文章のみを書くこと。`;
+
+function buildCoachContext(studyDateKey) {
+  const log = getDailyQuestionsLog();
+  const dayLog = log[studyDateKey] || {};
+  const keys = Object.keys(dayLog);
+  const correctCount = keys.filter(k => dayLog[k] === true).length;
+  const incorrectKeys = keys.filter(k => dayLog[k] === false);
+
+  const noteLines = [];
+  keys.forEach(k => {
+    const note = stripHtmlToText(localStorage.getItem(NOTES_LS_PREFIX + k));
+    if (note) noteLines.push(`[${k}] ${note.slice(0, 300)}`);
+    const aiNote = stripHtmlToText(localStorage.getItem(NOTES_LS_PREFIX + k + '-ai'));
+    if (aiNote) noteLines.push(`[${k}のAI質問履歴] ${aiNote.slice(0, 300)}`);
+  });
+
+  let text = `学習日: ${studyDateKey}\n取り組んだ問題数: ${keys.length}問(正解 ${correctCount} / 不正解 ${incorrectKeys.length})\n`;
+  if (incorrectKeys.length) text += `不正解だった問題番号: ${incorrectKeys.join(', ')}\n`;
+  if (noteLines.length) text += `\n書いたノート・AIへの質問:\n${noteLines.slice(0, 20).join('\n')}`;
+  return text;
+}
+
+async function generateCoachMessage() {
+  const studyDateKey = getMostRecentStudyDateKey();
+  if (!studyDateKey) return await callGemini(COACH_PROMPT_NO_DATA, 'まだ記録がありません。', { maxOutputTokens: 500 });
+  const context = buildCoachContext(studyDateKey);
+  return await callGemini(COACH_PROMPT, context, { maxOutputTokens: 700 });
+}
+
+let coachGenerationInFlight = null;
+
+async function loadOrGenerateCoachMessage(textareaEl, statusEl) {
+  const todayKey = localDateKey();
+  const history = getCoachHistory();
+  if (history[todayKey]) {
+    textareaEl.value = history[todayKey].text;
+    return;
+  }
+  if (!getGeminiKey() && !getGeminiPaidKey()) {
+    textareaEl.value = '';
+    textareaEl.placeholder = 'AIコーチを使うには、上の「設定」からGemini APIキーを入力してください。';
+    return;
+  }
+  if (!coachGenerationInFlight) {
+    statusEl.textContent = 'コーチメッセージを準備中...';
+    coachGenerationInFlight = generateCoachMessage()
+      .then(text => {
+        saveCoachHistoryEntry(todayKey, { studiedDate: getMostRecentStudyDateKey(), text });
+        return text;
+      })
+      .catch(e => `コーチメッセージの取得に失敗しました: ${e.message}`)
+      .finally(() => { coachGenerationInFlight = null; });
+  }
+  const text = await coachGenerationInFlight;
+  textareaEl.value = text;
+  statusEl.textContent = '';
+}
+
+function renderCoachHistoryPanel(panelEl) {
+  const history = getCoachHistory();
+  const dates = Object.keys(history).sort().reverse();
+  panelEl.innerHTML = '';
+  if (!dates.length) {
+    panelEl.innerHTML = '<p class="coach-history-empty">まだ履歴がありません。</p>';
+    return;
+  }
+  dates.forEach(dateKey => {
+    const entry = history[dateKey];
+    const item = document.createElement('div');
+    item.className = 'coach-history-item';
+    const label = document.createElement('div');
+    label.className = 'coach-history-date';
+    label.textContent = dateKey;
+    const body = document.createElement('div');
+    body.className = 'coach-history-text';
+    body.textContent = entry.text;
+    item.appendChild(label);
+    item.appendChild(body);
+    panelEl.appendChild(item);
+  });
+}
+
+function buildCoachBox() {
+  const box = document.createElement('div');
+  box.className = 'coach-box';
+
+  const label = document.createElement('div');
+  label.className = 'coach-label';
+  label.textContent = '🎯 専属コーチからのメッセージ';
+
+  const status = document.createElement('span');
+  status.className = 'coach-status';
+
+  const labelRow = document.createElement('div');
+  labelRow.className = 'coach-label-row';
+  labelRow.appendChild(label);
+  labelRow.appendChild(status);
+
+  const textarea = document.createElement('textarea');
+  textarea.className = 'coach-textarea';
+  textarea.readOnly = true;
+  textarea.rows = 6;
+
+  const historyBtn = document.createElement('button');
+  historyBtn.className = 'reveal-btn coach-history-btn';
+  historyBtn.type = 'button';
+  historyBtn.textContent = '過去のコーチメッセージ';
+
+  const historyPanel = document.createElement('div');
+  historyPanel.className = 'coach-history-panel';
+  historyPanel.style.display = 'none';
+
+  historyBtn.addEventListener('click', () => {
+    const showing = historyPanel.style.display !== 'none';
+    if (showing) { historyPanel.style.display = 'none'; return; }
+    renderCoachHistoryPanel(historyPanel);
+    historyPanel.style.display = 'block';
+  });
+
+  box.appendChild(labelRow);
+  box.appendChild(textarea);
+  box.appendChild(historyBtn);
+  box.appendChild(historyPanel);
+
+  loadOrGenerateCoachMessage(textarea, status);
+
+  return box;
+}
+
 function renderStatsDashboard() {
   const container = document.getElementById('statsDashboard');
   if (!container) return;
@@ -1414,6 +1605,8 @@ function renderStatsDashboard() {
 
   top.appendChild(grid);
   container.appendChild(top);
+
+  container.appendChild(buildCoachBox());
 
   const actions = document.createElement('div');
   actions.className = 'dashboard-actions';
