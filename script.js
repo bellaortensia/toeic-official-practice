@@ -392,8 +392,10 @@ async function askAiAboutQuestion(questionContext, userQuestion) {
 }
 
 // questionContextは、その設問の問題文・選択肢・正解などを含むプレーンテキスト
-// (getRichExplanationに渡しているquestionTextと同じもので良い)。
-function buildAskAiWidget(questionContext) {
+// (getRichExplanationに渡しているquestionTextと同じもので良い)。noteKeyを渡すと、
+// 質問・回答の履歴を(その設問のノートと同じ仕組みで)localStorage/スプレッドシートに
+// 保存し、次回開いたときに復元する。履歴は連続して積み上げ、消さない。
+function buildAskAiWidget(questionContext, noteKey) {
   const wrap = document.createElement('div');
   wrap.className = 'ask-ai-wrap';
   const label = document.createElement('div');
@@ -415,21 +417,42 @@ function buildAskAiWidget(questionContext) {
   wrap.appendChild(row);
 
   const answerArea = document.createElement('div');
-  answerArea.className = 'ask-ai-answer';
+  answerArea.className = 'ask-ai-answer notes-area';
   answerArea.style.display = 'none';
   wrap.appendChild(answerArea);
+
+  if (noteKey) {
+    restoreNotesIfSaved(answerArea, `${noteKey}-ai`).then(() => {
+      if (answerArea.innerHTML.trim()) answerArea.style.display = 'block';
+    });
+  }
+
+  function appendEntry(question, answerText) {
+    const qDiv = document.createElement('div');
+    const strong = document.createElement('strong');
+    strong.style.color = '#c1503f';
+    strong.textContent = 'Q. ' + question;
+    qDiv.appendChild(strong);
+    answerArea.appendChild(qDiv);
+    const aDiv = document.createElement('div');
+    aDiv.className = 'ask-ai-answer-entry';
+    aDiv.textContent = answerText;
+    answerArea.appendChild(aDiv);
+    return aDiv;
+  }
 
   async function ask() {
     const q = input.value.trim();
     if (!q) return;
+    input.value = '';
     btn.disabled = true;
     btn.textContent = '質問中...';
     answerArea.style.display = 'block';
-    answerArea.textContent = '回答を生成中...';
+    const aDiv = appendEntry(q, '回答を生成中...');
     try {
-      answerArea.textContent = await askAiAboutQuestion(questionContext, q);
+      aDiv.textContent = await askAiAboutQuestion(questionContext, q);
     } catch (e) {
-      answerArea.textContent = '回答の取得に失敗しました: ' + e.message;
+      aDiv.textContent = '回答の取得に失敗しました: ' + e.message;
     }
     btn.disabled = false;
     btn.textContent = '質問する';
@@ -564,6 +587,27 @@ function renderTranslationChunks(container, segments, notesArea) {
   setSeg(0);
 }
 
+// スラッシュリーディング用に、接続詞・関係詞・主要な前置詞の直前とカンマの直後に
+// "/"を挿入する(AIを呼ばずルールベースで行うため無料・即時)。原文の文字自体は
+// 一切変更・削除しない(空白と"/"の挿入のみ)。
+const SLASH_CONNECTORS = [
+  'because', 'although', 'though', 'unless', 'until', 'while', 'whereas', 'if', 'when', 'before', 'after', 'since',
+  'that', 'which', 'who', 'whom', 'whose', 'where',
+  'and', 'but', 'or',
+  'in', 'on', 'at', 'with', 'for', 'from', 'about', 'during', 'without', 'within', 'between', 'among'
+];
+const SLASH_CONNECTOR_RE = new RegExp('\\s+(' + SLASH_CONNECTORS.join('|') + ')\\s+', 'gi');
+function insertSlashMarks(text) {
+  return text.split('\n').map(line => {
+    if (!line.trim()) return line;
+    let out = line.replace(/,\s+/g, ', / ');
+    out = out.replace(SLASH_CONNECTOR_RE, (m, word) => ` / ${word} `);
+    out = out.replace(/\s*\/\s*\/\s*/g, ' / ');
+    out = out.replace(/^\s*\/\s*/, '');
+    return out;
+  }).join('\n');
+}
+
 // 解説画面用の翻訳ウィジェット:「翻訳」ボタンで開き、直訳(チャンク表示)⇄意訳の
 // 切り替え、ワイド/トールモード、クリックしたチャンクの解説をノートへ書き写す機能を持つ。
 // 問題文の原文表示そのものを、decode-toeicの英文貼り付け欄のように
@@ -616,9 +660,11 @@ function buildTranslatableBlock(text, cacheKey) {
 
   wrap.appendChild(controls);
 
+  const slashText = insertSlashMarks(text);
+
   const box = document.createElement('div');
   box.className = 'doc-box translate-box';
-  box.textContent = text;
+  box.textContent = slashText;
   wrap.appendChild(box);
 
   let loaded = false;
@@ -682,7 +728,7 @@ function buildTranslatableBlock(text, cacheKey) {
   function renderPlain() {
     box.className = 'doc-box translate-box';
     box.innerHTML = '';
-    box.textContent = text;
+    box.textContent = slashText;
   }
 
   async function doTranslate(forceRefresh) {
@@ -923,7 +969,8 @@ function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'player-toggle';
   toggleBtn.textContent = '▶';
-  // 複数トラック(問題文→設問)の場合のみ、問題文だけを繰り返し再生するボタンを出す。
+  // 問題文(先頭トラック)だけを繰り返し再生するボタン。設問トラックがある場合は
+  // そちらへは進んだ後ループしない(問題文のみ繰り返す)。
   let loopFirst = false;
   const loopBtn = document.createElement('button');
   loopBtn.className = 'player-loop';
@@ -946,7 +993,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
   totalTimeEl.textContent = '0:00';
   player.appendChild(restartBtn);
   player.appendChild(toggleBtn);
-  if (list.length > 1) player.appendChild(loopBtn);
+  player.appendChild(loopBtn);
   player.appendChild(curTimeEl);
   player.appendChild(trackEl);
   player.appendChild(totalTimeEl);
@@ -1618,15 +1665,42 @@ const headerNextBtn = document.getElementById('header-next-btn');
 headerPrevBtn.addEventListener('click', () => goToAdjacentUnit(-1));
 headerNextBtn.addEventListener('click', () => goToAdjacentUnit(1));
 
+const footerPrevBtn = document.getElementById('footer-prev-btn');
+const footerNextBtn = document.getElementById('footer-next-btn');
+const progressLabelBottomEl = document.getElementById('progress-label-bottom');
+footerPrevBtn.addEventListener('click', () => goToAdjacentUnit(-1));
+footerNextBtn.addEventListener('click', () => goToAdjacentUnit(1));
+
+// 画面上部のPart切り替えドロップダウン: test1 part1〜test2 part7を全て列挙し、
+// 選ぶとその1問目にジャンプする。
+const partJumpSelectEl = document.getElementById('partJumpSelect');
+['T1', 'T2'].forEach(test => {
+  for (let part = 1; part <= 7; part++) {
+    const opt = document.createElement('option');
+    opt.value = `${test}-${part}`;
+    opt.textContent = `${test === 'T1' ? 'test1' : 'test2'} part${part}`;
+    partJumpSelectEl.appendChild(opt);
+  }
+});
+partJumpSelectEl.addEventListener('change', () => {
+  const [test, partStr] = partJumpSelectEl.value.split('-');
+  jumpToUnit(test, Number(partStr), 0);
+});
+
 // renderPart1or2/3or4/6/7は途中のフェーズ遷移(次の問題へ、シャドーイングへ、など)で
 // renderPractice()を経由せず自分自身を再帰的に呼び出すため、進捗表示とボタンの
 // 有効/無効はrenderPractice()側ではなく、各renderPartX()の先頭で毎回更新する。
 function updateHeaderNav() {
   const unitIdx = getCurrentUnitIndex();
   const unitCount = getItemCount();
-  progressLabelEl.textContent = `${unitIdx + 1} / ${unitCount}`;
+  const label = `${unitIdx + 1} / ${unitCount}`;
+  progressLabelEl.textContent = label;
+  progressLabelBottomEl.textContent = label;
   headerPrevBtn.disabled = unitIdx <= 0;
   headerNextBtn.disabled = unitIdx >= unitCount - 1;
+  footerPrevBtn.disabled = unitIdx <= 0;
+  footerNextBtn.disabled = unitIdx >= unitCount - 1;
+  partJumpSelectEl.value = `${state.test}-${state.part}`;
 }
 
 // ---------- Part別レンダリング ----------
@@ -2005,15 +2079,19 @@ function renderPart1or2() {
       const noteKey = `${state.test}-${state.part}-${q.number}`;
       notesSlot.appendChild(buildNotesWidget(noteKey));
       const questionContext = `Q${q.number}\n` + letters.map(l => `(${l}) ${choiceTexts[l]}`).join('\n') + `\n正解: (${q.answer})`;
-      askAiSlot.appendChild(buildAskAiWidget(questionContext));
+      askAiSlot.appendChild(buildAskAiWidget(questionContext, noteKey));
       incrementAttempt(noteKey, p12.selected === q.answer);
-      const isLast = p12.qIdx >= groupQuestions.length - 1;
-      nextBtn.textContent = isLast ? 'シャドーイングへ' : '次の問題へ';
+      nextBtn.textContent = '次へ';
     } else {
       p12.qIdx++;
       p12.selected = null;
       if (p12.qIdx >= groupQuestions.length) {
-        p12.phase = 'shadowing';
+        p12.groupStart += 3;
+        p12.qIdx = 0;
+        if (p12.groupStart >= state.data.questions.length) {
+          showPartComplete();
+          return;
+        }
       }
       renderPart1or2();
     }
@@ -2153,7 +2231,7 @@ function renderPart3or4() {
           html = prefixHtml + `<div>解説の取得に失敗しました: ${escapeHtml(e.message)}</div>`;
         }
         explainDiv.innerHTML = html;
-        askAiSlot.appendChild(buildAskAiWidget(questionText));
+        askAiSlot.appendChild(buildAskAiWidget(questionText, `${state.test}-${state.part}-${item.number}`));
       }
       g.items.forEach(item => {
         incrementAttempt(`${state.test}-${state.part}-${item.number}`, p34.selections[item.number] === item.answer);
@@ -2165,9 +2243,15 @@ function renderPart3or4() {
       }
       wrap.insertBefore(buildNotesWidget(`${state.test}-${state.part}-${g.questions[0]}`), nextBtn);
       nextBtn.disabled = false;
-      nextBtn.textContent = 'シャドーイングへ';
+      nextBtn.textContent = '次へ';
     } else {
-      p34.phase = 'shadowing';
+      p34.groupIdx++;
+      p34.phase = 'question';
+      p34.selections = {};
+      if (p34.groupIdx >= state.data.groups.length) {
+        showPartComplete();
+        return;
+      }
       renderPart3or4();
     }
   });
@@ -2250,7 +2334,7 @@ function renderPart5() {
       } catch (e) {
         explainDiv.innerHTML = prefixHtml + `<div>解説の取得に失敗しました: ${escapeHtml(e.message)}</div>`;
       }
-      askAiSlot.appendChild(buildAskAiWidget(questionText));
+      askAiSlot.appendChild(buildAskAiWidget(questionText, `${state.test}-5-${q.number}`));
     }
     batch.forEach(q => {
       incrementAttempt(`${state.test}-5-${q.number}`, selections[q.number] === q.answer);
@@ -2353,7 +2437,7 @@ async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, 
       html = prefixHtml + `<div>解説の取得に失敗しました: ${escapeHtml(e.message)}</div>`;
     }
     explainDiv.innerHTML = html;
-    askAiSlot.appendChild(buildAskAiWidget(questionTextBuilder(item)));
+    askAiSlot.appendChild(buildAskAiWidget(questionTextBuilder(item), `${state.test}-${state.part}-${item.number}`));
   }
   const allCorrect = items.every(item => p67.selections[item.number] === item.answer);
   incrementAttempt(attemptKey, allCorrect);
@@ -2361,7 +2445,7 @@ async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, 
     recordCorrectness(`${state.test}-${state.part}-${item.number}-correct`, p67.selections[item.number] === item.answer);
   });
   nextBtn.disabled = false;
-  nextBtn.textContent = 'シャドーイングへ';
+  nextBtn.textContent = '次へ';
 }
 
 function renderPart6() {
@@ -2414,8 +2498,7 @@ function renderPart6() {
       translateSlot.style.display = 'block';
       translateSlot.appendChild(buildTranslatableBlock(p.text, `${state.test}-6-${p.questions[0]}`));
     } else {
-      p67.phase = 'shadowing';
-      renderPart6();
+      p67AdvancePassage(renderPart6);
     }
   });
 
@@ -2499,8 +2582,7 @@ function renderPart7() {
         slot.appendChild(buildTranslatableBlock(doc.text, `${state.test}-7-${p.questions[0]}-doc${di}`));
       });
     } else {
-      p67.phase = 'shadowing';
-      renderPart7();
+      p67AdvancePassage(renderPart7);
     }
   });
 

@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=17">
+<link rel="stylesheet" href="style.css?v=18">
 </head>
 <body>
 <div class="wrap">
@@ -130,13 +130,21 @@ function doPost(e) {
   <main>
     <section id="practice" class="panel" style="display:none;">
       <div class="practice-header">
+        <select id="partJumpSelect" class="part-jump-select"></select>
         <div class="nav-cluster">
           <button id="header-prev-btn" class="nav-btn">◀</button>
-          <span id="progress-label"></span>
+          <span id="progress-label" class="progress-label"></span>
           <button id="header-next-btn" class="nav-btn">▶</button>
         </div>
       </div>
       <div id="practice-body"></div>
+      <div class="practice-footer">
+        <div class="nav-cluster">
+          <button id="footer-prev-btn" class="nav-btn">◀</button>
+          <span id="progress-label-bottom" class="progress-label"></span>
+          <button id="footer-next-btn" class="nav-btn">▶</button>
+        </div>
+      </div>
     </section>
 
     <section id="empty-state" class="panel">
@@ -147,6 +155,6 @@ function doPost(e) {
   </main>
 </div>
 
-  <script src="script.js?v=36"></script>
+  <script src="script.js?v=37"></script>
 </body>
 </html>
