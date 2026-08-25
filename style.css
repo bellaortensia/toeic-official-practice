@@ -373,6 +373,10 @@ audio{
 .ask-ai-answer > div:not(:first-child){margin-top:10px;}
 .ask-ai-answer-entry{color:var(--text-soft);}
 
+.pdf-explain-wrap{margin-top:14px;}
+.pdf-explain-images{margin-top:10px;display:flex;flex-direction:column;gap:10px;}
+.pdf-explain-img{max-width:100%;border:1px solid var(--line);border-radius:8px;display:block;}
+
 .audio-player{
   display:flex;align-items:center;gap:10px;
   background:#faf7ee;border:1px solid var(--line);border-radius:8px;

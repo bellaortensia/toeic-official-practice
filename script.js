@@ -19,6 +19,18 @@ function getGeminiKey() {
   return localStorage.getItem(GEMINI_KEY_LS) || geminiKeyInput.value.trim();
 }
 
+// 有料キー(任意)。無料キーが利用上限(429)に達した瞬間だけ自動でこちらに
+// 切り替わる(普段は無料キーのみ使用。有料キーが無ければ無料キーのみで動作する)。
+const GEMINI_PAID_KEY_LS = 'decodeToeic.geminiPaidKey';
+const geminiPaidKeyInput = document.getElementById('geminiPaidKey');
+const savedGeminiPaidKey = localStorage.getItem(GEMINI_PAID_KEY_LS);
+if (savedGeminiPaidKey) geminiPaidKeyInput.value = savedGeminiPaidKey;
+geminiPaidKeyInput.addEventListener('change', () => localStorage.setItem(GEMINI_PAID_KEY_LS, geminiPaidKeyInput.value.trim()));
+
+function getGeminiPaidKey() {
+  return localStorage.getItem(GEMINI_PAID_KEY_LS) || geminiPaidKeyInput.value.trim();
+}
+
 // ---------- ノート保存用スプレッドシート(decode-toeicと同じApps Script Web Appブリッジ方式) ----------
 
 const SHEET_URL_LS = 'toeicOfficialPractice.sheetUrl';
@@ -45,9 +57,24 @@ if (copyGasBtn) {
 
 const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 
+// 無料キーでリクエストし、利用上限(429)に達した場合のみ有料キーへ自動フォールバック
+// する(decode-toeicと同じ方式)。両方試して全て失敗した場合は最後のレスポンスを返す。
+async function fetchGeminiWithFailover(url, body) {
+  const keys = [getGeminiKey(), getGeminiPaidKey()].filter(Boolean);
+  if (!keys.length) throw new Error('Gemini APIキーが設定されていません');
+  let res = null;
+  for (let i = 0; i < keys.length; i++) {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': keys[i] },
+      body: JSON.stringify(body)
+    });
+    if (res.ok || res.status !== 429 || i === keys.length - 1) return res;
+  }
+  return res;
+}
+
 async function callGemini(systemPrompt, userText, options = {}) {
-  const key = getGeminiKey();
-  if (!key) throw new Error('Gemini APIキーが設定されていません');
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
   const body = {
     systemInstruction: { parts: [{ text: systemPrompt }] },
@@ -58,11 +85,7 @@ async function callGemini(systemPrompt, userText, options = {}) {
       ...(options.responseMimeType ? { responseMimeType: options.responseMimeType } : {})
     }
   };
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-    body: JSON.stringify(body)
-  });
+  const res = await fetchGeminiWithFailover(url, body);
   if (!res.ok) throw new Error(`Gemini APIエラー (${res.status}): ${(await res.text()).slice(0, 200)}`);
   const data = await res.json();
   const parts = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
@@ -674,6 +697,14 @@ function buildTranslatableBlock(text, cacheKey) {
   let wide = false; // デフォルトで通常モード
   let tall = false;
 
+  // 解説が表示された(=このウィジェットが作られた)タイミングで、裏で翻訳を
+  // 先読みしておく。ユーザーが後で「翻訳」ボタンを押した時に待たされないようにする
+  // ためで、画面表示には反映しない(表示はユーザーが「翻訳」を押した時のみ)。
+  // 既にキャッシュ済みならAPIは呼ばれない(getTranslationChunks内でキャッシュ確認)。
+  getTranslationChunks(cacheKey, text).then(d => {
+    if (!loaded) { data = d; loaded = true; }
+  }).catch(() => { /* 先読み失敗時は、後でボタンを押した時に通常通り再試行される */ });
+
   function refreshModeUI() {
     wideBtn.textContent = wide ? '⛶ ワイド解除' : '⛶ ワイドモード';
     tallBtn.textContent = tall ? '⬍ トール解除' : '⬍ トールモード';
@@ -1064,6 +1095,73 @@ async function loadPartData(test, part) {
   const json = await res.json();
   dataCache[key] = json;
   return json;
+}
+
+// ---------- 公式PDF(解答・解説p.123以降)の該当ページ画像を表示するボタン ----------
+// data/test1/pdfExplain.jsonは、設問番号→その解説が載っているページ画像(1〜2ページ)への
+// マッピング。ページ単位の画像なので、同じページに他の設問の解説が写り込むことがある
+// (設問1問だけを厳密に切り出した画像ではない点に注意)。TEST2は未対応。
+const pdfExplainMapCache = {};
+async function loadPdfExplainMap(test) {
+  if (test !== 'T1') return null;
+  if (pdfExplainMapCache[test]) return pdfExplainMapCache[test];
+  try {
+    const res = await fetch('data/test1/pdfExplain.json');
+    if (!res.ok) return null;
+    const json = await res.json();
+    pdfExplainMapCache[test] = json;
+    return json;
+  } catch (e) { return null; }
+}
+
+function buildPdfExplainWidget(test, questionNumber) {
+  const wrap = document.createElement('div');
+  wrap.className = 'pdf-explain-wrap';
+  const btn = document.createElement('button');
+  btn.className = 'mode-toggle-btn';
+  btn.textContent = 'PDF解説文へ';
+  wrap.appendChild(btn);
+
+  const imgsWrap = document.createElement('div');
+  imgsWrap.className = 'pdf-explain-images';
+  imgsWrap.style.display = 'none';
+  wrap.appendChild(imgsWrap);
+
+  let shown = false;
+  btn.addEventListener('click', async () => {
+    if (shown) {
+      imgsWrap.style.display = 'none';
+      btn.textContent = 'PDF解説文へ';
+      shown = false;
+      return;
+    }
+    if (!imgsWrap.dataset.loaded) {
+      btn.disabled = true;
+      const map = await loadPdfExplainMap(test);
+      btn.disabled = false;
+      const files = map && map[String(questionNumber)];
+      imgsWrap.innerHTML = '';
+      if (files && files.length) {
+        files.forEach(src => {
+          const img = document.createElement('img');
+          img.src = src;
+          img.className = 'pdf-explain-img';
+          imgsWrap.appendChild(img);
+        });
+      } else {
+        const p = document.createElement('p');
+        p.className = 'hint';
+        p.textContent = 'このテストのPDF解説はまだ用意されていません。';
+        imgsWrap.appendChild(p);
+      }
+      imgsWrap.dataset.loaded = '1';
+    }
+    imgsWrap.style.display = 'block';
+    btn.textContent = 'PDF解説文を閉じる';
+    shown = true;
+  });
+
+  return wrap;
 }
 
 // ---------- ナビゲーション状態 ----------
@@ -2057,6 +2155,8 @@ function renderPart1or2() {
   wrap.appendChild(notesSlot);
   const askAiSlot = document.createElement('div');
   wrap.appendChild(askAiSlot);
+  const pdfSlot = document.createElement('div');
+  wrap.appendChild(pdfSlot);
 
   const nextBtn = document.createElement('button');
   nextBtn.textContent = '次へ';
@@ -2080,6 +2180,7 @@ function renderPart1or2() {
       notesSlot.appendChild(buildNotesWidget(noteKey));
       const questionContext = `Q${q.number}\n` + letters.map(l => `(${l}) ${choiceTexts[l]}`).join('\n') + `\n正解: (${q.answer})`;
       askAiSlot.appendChild(buildAskAiWidget(questionContext, noteKey));
+      pdfSlot.appendChild(buildPdfExplainWidget(state.test, q.number));
       incrementAttempt(noteKey, p12.selected === q.answer);
       nextBtn.textContent = '次へ';
     } else {
@@ -2192,8 +2293,10 @@ function renderPart3or4() {
 
     const askAiSlot = document.createElement('div');
     block.appendChild(askAiSlot);
+    const pdfSlot = document.createElement('div');
+    block.appendChild(pdfSlot);
 
-    blocks[item.number] = { choicesDiv, explainDiv, letters, askAiSlot };
+    blocks[item.number] = { choicesDiv, explainDiv, letters, askAiSlot, pdfSlot };
     wrap.appendChild(block);
   });
 
@@ -2220,7 +2323,7 @@ function renderPart3or4() {
         explainDiv.textContent = (isCorrect ? '正解です!\n\n' : '不正解です。\n\n') + '解説を生成中...';
       });
       for (const item of g.items) {
-        const { explainDiv, askAiSlot } = blocks[item.number];
+        const { explainDiv, askAiSlot, pdfSlot } = blocks[item.number];
         const isCorrect = p34.selections[item.number] === item.answer;
         const prefixHtml = correctBannerHtml(isCorrect);
         const questionText = `${item.number}. ${item.text}\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}\nあなたの回答: (${p34.selections[item.number]}) ${item.choices[p34.selections[item.number]]}`;
@@ -2232,6 +2335,7 @@ function renderPart3or4() {
         }
         explainDiv.innerHTML = html;
         askAiSlot.appendChild(buildAskAiWidget(questionText, `${state.test}-${state.part}-${item.number}`));
+        pdfSlot.appendChild(buildPdfExplainWidget(state.test, item.number));
       }
       g.items.forEach(item => {
         incrementAttempt(`${state.test}-${state.part}-${item.number}`, p34.selections[item.number] === item.answer);
@@ -2300,8 +2404,10 @@ function renderPart5() {
 
     const askAiSlot = document.createElement('div');
     block.appendChild(askAiSlot);
+    const pdfSlot = document.createElement('div');
+    block.appendChild(pdfSlot);
 
-    blocks[q.number] = { choicesDiv, explainDiv, letters, askAiSlot };
+    blocks[q.number] = { choicesDiv, explainDiv, letters, askAiSlot, pdfSlot };
     wrap.appendChild(block);
   });
 
@@ -2325,7 +2431,7 @@ function renderPart5() {
     });
     gradeBtn.remove();
     for (const q of batch) {
-      const { explainDiv, askAiSlot } = blocks[q.number];
+      const { explainDiv, askAiSlot, pdfSlot } = blocks[q.number];
       const isCorrect = selections[q.number] === q.answer;
       const prefixHtml = correctBannerHtml(isCorrect);
       const questionText = `${q.number}. ${q.sentence}\n選択肢: ${Object.entries(q.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${q.answer}) ${q.choices[q.answer]}\nあなたの回答: (${selections[q.number]}) ${q.choices[selections[q.number]]}`;
@@ -2335,6 +2441,7 @@ function renderPart5() {
         explainDiv.innerHTML = prefixHtml + `<div>解説の取得に失敗しました: ${escapeHtml(e.message)}</div>`;
       }
       askAiSlot.appendChild(buildAskAiWidget(questionText, `${state.test}-5-${q.number}`));
+      pdfSlot.appendChild(buildPdfExplainWidget(state.test, q.number));
     }
     batch.forEach(q => {
       incrementAttempt(`${state.test}-5-${q.number}`, selections[q.number] === q.answer);
@@ -2398,8 +2505,10 @@ function p67RenderQuestionBlocks(wrap, items, getBlockLabel) {
 
     const askAiSlot = document.createElement('div');
     block.appendChild(askAiSlot);
+    const pdfSlot = document.createElement('div');
+    block.appendChild(pdfSlot);
 
-    blocks[item.number] = { choicesDiv, explainDiv, letters, askAiSlot };
+    blocks[item.number] = { choicesDiv, explainDiv, letters, askAiSlot, pdfSlot };
     wrap.appendChild(block);
   });
 
@@ -2427,7 +2536,7 @@ async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, 
     explainDiv.textContent = (isCorrect ? '正解です!\n\n' : '不正解です。\n\n') + '解説を生成中...';
   });
   for (const item of items) {
-    const { explainDiv, askAiSlot } = blocks[item.number];
+    const { explainDiv, askAiSlot, pdfSlot } = blocks[item.number];
     const isCorrect = p67.selections[item.number] === item.answer;
     const prefixHtml = correctBannerHtml(isCorrect);
     let html;
@@ -2438,6 +2547,7 @@ async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, 
     }
     explainDiv.innerHTML = html;
     askAiSlot.appendChild(buildAskAiWidget(questionTextBuilder(item), `${state.test}-${state.part}-${item.number}`));
+    pdfSlot.appendChild(buildPdfExplainWidget(state.test, item.number));
   }
   const allCorrect = items.every(item => p67.selections[item.number] === item.answer);
   incrementAttempt(attemptKey, allCorrect);

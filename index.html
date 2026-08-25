@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=18">
+<link rel="stylesheet" href="style.css?v=19">
 </head>
 <body>
 <div class="wrap">
@@ -37,8 +37,12 @@
             <label for="geminiKey">GEMINI API KEY(無料)</label>
             <input id="geminiKey" type="password" placeholder="AIza...">
           </div>
+          <div class="field">
+            <label for="geminiPaidKey">GEMINI API KEY(有料・任意)</label>
+            <input id="geminiPaidKey" type="password" placeholder="AIza...">
+          </div>
         </div>
-        <p class="hint">未入力でも問題演習はできますが、AIによる解説は表示されません。<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>で無料取得できます。decode-toeicと同じキーを使っている場合は自動で反映されます。</p>
+        <p class="hint">未入力でも問題演習はできますが、AIによる解説は表示されません。<a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">Google AI Studio</a>で無料取得できます。decode-toeicと同じキーを使っている場合は自動で反映されます。有料キーを設定すると、無料枠の上限に達した瞬間だけ自動でそちらに切り替わります(普段は無料キーのみ使用)。</p>
       </details>
 
       <details class="help sub-details">
@@ -155,6 +159,6 @@ function doPost(e) {
   </main>
 </div>
 
-  <script src="script.js?v=37"></script>
+  <script src="script.js?v=38"></script>
 </body>
 </html>
