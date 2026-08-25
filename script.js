@@ -1098,15 +1098,14 @@ async function loadPartData(test, part) {
 }
 
 // ---------- 公式PDF(解答・解説p.123以降)の該当ページ画像を表示するボタン ----------
-// data/test1/pdfExplain.jsonは、設問番号→その解説が載っているページ画像(1〜2ページ)への
-// マッピング。ページ単位の画像なので、同じページに他の設問の解説が写り込むことがある
-// (設問1問だけを厳密に切り出した画像ではない点に注意)。TEST2は未対応。
+// data/test1(2)/pdfExplain.jsonは、設問番号→その解説が載っているページ画像(前後1ページ
+// ずつを含む最大3ページ)へのマッピング。ページ単位の画像なので、同じページに他の設問の
+// 解説が写り込むことがある(設問1問だけを厳密に切り出した画像ではない点に注意)。
 const pdfExplainMapCache = {};
 async function loadPdfExplainMap(test) {
-  if (test !== 'T1') return null;
   if (pdfExplainMapCache[test]) return pdfExplainMapCache[test];
   try {
-    const res = await fetch('data/test1/pdfExplain.json');
+    const res = await fetch(`data/${test === 'T1' ? 'test1' : 'test2'}/pdfExplain.json`);
     if (!res.ok) return null;
     const json = await res.json();
     pdfExplainMapCache[test] = json;
