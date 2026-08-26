@@ -107,6 +107,8 @@ const EXPLAIN_PROMPT_READING = `あなたはTOEIC対策の講師です。以下�
 次の行: ■根拠・解説 とだけ書く。
 続けて、必ず最初の文で「正解は(X)です。」と正解の記号を明記すること。入力に「あなたの回答」が含まれ、それが正解と異なる場合は、その回答がなぜ誤りなのかを具体的に説明すること(単に不正解と述べるだけでなく、その選択肢のどこが本文の内容と合わないのかを明記する)。その後、なぜ正解の選択肢が正しいのかを説明する。本文中の根拠となる箇所を引用する際は①②③...の番号を付け、直後に「」で該当箇所を引用すること(例: ①「the delivery will be delayed」)。
 
+重要: 引用符「」で囲む部分は、必ず入力に与えられた文書・会話・トークの原文から一字一句そのまま抜き出すこと。原文にない文言を作り出して引用してはならない。入力に文書・会話・トークの原文(本文)が含まれていない場合は、①②③の番号付き引用は一切使わず、根拠は選択肢や設問文の内容に基づいて言葉で説明すること。
+
 最後の行: ★知らないと解けない要素 に続けて、この問題を解くために知っておく必要がある文法・語彙・表現を1〜2行で書く。
 
 出力は必ず次のJSON形式のみを返し、説明文やコードフェンスは一切含めないこと。
@@ -115,7 +117,7 @@ const EXPLAIN_PROMPT_READING = `あなたはTOEIC対策の講師です。以下�
   "keyPhraseQuotes": ["explainText中の特に重要なTOEIC頻出語・イディオムを、原文の表記のまま(下線を引きたい語句)"]
 }`;
 
-const EXPLAIN_PROMPT_READING_VERSION = 'v1';
+const EXPLAIN_PROMPT_READING_VERSION = 'v2';
 
 // Part5(短文穴埋め)専用: 全文の直訳ではなく、①完成文そのもの→②SVOC分解(下線付き)→
 // ③スラッシュ区切りの意訳、という順で示す。
@@ -987,12 +989,12 @@ function attachSeekable(trackEl, getAudio) {
 // Part1/2/3/4の問題画面用の常設プレーヤー(シャドーイングと同じ▶/❚❚+進捗バー表示)。
 // 「音声を再生」ボタンを押して初めてプレーヤーが現れる、という中間ステップを無くし、
 // 最初からこの表示のままにする。filenamesは複数渡すと連続再生する(Part3/4の会話→設問)。
-function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
+function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false } = {}) {
   const list = (Array.isArray(filenames) ? filenames : [filenames]).filter(Boolean);
   let currentAudio = null;
 
   const player = document.createElement('div');
-  player.className = 'audio-player';
+  player.className = 'audio-player' + (sticky ? ' audio-player-sticky' : '');
   const restartBtn = document.createElement('button');
   restartBtn.className = 'player-restart';
   restartBtn.textContent = '⏮';
@@ -1005,7 +1007,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false } = {}) {
   let loopFirst = false;
   const loopBtn = document.createElement('button');
   loopBtn.className = 'player-loop';
-  loopBtn.textContent = '🔁';
+  loopBtn.textContent = '↻';
   loopBtn.title = '問題文を繰り返し再生';
   loopBtn.addEventListener('click', () => {
     loopFirst = !loopFirst;
@@ -1173,6 +1175,58 @@ const practiceBodyEl = document.getElementById('practice-body');
 const progressLabelEl = document.getElementById('progress-label');
 const appModeSelectEl = document.getElementById('appModeSelect');
 
+// ---------- 上部固定ヘッダーの高さをCSS変数に反映(Part2/3/4の音声プレーヤーを
+// その直下にstickyで貼り付けるため、実際の高さを都度measureする) ----------
+
+const stickyTopEl = document.querySelector('.sticky-top');
+function updateStickyTopHeight() {
+  if (!stickyTopEl) return;
+  document.documentElement.style.setProperty('--sticky-top-h', stickyTopEl.offsetHeight + 'px');
+}
+updateStickyTopHeight();
+window.addEventListener('resize', updateStickyTopHeight);
+
+// ---------- ストップウォッチ(問題画面の上部ナビ行の右端。設問が変わるたびリセットして自動計測開始) ----------
+
+const stopwatchTimeEl = document.getElementById('stopwatchTime');
+const stopwatchToggleBtn = document.getElementById('stopwatchToggleBtn');
+let stopwatchSeconds = 0;
+let stopwatchInterval = null;
+let stopwatchPaused = false;
+
+function formatStopwatch(totalSeconds) {
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+function resetAndStartStopwatch() {
+  clearInterval(stopwatchInterval);
+  stopwatchSeconds = 0;
+  stopwatchPaused = false;
+  stopwatchTimeEl.textContent = '0:00';
+  stopwatchToggleBtn.textContent = '⏸';
+  stopwatchInterval = setInterval(() => {
+    stopwatchSeconds++;
+    stopwatchTimeEl.textContent = formatStopwatch(stopwatchSeconds);
+  }, 1000);
+}
+
+stopwatchToggleBtn.addEventListener('click', () => {
+  stopwatchPaused = !stopwatchPaused;
+  if (stopwatchPaused) {
+    clearInterval(stopwatchInterval);
+    stopwatchInterval = null;
+    stopwatchToggleBtn.textContent = '▶';
+  } else {
+    stopwatchInterval = setInterval(() => {
+      stopwatchSeconds++;
+      stopwatchTimeEl.textContent = formatStopwatch(stopwatchSeconds);
+    }, 1000);
+    stopwatchToggleBtn.textContent = '⏸';
+  }
+});
+
 // ---------- 他アプリへの切り替え(decode-toeicと共通のメニュー) ----------
 
 appModeSelectEl.addEventListener('change', () => {
@@ -1189,13 +1243,16 @@ const ATTEMPTS_LS = 'toeicOfficialPractice.attempts';
 function getAttemptsStore() {
   try { return JSON.parse(localStorage.getItem(ATTEMPTS_LS) || '{}'); } catch (e) { return {}; }
 }
-// 各キーは {count, lastCorrect} で保持する(以前はcountだけの数値だったので、
-// 古い数値形式が残っていても壊れないように読み替える)。
+// 各キーは {count, lastCorrect, lastAt} で保持する(以前はcountだけの数値だったので、
+// 古い数値形式が残っていても壊れないように読み替える。lastAtは回答履歴欄の並び順用に
+// 後から追加したフィールドなので、それ以前の記録には無い=0として扱う)。
+function normalizeAttemptRaw(raw) {
+  if (raw == null) return { count: 0, lastCorrect: null, lastAt: 0 };
+  if (typeof raw === 'number') return { count: raw, lastCorrect: null, lastAt: 0 };
+  return { count: raw.count || 0, lastCorrect: raw.lastCorrect == null ? null : !!raw.lastCorrect, lastAt: raw.lastAt || 0 };
+}
 function getAttemptEntry(key) {
-  const raw = getAttemptsStore()[key];
-  if (raw == null) return { count: 0, lastCorrect: null };
-  if (typeof raw === 'number') return { count: raw, lastCorrect: null };
-  return { count: raw.count || 0, lastCorrect: raw.lastCorrect == null ? null : !!raw.lastCorrect };
+  return normalizeAttemptRaw(getAttemptsStore()[key]);
 }
 function getAttemptCount(key) {
   return getAttemptEntry(key).count;
@@ -1203,7 +1260,7 @@ function getAttemptCount(key) {
 function incrementAttempt(key, isCorrect) {
   const store = getAttemptsStore();
   const prev = getAttemptEntry(key);
-  store[key] = { count: Math.min(99, prev.count + 1), lastCorrect: isCorrect == null ? prev.lastCorrect : !!isCorrect };
+  store[key] = { count: Math.min(99, prev.count + 1), lastCorrect: isCorrect == null ? prev.lastCorrect : !!isCorrect, lastAt: Date.now() };
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
   recordStudyActivity();
   recordDailyQuestion(key, isCorrect);
@@ -1211,7 +1268,7 @@ function incrementAttempt(key, isCorrect) {
 function setAttemptCount(key, value) {
   const store = getAttemptsStore();
   const prev = getAttemptEntry(key);
-  store[key] = { count: Math.max(0, Math.min(99, value)), lastCorrect: prev.lastCorrect };
+  store[key] = { count: Math.max(0, Math.min(99, value)), lastCorrect: prev.lastCorrect, lastAt: prev.lastAt };
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
 }
 // Part6/7では挑戦回数(count)はパッセージ単位で共有するが、正誤の色分けは設問
@@ -1219,8 +1276,58 @@ function setAttemptCount(key, value) {
 function recordCorrectness(key, isCorrect) {
   const store = getAttemptsStore();
   const prev = getAttemptEntry(key);
-  store[key] = { count: prev.count, lastCorrect: !!isCorrect };
+  store[key] = { count: prev.count, lastCorrect: !!isCorrect, lastAt: Date.now() };
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
+}
+
+// ---------- 回答履歴欄(トップ画面右カラム。解いた設問を、解いた順(直近が上)に一覧) ----------
+// キーの形式は2種類:
+//  - "T1-3-45" のような素のキー: Part1〜5は設問ごとの直接記録。Part6/7では
+//    パッセージ単位(先頭設問番号)の挑戦回数カウンタなので、ここでは対象外にする。
+//  - "T1-6-45-correct" のように末尾に-correctが付くキー: Part6/7の設問ごとの正誤記録。
+function parseAttemptKey(key) {
+  const correctMatch = key.match(/^(T[12])-(\d)-(\d+)-correct$/);
+  if (correctMatch) return { test: correctMatch[1], part: Number(correctMatch[2]), number: Number(correctMatch[3]), perQuestion: true };
+  const plainMatch = key.match(/^(T[12])-(\d)-(\d+)$/);
+  if (plainMatch) return { test: plainMatch[1], part: Number(plainMatch[2]), number: Number(plainMatch[3]), perQuestion: Number(plainMatch[2]) <= 5 };
+  return null;
+}
+
+function buildAnswerHistoryList() {
+  const store = getAttemptsStore();
+  const items = [];
+  Object.keys(store).forEach(key => {
+    const parsed = parseAttemptKey(key);
+    if (!parsed || !parsed.perQuestion) return;
+    const entry = normalizeAttemptRaw(store[key]);
+    items.push({ test: parsed.test, part: parsed.part, number: parsed.number, lastCorrect: entry.lastCorrect, lastAt: entry.lastAt });
+  });
+  items.sort((a, b) => b.lastAt - a.lastAt);
+  return items;
+}
+
+function renderHistorySidebar() {
+  const listEl = document.getElementById('historySidebarList');
+  if (!listEl) return;
+  const items = buildAnswerHistoryList();
+  listEl.innerHTML = '';
+  if (!items.length) {
+    listEl.innerHTML = '<p class="history-sidebar-empty">まだ解いた問題がありません。</p>';
+    return;
+  }
+  items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'history-item';
+    const label = document.createElement('span');
+    label.className = 'history-item-label';
+    label.textContent = `${item.test} P${item.part} Q${item.number}`;
+    const badge = document.createElement('span');
+    badge.className = 'history-item-badge ' + (item.lastCorrect === true ? 'correct' : item.lastCorrect === false ? 'wrong' : 'unknown');
+    badge.textContent = item.lastCorrect === true ? '○' : item.lastCorrect === false ? '×' : '-';
+    row.appendChild(label);
+    row.appendChild(badge);
+    listEl.appendChild(row);
+  });
 }
 
 // ---------- 学習ログ(総学習時間・今週の学習状況・総学習回数・連続学習日数) ----------
@@ -1890,6 +1997,7 @@ function buildLandingNav() {
 }
 buildLandingNav();
 renderStatsDashboard();
+renderHistorySidebar();
 
 function chunk(arr, size) {
   const out = [];
@@ -1993,6 +2101,7 @@ function updateHeaderNav() {
   footerPrevBtn.disabled = unitIdx <= 0;
   footerNextBtn.disabled = unitIdx >= unitCount - 1;
   partJumpSelectEl.value = `${state.test}-${state.part}`;
+  resetAndStartStopwatch();
 }
 
 // ---------- Part別レンダリング ----------
@@ -2321,7 +2430,7 @@ function renderPart1or2() {
     wrap.appendChild(img);
   }
 
-  wrap.appendChild(createAudioPlayerWidget(q.audio, { autoplay: true }));
+  wrap.appendChild(createAudioPlayerWidget(q.audio, { autoplay: true, sticky: !isPart1 }));
 
   const choiceTexts = isPart1 ? q.statements : q.responses;
   const letters = Object.keys(choiceTexts);
@@ -2437,7 +2546,7 @@ function renderPart3or4() {
   audioLabel.className = 'audio-label';
   audioLabel.textContent = `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`;
   wrap.appendChild(audioLabel);
-  wrap.appendChild(createAudioPlayerWidget([g.audioConversation || g.audioTalk, g.audioQuestions], { autoplay: true }));
+  wrap.appendChild(createAudioPlayerWidget([g.audioConversation || g.audioTalk, g.audioQuestions], { autoplay: true, sticky: true }));
   if (g.graphicImage) {
     const img = document.createElement('img');
     img.src = g.graphicImage;
@@ -2516,11 +2625,12 @@ function renderPart3or4() {
         explainDiv.style.display = 'block';
         explainDiv.textContent = (isCorrect ? '正解です!\n\n' : '不正解です。\n\n') + '解説を生成中...';
       });
+      const transcriptText = g.conversationText || g.talkText;
       for (const item of g.items) {
         const { explainDiv, askAiSlot, pdfSlot } = blocks[item.number];
         const isCorrect = p34.selections[item.number] === item.answer;
         const prefixHtml = correctBannerHtml(isCorrect);
-        const questionText = `${item.number}. ${item.text}\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}\nあなたの回答: (${p34.selections[item.number]}) ${item.choices[p34.selections[item.number]]}`;
+        const questionText = `${transcriptText ? `会話・トークの原文:\n${transcriptText}\n\n` : ''}${item.number}. ${item.text}\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}\nあなたの回答: (${p34.selections[item.number]}) ${item.choices[p34.selections[item.number]]}`;
         let html;
         try {
           html = prefixHtml + await getRichExplanation(`${state.test}-${state.part}-${item.number}-${p34.selections[item.number]}`, questionText);

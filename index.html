@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=20">
+<link rel="stylesheet" href="style.css?v=21">
 </head>
 <body>
 <div class="wrap">
@@ -140,6 +140,10 @@ function doPost(e) {
           <span id="progress-label" class="progress-label"></span>
           <button id="header-next-btn" class="nav-btn">▶</button>
         </div>
+        <div class="stopwatch">
+          <span id="stopwatchTime" class="stopwatch-time">0:00</span>
+          <button id="stopwatchToggleBtn" class="stopwatch-toggle" type="button" title="一時停止/再開">⏸</button>
+        </div>
       </div>
       <div id="practice-body"></div>
       <div class="practice-footer">
@@ -152,13 +156,21 @@ function doPost(e) {
     </section>
 
     <section id="empty-state" class="panel">
-      <div class="stats-dashboard" id="statsDashboard"></div>
-      <p>下のリストからテスト・Part・問題を選んで学習を始めてください。音声の再生には、上の「設定」からBox連携でログインしてください。</p>
-      <div class="landing-nav" id="landingNav"></div>
+      <div class="empty-state-layout">
+        <div class="empty-state-main">
+          <div class="stats-dashboard" id="statsDashboard"></div>
+          <p>下のリストからテスト・Part・問題を選んで学習を始めてください。音声の再生には、上の「設定」からBox連携でログインしてください。</p>
+          <div class="landing-nav" id="landingNav"></div>
+        </div>
+        <aside class="history-sidebar">
+          <div class="history-sidebar-title">📝 回答履歴</div>
+          <div class="history-sidebar-list" id="historySidebarList"></div>
+        </aside>
+      </div>
     </section>
   </main>
 </div>
 
-  <script src="script.js?v=41"></script>
+  <script src="script.js?v=42"></script>
 </body>
 </html>
