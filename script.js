@@ -7,6 +7,19 @@ const loginBtn = document.getElementById('login-btn');
 const statusEl = document.getElementById('status');
 const resultEl = document.getElementById('result');
 
+// ---------- 再生中の音声を全体で1つだけ追跡(設問切り替え時に確実に止めるため) ----------
+// createAudioPlayerWidget/renderDictation/renderShadowingが新しいAudioを再生する
+// たびにここへ登録する。別の設問に切り替わる際、前の設問のAudioオブジェクトは
+// DOMから消えても再生し続けてしまう(closure内で参照が残るため)ので、
+// updateHeaderNav()から毎回stopAllAudio()を呼んで確実に止める。
+const globalAudio = { current: null };
+function stopAllAudio() {
+  if (globalAudio.current) {
+    try { globalAudio.current.pause(); } catch (e) { /* ignore */ }
+    globalAudio.current = null;
+  }
+}
+
 // ---------- Gemini APIキー(decode-toeicと同じキー名で共有) ----------
 
 const GEMINI_KEY_LS = 'decodeToeic.geminiKey';
@@ -99,10 +112,13 @@ async function callGemini(systemPrompt, userText, options = {}) {
 const EXPLAIN_PROMPT_READING = `あなたはTOEIC対策の講師です。以下のTOEICの設問について、日本語で解説してください。
 必ず次の構成・記号ルールに従ってください。
 
-1行目: ■選択肢の日本語訳 とだけ書く。
-続けて、すべての選択肢(A)(B)(C)(D)を1行ずつ、必ず▲から始めて日本語訳を書く。例:
-▲(A) ~という意味
-▲(B) ~という意味
+1行目: ■設問の日本語訳 とだけ書く。
+続けて、設問文(何が問われているか)の日本語訳を1〜2行で書く。選択肢だけで設問文にあたる英文が存在しない問題の場合は、この■設問の日本語訳の見出しごと省略してよい。
+
+次の行: ■選択肢の日本語訳 とだけ書く。
+続けて、すべての選択肢(A)(B)(C)(D)を1行ずつ、必ず▲から始めて日本語訳のみを書く。「〜という意味」のような語尾や説明的な付け足しは一切付けず、訳文だけを簡潔に書くこと。例:
+▲(A) 配送が遅れている
+▲(B) 予算が不足している
 
 次の行: ■根拠・解説 とだけ書く。
 続けて、必ず最初の文で「正解は(X)です。」と正解の記号を明記すること。入力に「あなたの回答」が含まれ、それが正解と異なる場合は、その回答がなぜ誤りなのかを具体的に説明すること(単に不正解と述べるだけでなく、その選択肢のどこが本文の内容と合わないのかを明記する)。その後、なぜ正解の選択肢が正しいのかを説明する。本文中の根拠となる箇所を引用する際は①②③...の番号を付け、直後に「」で該当箇所を引用すること(例: ①「the delivery will be delayed」)。
@@ -117,7 +133,7 @@ const EXPLAIN_PROMPT_READING = `あなたはTOEIC対策の講師です。以下�
   "keyPhraseQuotes": ["explainText中の特に重要なTOEIC頻出語・イディオムを、原文の表記のまま(下線を引きたい語句)"]
 }`;
 
-const EXPLAIN_PROMPT_READING_VERSION = 'v2';
+const EXPLAIN_PROMPT_READING_VERSION = 'v3';
 
 // Part5(短文穴埋め)専用: 全文の直訳ではなく、①完成文そのもの→②SVOC分解(下線付き)→
 // ③スラッシュ区切りの意訳、という順で示す。
@@ -492,7 +508,7 @@ const chunkPopupEl = document.createElement('div');
 chunkPopupEl.className = 'chunk-popup';
 document.body.appendChild(chunkPopupEl);
 document.addEventListener('click', e => {
-  if (!chunkPopupEl.contains(e.target) && !e.target.closest('.chunk-seg') && !e.target.closest('.translate-col-ja')) {
+  if (!chunkPopupEl.contains(e.target) && !e.target.closest('.chunk-seg') && !e.target.closest('.translate-col-ja') && !e.target.closest('.translate-col-en')) {
     chunkPopupEl.classList.remove('show');
   }
 });
@@ -557,6 +573,7 @@ function renderTranslationChunks(container, segments, notesArea) {
   const jaCol = document.createElement('div');
   jaCol.className = 'translate-col translate-col-ja';
 
+  const enSpans = [];
   const jaSpans = [];
   segments.forEach((seg, i) => {
     const enSpan = document.createElement('span');
@@ -569,6 +586,7 @@ function renderTranslationChunks(container, segments, notesArea) {
     jaSpan.textContent = seg.ja + ' ';
     enCol.appendChild(enSpan);
     jaCol.appendChild(jaSpan);
+    enSpans.push(enSpan);
     jaSpans.push(jaSpan);
     if (seg.lineBreak) {
       enCol.appendChild(document.createElement('br'));
@@ -597,13 +615,16 @@ function renderTranslationChunks(container, segments, notesArea) {
       return;
     }
     wideWrap.querySelectorAll(`.chunk-seg[data-seg="${curSeg}"]`).forEach(n => n.classList.add('seg-revealed'));
-    showChunkPopup(segments[curSeg], jaSpans[curSeg], notesArea);
+    showChunkPopup(segments[curSeg], enSpans[curSeg], notesArea);
   }
 
   wideWrap.addEventListener('wheel', e => {
     e.preventDefault();
     setSeg((curSeg < 0 ? 0 : curSeg) + (e.deltaY > 0 ? 1 : -1));
   }, { passive: false });
+  // JA欄・EN欄どちらでクリックしても現在位置のポップアップが開く(ワイドモードに
+  // 限らず常時)。ポップアップ自体は常にEN側の単語に添えて表示する。
+  enCol.addEventListener('click', revealCurrent);
   jaCol.addEventListener('click', revealCurrent);
 
   wideWrap.appendChild(enCol);
@@ -999,6 +1020,13 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
   restartBtn.className = 'player-restart';
   restartBtn.textContent = '⏮';
   restartBtn.title = '初めから再生';
+  const back5Btn = document.createElement('button');
+  back5Btn.className = 'player-back5';
+  back5Btn.textContent = '-5s';
+  back5Btn.title = '5秒戻る';
+  back5Btn.addEventListener('click', () => {
+    if (currentAudio) currentAudio.currentTime = Math.max(0, currentAudio.currentTime - 5);
+  });
   const toggleBtn = document.createElement('button');
   toggleBtn.className = 'player-toggle';
   toggleBtn.textContent = '▶';
@@ -1025,6 +1053,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
   totalTimeEl.className = 'player-time';
   totalTimeEl.textContent = '0:00';
   player.appendChild(restartBtn);
+  player.appendChild(back5Btn);
   player.appendChild(toggleBtn);
   player.appendChild(loopBtn);
   player.appendChild(curTimeEl);
@@ -1054,6 +1083,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
     toggleBtn.disabled = false;
     if (!url) return;
     currentAudio = new Audio(url);
+    globalAudio.current = currentAudio;
     attachEvents(currentAudio);
     currentAudio.addEventListener('ended', () => {
       if (i === 0 && loopFirst) playIndex(0);
@@ -1247,9 +1277,9 @@ function getAttemptsStore() {
 // 古い数値形式が残っていても壊れないように読み替える。lastAtは回答履歴欄の並び順用に
 // 後から追加したフィールドなので、それ以前の記録には無い=0として扱う)。
 function normalizeAttemptRaw(raw) {
-  if (raw == null) return { count: 0, lastCorrect: null, lastAt: 0 };
-  if (typeof raw === 'number') return { count: raw, lastCorrect: null, lastAt: 0 };
-  return { count: raw.count || 0, lastCorrect: raw.lastCorrect == null ? null : !!raw.lastCorrect, lastAt: raw.lastAt || 0 };
+  if (raw == null) return { count: 0, lastCorrect: null, lastAt: 0, noteKey: null };
+  if (typeof raw === 'number') return { count: raw, lastCorrect: null, lastAt: 0, noteKey: null };
+  return { count: raw.count || 0, lastCorrect: raw.lastCorrect == null ? null : !!raw.lastCorrect, lastAt: raw.lastAt || 0, noteKey: raw.noteKey || null };
 }
 function getAttemptEntry(key) {
   return normalizeAttemptRaw(getAttemptsStore()[key]);
@@ -1257,10 +1287,13 @@ function getAttemptEntry(key) {
 function getAttemptCount(key) {
   return getAttemptEntry(key).count;
 }
-function incrementAttempt(key, isCorrect) {
+// noteKeyは、Part3/4/6/7のようにグループ(パッセージ)単位で1つのノートを共有する
+// Partで、そのグループのノートが保存されているキー(buildNotesWidgetに渡している
+// ものと同じ)を渡す。省略時(Part1/2/5の単独設問)はkeyと同じとみなす。
+function incrementAttempt(key, isCorrect, noteKey) {
   const store = getAttemptsStore();
   const prev = getAttemptEntry(key);
-  store[key] = { count: Math.min(99, prev.count + 1), lastCorrect: isCorrect == null ? prev.lastCorrect : !!isCorrect, lastAt: Date.now() };
+  store[key] = { count: Math.min(99, prev.count + 1), lastCorrect: isCorrect == null ? prev.lastCorrect : !!isCorrect, lastAt: Date.now(), noteKey: noteKey || prev.noteKey || null };
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
   recordStudyActivity();
   recordDailyQuestion(key, isCorrect);
@@ -1268,15 +1301,15 @@ function incrementAttempt(key, isCorrect) {
 function setAttemptCount(key, value) {
   const store = getAttemptsStore();
   const prev = getAttemptEntry(key);
-  store[key] = { count: Math.max(0, Math.min(99, value)), lastCorrect: prev.lastCorrect, lastAt: prev.lastAt };
+  store[key] = { count: Math.max(0, Math.min(99, value)), lastCorrect: prev.lastCorrect, lastAt: prev.lastAt, noteKey: prev.noteKey };
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
 }
 // Part6/7では挑戦回数(count)はパッセージ単位で共有するが、正誤の色分けは設問
 // ごとに分けたいので、countには触れずlastCorrectだけを別キーに記録する。
-function recordCorrectness(key, isCorrect) {
+function recordCorrectness(key, isCorrect, noteKey) {
   const store = getAttemptsStore();
   const prev = getAttemptEntry(key);
-  store[key] = { count: prev.count, lastCorrect: !!isCorrect, lastAt: Date.now() };
+  store[key] = { count: prev.count, lastCorrect: !!isCorrect, lastAt: Date.now(), noteKey: noteKey || prev.noteKey || null };
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
 }
 
@@ -1300,10 +1333,38 @@ function buildAnswerHistoryList() {
     const parsed = parseAttemptKey(key);
     if (!parsed || !parsed.perQuestion) return;
     const entry = normalizeAttemptRaw(store[key]);
-    items.push({ test: parsed.test, part: parsed.part, number: parsed.number, lastCorrect: entry.lastCorrect, lastAt: entry.lastAt });
+    items.push({
+      test: parsed.test, part: parsed.part, number: parsed.number,
+      lastCorrect: entry.lastCorrect, lastAt: entry.lastAt,
+      noteKey: entry.noteKey || `${parsed.test}-${parsed.part}-${parsed.number}`
+    });
   });
-  items.sort((a, b) => b.lastAt - a.lastAt);
+  // lastAtが新しい順(降順)。lastAtを持たない古い記録(0)同士は、記録日時が
+  // 分からないぶんTest→Part→問題番号の降順に揃えて並べる(全体として常に降順に見えるように)。
+  items.sort((a, b) => {
+    if (b.lastAt !== a.lastAt) return b.lastAt - a.lastAt;
+    if (a.test !== b.test) return b.test.localeCompare(a.test);
+    if (a.part !== b.part) return b.part - a.part;
+    return b.number - a.number;
+  });
   return items;
+}
+
+// 履歴欄の項目にマウスオーバーしたとき、その設問(が属するパッセージ)のノートが
+// あれば大きめのポップアップで表示する。chunk-popupとは別の専用ポップアップを使う。
+const historyNotePopupEl = document.createElement('div');
+historyNotePopupEl.className = 'history-note-popup';
+document.body.appendChild(historyNotePopupEl);
+
+function showHistoryNotePopup(anchorEl, noteHtml) {
+  historyNotePopupEl.innerHTML = noteHtml;
+  const rect = anchorEl.getBoundingClientRect();
+  historyNotePopupEl.style.left = Math.max(8, rect.left - 320) + 'px';
+  historyNotePopupEl.style.top = Math.max(8, rect.top + window.scrollY - 8) + 'px';
+  historyNotePopupEl.classList.add('show');
+}
+function hideHistoryNotePopup() {
+  historyNotePopupEl.classList.remove('show');
 }
 
 function renderHistorySidebar() {
@@ -1326,6 +1387,12 @@ function renderHistorySidebar() {
     badge.textContent = item.lastCorrect === true ? '○' : item.lastCorrect === false ? '×' : '-';
     row.appendChild(label);
     row.appendChild(badge);
+    const noteHtml = localStorage.getItem(NOTES_LS_PREFIX + item.noteKey);
+    if (noteHtml && noteHtml.trim()) {
+      row.classList.add('has-note');
+      row.addEventListener('mouseenter', () => showHistoryNotePopup(row, noteHtml));
+      row.addEventListener('mouseleave', hideHistoryNotePopup);
+    }
     listEl.appendChild(row);
   });
 }
@@ -2101,6 +2168,7 @@ function updateHeaderNav() {
   footerPrevBtn.disabled = unitIdx <= 0;
   footerNextBtn.disabled = unitIdx >= unitCount - 1;
   partJumpSelectEl.value = `${state.test}-${state.part}`;
+  stopAllAudio();
   resetAndStartStopwatch();
 }
 
@@ -2170,7 +2238,7 @@ function renderDictation(items, onComplete) {
     const url = await getAudioUrl(items[idx].audio);
     playBtn.disabled = false;
     playBtn.textContent = '▶ 音声を再生 (Spaceキーでも再生できます)';
-    if (url) { currentAudio = new Audio(url); currentAudio.play(); }
+    if (url) { currentAudio = new Audio(url); globalAudio.current = currentAudio; currentAudio.play(); }
   }
   playBtn.addEventListener('click', playCurrent);
 
@@ -2313,6 +2381,7 @@ function renderShadowing(items, onComplete) {
     toggleBtn.disabled = false;
     if (!url) return;
     currentAudio = new Audio(url);
+    globalAudio.current = currentAudio;
     attachAudioEvents(currentAudio);
     currentAudio.play();
     toggleBtn.textContent = '❚❚';
@@ -2642,7 +2711,7 @@ function renderPart3or4() {
         pdfSlot.appendChild(buildPdfExplainWidget(state.test, item.number));
       }
       g.items.forEach(item => {
-        incrementAttempt(`${state.test}-${state.part}-${item.number}`, p34.selections[item.number] === item.answer);
+        incrementAttempt(`${state.test}-${state.part}-${item.number}`, p34.selections[item.number] === item.answer, `${state.test}-${state.part}-${g.questions[0]}`);
       });
       const fullText = g.conversationText || g.talkText;
       if (fullText) {
@@ -2748,7 +2817,7 @@ function renderPart5() {
       pdfSlot.appendChild(buildPdfExplainWidget(state.test, q.number));
     }
     batch.forEach(q => {
-      incrementAttempt(`${state.test}-5-${q.number}`, selections[q.number] === q.answer);
+      incrementAttempt(`${state.test}-5-${q.number}`, selections[q.number] === q.answer, `${state.test}-5-${batch[0].number}`);
     });
     wrap.appendChild(buildNotesWidget(`${state.test}-5-${batch[0].number}`));
   });
@@ -2856,7 +2925,7 @@ async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, 
   const allCorrect = items.every(item => p67.selections[item.number] === item.answer);
   incrementAttempt(attemptKey, allCorrect);
   items.forEach(item => {
-    recordCorrectness(`${state.test}-${state.part}-${item.number}-correct`, p67.selections[item.number] === item.answer);
+    recordCorrectness(`${state.test}-${state.part}-${item.number}-correct`, p67.selections[item.number] === item.answer, attemptKey);
   });
   nextBtn.disabled = false;
   nextBtn.textContent = '次へ';
