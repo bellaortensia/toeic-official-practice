@@ -2,7 +2,7 @@
   "test": "T1",
   "part": 4,
   "type": "talk",
-  "note": "talkTextは別冊解答・解説(PDF p.156-166)から書き起こしたトーク全文。",
+  "note": "talkTextは別冊解答・解説(PDF p.156-166)から書き起こしたトーク全文。Q88の正解が誤ってBと記録されていたことが判明したため、公式正解一覧(PDF p.132)に基づきCへ修正済み(2026-08-28)。",
   "groups": [
     { "questions": [71,72,73], "audioTalk": "073 T1 Pt4 Q71-73 トーク.mp3", "audioQuestions": "074 T1 Pt4 Q71-73 設問.mp3",
       "talkText": "Do you have a big move coming up? Look no further than Martin Movers! We can pack up all your belongings and get them where they need to go in our spacious moving trucks. Customers rave about how fast, clean, and reliable our service is. We are proud of our ten years of experience serving the community. To celebrate our tenth anniversary, we're waiving the cost of supplies for the month of May. That's free boxes, tape, and foam wrap for your breakables! Schedule today to get this great deal!",
@@ -44,7 +44,7 @@
       "items": [
       { "number": 86, "text": "Who most likely are the listeners?", "choices": {"A":"Flight attendants","B":"Park rangers","C":"Warehouse workers","D":"Medical assistants"}, "answer": "C" },
       { "number": 87, "text": "Why does the speaker say, \"That's three times a day\"?", "choices": {"A":"To question a new process","B":"To promote practicing a skill","C":"To clarify a responsibility","D":"To complain about a policy"}, "answer": "C" },
-      { "number": 88, "text": "What are the listeners asked to record in a logbook?", "choices": {"A":"Supply inventory","B":"Training hours","C":"Mechanical issues","D":"Driving distances"}, "answer": "B" }
+      { "number": 88, "text": "What are the listeners asked to record in a logbook?", "choices": {"A":"Supply inventory","B":"Training hours","C":"Mechanical issues","D":"Driving distances"}, "answer": "C" }
     ]},
     { "questions": [89,90,91], "audioTalk": "085 T1 Pt4 Q89-91 トーク.mp3", "audioQuestions": "086 T1 Pt4 Q89-91 設問.mp3",
       "talkText": "Today I'll be presenting the work of Moritz Hoffman. Moritz spent the last two years designing and renovating the city hall building, saving a truly historic building — one of the oldest in Madison. A project of this scale requires a great deal of careful planning and attention to detail. And Moritz spent a great deal of time on preparation. The whole process was documented with photographs. Now, let's look at some slides of the city hall before and after renovations.",

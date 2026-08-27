@@ -306,9 +306,10 @@ audio{
 .translate-col-en .chunk-seg.seg-hover{background:var(--accent);}
 .translate-col-ja .chunk-seg.seg-hover{background:var(--text);color:var(--text);}
 .translate-col-ja .chunk-seg.seg-revealed{background:var(--accent);color:inherit;}
-/* 意訳モード: JA側(意訳文)はハイライトせず下線のみ。EN側は直訳モードと同じ
+/* 意訳モード: JA側(意訳文)は常時ハイライトせず、EN側で今ハイライトされている
+   チャンクを含む文だけ下線が連動する(seg-active)。EN側は直訳モードと同じ
    チャンク単位のハイライト・スラッシュ表示のまま変わらない。 */
-.translate-col-ja .natural-seg{text-decoration:underline;text-decoration-color:var(--accent-2);text-underline-offset:3px;}
+.translate-col-ja .natural-seg.seg-active{text-decoration:underline;text-decoration-color:var(--accent-2);text-underline-offset:3px;}
 .chunk-popup{
   position:absolute;
   z-index:80;

@@ -271,21 +271,27 @@ const TRANSLATE_PROMPT = `あなたは英語学習者向けの解析エンジン
 }
 segmentsの"en"を出現順にそのまま連結すると、空白の増減を除いて原文と完全に一致するようにしてください。naturalSentencesの"en"を出現順にそのまま連結した場合も同様に原文と完全に一致させてください。`;
 
-const TRANSLATE_PROMPT_VERSION = 'v5';
+const TRANSLATE_PROMPT_VERSION = 'v6';
 
 // AIが返すlineBreakは「ピリオドの直後」など原文に無い位置でもtrueを付けがちで、
 // EN/JA両カラムの改行位置がずれる原因になる。原文中の実際の改行位置とチャンクの
 // 出現位置を突き合わせて、lineBreakをこちら側で確定し直す(AIの判断は信用しない)。
+// あわせて原文中の文字位置(start/end)も記録する。これは、意訳モードでEN側の
+// どのチャンクが今ハイライトされているかから、対応する意訳の文を特定する
+// (chunk単位のsegmentsと文単位のnaturalSentencesは別々にAIが分割するため、
+// 文字位置を突き合わせないと対応関係が分からない)のに使う。
 function reconcileLineBreaks(segments, sourceText) {
-  if (!sourceText) return segments;
+  if (!sourceText) return segments.map(seg => ({ ...seg, lineBreak: false, start: 0, end: 0 }));
   let cursor = 0;
   return segments.map(seg => {
     const idx = sourceText.indexOf(seg.en, cursor);
-    if (idx === -1) return { ...seg, lineBreak: false };
+    if (idx === -1) return { ...seg, lineBreak: false, start: cursor, end: cursor };
+    const start = idx;
     let i = idx + seg.en.length;
+    const end = i;
     cursor = i;
     while (i < sourceText.length && (sourceText[i] === ' ' || sourceText[i] === '\t')) i++;
-    return { ...seg, lineBreak: sourceText[i] === '\n' };
+    return { ...seg, lineBreak: sourceText[i] === '\n', start, end };
   });
 }
 
@@ -607,8 +613,8 @@ function showChunkPopup(seg, anchorEl, notesArea) {
 // ・直訳: チャンク単位。現在位置でもクリックされるまで背景=文字色で塗りつぶして
 //   読めなくし(単語帳の答え隠し)、クリックするとEN側と同じアクセント色にめくれる。
 // ・意訳: 文単位、常時表示。チャンク単位で正確に対応する箇所をハイライトするのは
-//   難しいため、ハイライトはせず下線だけを引く(EN側のチャンク表示・ハイライトには
-//   影響しない)。
+//   難しいため背景ハイライトはしないが、今EN側でハイライトされているチャンクが
+//   含まれる文だけに下線を引き、ホイール操作と連動させる(常時全文下線にはしない)。
 function renderTranslateColumns(container, data, mode, notesArea) {
   container.innerHTML = '';
   const segments = data.segments || [];
@@ -646,6 +652,36 @@ function renderTranslateColumns(container, data, mode, notesArea) {
     }
   });
 
+  // 意訳モード: 文単位のJA表示を作りつつ、各チャンク(segments)が原文中のどこに
+  // あるか(start)から、それがどの文(naturalSentences)に含まれるかの対応表を作る。
+  // segments/naturalSentencesはAIが別々に分割するため、文字位置(start/end)を
+  // 突き合わせないと対応関係が分からない。
+  const naturalJaSpans = [];
+  let segToSentenceIdx = [];
+  if (mode === 'natural') {
+    jaCol.classList.add('natural-mode');
+    const sentences = data.naturalSentences || [];
+    if (!sentences.length) {
+      jaCol.innerHTML = '<p class="translate-error">意訳データがありません。「翻訳を再取得」をお試しください。</p>';
+    } else {
+      sentences.forEach((s, i) => {
+        const jaSpan = document.createElement('span');
+        jaSpan.className = 'natural-seg';
+        jaSpan.dataset.seg = i;
+        jaSpan.textContent = s.ja + ' ';
+        jaCol.appendChild(jaSpan);
+        naturalJaSpans.push(jaSpan);
+        if (s.lineBreak) jaCol.appendChild(document.createElement('br'));
+      });
+      segToSentenceIdx = segments.map(seg => {
+        let idx = sentences.findIndex(s => seg.start >= s.start && seg.start < s.end);
+        if (idx === -1) idx = sentences.findIndex(s => seg.start < s.end);
+        if (idx === -1) idx = sentences.length - 1;
+        return idx;
+      });
+    }
+  }
+
   function setSeg(i) {
     i = Math.max(0, Math.min(segments.length - 1, i));
     if (i === curSeg) return;
@@ -656,6 +692,11 @@ function renderTranslateColumns(container, data, mode, notesArea) {
     const hovered = wideWrap.querySelectorAll(`.chunk-seg[data-seg="${i}"]`);
     hovered.forEach(n => n.classList.add('seg-hover'));
     if (hovered[0] && !wasInit) hovered[0].scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    if (mode === 'natural' && naturalJaSpans.length) {
+      naturalJaSpans.forEach(n => n.classList.remove('seg-active'));
+      const sentIdx = segToSentenceIdx[i];
+      if (sentIdx != null && naturalJaSpans[sentIdx]) naturalJaSpans[sentIdx].classList.add('seg-active');
+    }
   }
 
   function revealCurrent() {
@@ -682,23 +723,6 @@ function renderTranslateColumns(container, data, mode, notesArea) {
   if (mode === 'literal') jaCol.addEventListener('click', revealCurrent);
 
   wideWrap.appendChild(enCol);
-
-  if (mode === 'natural') {
-    jaCol.classList.add('natural-mode');
-    const sentences = data.naturalSentences || [];
-    if (!sentences.length) {
-      jaCol.innerHTML = '<p class="translate-error">意訳データがありません。「翻訳を再取得」をお試しください。</p>';
-    } else {
-      sentences.forEach(s => {
-        const jaSpan = document.createElement('span');
-        jaSpan.className = 'natural-seg';
-        jaSpan.textContent = s.ja + ' ';
-        jaCol.appendChild(jaSpan);
-        if (s.lineBreak) jaCol.appendChild(document.createElement('br'));
-      });
-    }
-  }
-
   wideWrap.appendChild(jaCol);
   container.appendChild(wideWrap);
   setSeg(0);
