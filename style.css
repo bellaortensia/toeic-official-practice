@@ -539,6 +539,15 @@ audio{
   font-family:'JetBrains Mono',monospace;
   font-size:12px;
   color:var(--text);
+  flex:1 1 auto;
+  min-width:0;
+}
+.history-item-date{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10.5px;
+  color:var(--text-soft);
+  flex:0 0 auto;
+  white-space:nowrap;
 }
 .history-item-badge{
   font-weight:700;
@@ -558,19 +567,22 @@ audio{
   position:absolute;
   z-index:90;
   display:none;
-  max-width:340px;
-  min-width:220px;
-  max-height:320px;
+  max-width:850px;
+  min-width:550px;
+  max-height:min(800px, 80vh);
   overflow-y:auto;
   background:var(--ink-2);
   color:var(--paper);
   border-radius:8px;
-  padding:14px 16px;
-  font-size:13.5px;
-  line-height:1.7;
+  padding:24px 28px;
+  font-size:15.5px;
+  line-height:1.8;
   box-shadow:0 12px 32px rgba(0,0,0,.5);
 }
 .history-note-popup.show{display:block;}
+@media (max-width:900px){
+  .history-note-popup{min-width:0;max-width:calc(100vw - 32px);}
+}
 
 @media (max-width:720px){
   .empty-state-layout{flex-direction:column;}

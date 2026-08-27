@@ -1350,28 +1350,49 @@ function buildAnswerHistoryList() {
   return items;
 }
 
+const JP_WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
+function formatHistoryDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  return `${d.getMonth() + 1}/${d.getDate()}${JP_WEEKDAYS[d.getDay()]}`;
+}
+
 // 履歴欄の項目にマウスオーバーしたとき、その設問(が属するパッセージ)のノートが
 // あれば大きめのポップアップで表示する。chunk-popupとは別の専用ポップアップを使う。
+// マウスオーバーだけだと少し動いただけで消えてしまうため、左クリックで「固定」でき、
+// 固定中はマウスが離れても消えず、もう一度クリックする(または他をクリックする)まで残る。
 const historyNotePopupEl = document.createElement('div');
 historyNotePopupEl.className = 'history-note-popup';
 document.body.appendChild(historyNotePopupEl);
+let historyPopupPinnedRow = null;
 
 function showHistoryNotePopup(anchorEl, noteHtml) {
   historyNotePopupEl.innerHTML = noteHtml;
   const rect = anchorEl.getBoundingClientRect();
-  historyNotePopupEl.style.left = Math.max(8, rect.left - 320) + 'px';
+  // 右カラム(履歴欄)のすぐ左側に、右端をそろえて表示する(ポップアップ自体の
+  // 幅が大きいので、アンカーからの左オフセット固定ではなく画面右端基準で置く)。
+  historyNotePopupEl.style.left = 'auto';
+  historyNotePopupEl.style.right = Math.max(8, window.innerWidth - rect.left + 12) + 'px';
   historyNotePopupEl.style.top = Math.max(8, rect.top + window.scrollY - 8) + 'px';
   historyNotePopupEl.classList.add('show');
 }
 function hideHistoryNotePopup() {
+  historyPopupPinnedRow = null;
   historyNotePopupEl.classList.remove('show');
 }
+document.addEventListener('click', e => {
+  if (historyPopupPinnedRow && !historyNotePopupEl.contains(e.target) && !e.target.closest('.history-item')) {
+    hideHistoryNotePopup();
+  }
+});
 
 function renderHistorySidebar() {
   const listEl = document.getElementById('historySidebarList');
   if (!listEl) return;
   const items = buildAnswerHistoryList();
   listEl.innerHTML = '';
+  historyPopupPinnedRow = null;
+  hideHistoryNotePopup();
   if (!items.length) {
     listEl.innerHTML = '<p class="history-sidebar-empty">まだ解いた問題がありません。</p>';
     return;
@@ -1382,16 +1403,32 @@ function renderHistorySidebar() {
     const label = document.createElement('span');
     label.className = 'history-item-label';
     label.textContent = `${item.test} P${item.part} Q${item.number}`;
+    const dateEl = document.createElement('span');
+    dateEl.className = 'history-item-date';
+    dateEl.textContent = formatHistoryDate(item.lastAt);
     const badge = document.createElement('span');
     badge.className = 'history-item-badge ' + (item.lastCorrect === true ? 'correct' : item.lastCorrect === false ? 'wrong' : 'unknown');
     badge.textContent = item.lastCorrect === true ? '○' : item.lastCorrect === false ? '×' : '-';
     row.appendChild(label);
+    row.appendChild(dateEl);
     row.appendChild(badge);
     const noteHtml = localStorage.getItem(NOTES_LS_PREFIX + item.noteKey);
     if (noteHtml && noteHtml.trim()) {
       row.classList.add('has-note');
-      row.addEventListener('mouseenter', () => showHistoryNotePopup(row, noteHtml));
-      row.addEventListener('mouseleave', hideHistoryNotePopup);
+      row.addEventListener('mouseenter', () => {
+        if (!historyPopupPinnedRow) showHistoryNotePopup(row, noteHtml);
+      });
+      row.addEventListener('mouseleave', () => {
+        if (historyPopupPinnedRow !== row) hideHistoryNotePopup();
+      });
+      row.addEventListener('click', () => {
+        if (historyPopupPinnedRow === row) {
+          hideHistoryNotePopup();
+        } else {
+          historyPopupPinnedRow = row;
+          showHistoryNotePopup(row, noteHtml);
+        }
+      });
     }
     listEl.appendChild(row);
   });
