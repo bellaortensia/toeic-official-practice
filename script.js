@@ -601,12 +601,17 @@ function showChunkPopup(seg, anchorEl, notesArea) {
   chunkPopupEl.classList.add('show');
 }
 
-// decode-toeicと同じ操作方式: マウスホイールの上下でハイライト位置(curSeg)が
-// EN/JA両カラム同時に動く(実際のカーソル位置とは無関係)。直訳(JA)側は現在位置でも
-// クリックされるまで背景色=文字色(var(--text))で塗りつぶして読めなくし、クリックで
-// EN側と同じアクセント色にめくれて読めるようになる(単語帳・自己テスト的な体験)。
-function renderTranslationChunks(container, segments, notesArea) {
+// EN列は直訳・意訳どちらのモードでも常にチャンク単位で表示する(スラッシュ区切り、
+// マウスホイールの上下でハイライト位置(curSeg)を送り、クリックでポップアップ。
+// 実際のカーソル位置とは無関係)。JA列はモードで表示を切り替える:
+// ・直訳: チャンク単位。現在位置でもクリックされるまで背景=文字色で塗りつぶして
+//   読めなくし(単語帳の答え隠し)、クリックするとEN側と同じアクセント色にめくれる。
+// ・意訳: 文単位、常時表示。チャンク単位で正確に対応する箇所をハイライトするのは
+//   難しいため、ハイライトはせず下線だけを引く(EN側のチャンク表示・ハイライトには
+//   影響しない)。
+function renderTranslateColumns(container, data, mode, notesArea) {
   container.innerHTML = '';
+  const segments = data.segments || [];
   let curSeg = -1;
 
   const wideWrap = document.createElement('div');
@@ -617,7 +622,7 @@ function renderTranslationChunks(container, segments, notesArea) {
   jaCol.className = 'translate-col translate-col-ja';
 
   const enSpans = [];
-  const jaSpans = [];
+  const jaSpans = []; // 直訳モードのみ使用
   segments.forEach((seg, i) => {
     const enSpan = document.createElement('span');
     enSpan.className = 'chunk-seg';
@@ -625,17 +630,19 @@ function renderTranslationChunks(container, segments, notesArea) {
     // チャンクの区切りが視覚的に必ず分かるよう、改行の直前を除いて毎回「/」を
     // 明示的に挟む(スラッシュリーディング表示を確実にするため)。
     enSpan.textContent = seg.en + (seg.lineBreak ? ' ' : ' / ');
-    const jaSpan = document.createElement('span');
-    jaSpan.className = 'chunk-seg';
-    jaSpan.dataset.seg = i;
-    jaSpan.textContent = seg.ja + ' ';
     enCol.appendChild(enSpan);
-    jaCol.appendChild(jaSpan);
     enSpans.push(enSpan);
-    jaSpans.push(jaSpan);
+    if (mode === 'literal') {
+      const jaSpan = document.createElement('span');
+      jaSpan.className = 'chunk-seg';
+      jaSpan.dataset.seg = i;
+      jaSpan.textContent = seg.ja + ' ';
+      jaCol.appendChild(jaSpan);
+      jaSpans.push(jaSpan);
+    }
     if (seg.lineBreak) {
       enCol.appendChild(document.createElement('br'));
-      jaCol.appendChild(document.createElement('br'));
+      if (mode === 'literal') jaCol.appendChild(document.createElement('br'));
     }
   });
 
@@ -644,7 +651,7 @@ function renderTranslationChunks(container, segments, notesArea) {
     if (i === curSeg) return;
     const wasInit = curSeg < 0;
     wideWrap.querySelectorAll('.chunk-seg.seg-hover').forEach(n => n.classList.remove('seg-hover'));
-    wideWrap.querySelectorAll('.chunk-seg.seg-revealed').forEach(n => n.classList.remove('seg-revealed'));
+    if (mode === 'literal') wideWrap.querySelectorAll('.chunk-seg.seg-revealed').forEach(n => n.classList.remove('seg-revealed'));
     curSeg = i;
     const hovered = wideWrap.querySelectorAll(`.chunk-seg[data-seg="${i}"]`);
     hovered.forEach(n => n.classList.add('seg-hover'));
@@ -653,13 +660,15 @@ function renderTranslationChunks(container, segments, notesArea) {
 
   function revealCurrent() {
     if (curSeg < 0) return;
-    if (jaSpans[curSeg].classList.contains('seg-revealed')) {
-      // もう一度クリック: ポップアップを閉じ、ハイライトも黒塗りに戻す
-      wideWrap.querySelectorAll(`.chunk-seg[data-seg="${curSeg}"]`).forEach(n => n.classList.remove('seg-revealed'));
-      chunkPopupEl.classList.remove('show');
-      return;
+    if (mode === 'literal') {
+      if (jaSpans[curSeg].classList.contains('seg-revealed')) {
+        // もう一度クリック: ポップアップを閉じ、ハイライトも黒塗りに戻す
+        wideWrap.querySelectorAll(`.chunk-seg[data-seg="${curSeg}"]`).forEach(n => n.classList.remove('seg-revealed'));
+        chunkPopupEl.classList.remove('show');
+        return;
+      }
+      wideWrap.querySelectorAll(`.chunk-seg[data-seg="${curSeg}"]`).forEach(n => n.classList.add('seg-revealed'));
     }
-    wideWrap.querySelectorAll(`.chunk-seg[data-seg="${curSeg}"]`).forEach(n => n.classList.add('seg-revealed'));
     showChunkPopup(segments[curSeg], enSpans[curSeg], notesArea);
   }
 
@@ -667,60 +676,32 @@ function renderTranslationChunks(container, segments, notesArea) {
     e.preventDefault();
     setSeg((curSeg < 0 ? 0 : curSeg) + (e.deltaY > 0 ? 1 : -1));
   }, { passive: false });
-  // JA欄・EN欄どちらでクリックしても現在位置のポップアップが開く(ワイドモードに
-  // 限らず常時)。ポップアップ自体は常にEN側の単語に添えて表示する。
+  // 直訳モードはJA欄・EN欄どちらでクリックしても現在位置のポップアップが開く。
+  // 意訳モードはJA欄が文単位で独立表示のため、EN欄のクリックのみで開く。
   enCol.addEventListener('click', revealCurrent);
-  jaCol.addEventListener('click', revealCurrent);
+  if (mode === 'literal') jaCol.addEventListener('click', revealCurrent);
 
   wideWrap.appendChild(enCol);
+
+  if (mode === 'natural') {
+    jaCol.classList.add('natural-mode');
+    const sentences = data.naturalSentences || [];
+    if (!sentences.length) {
+      jaCol.innerHTML = '<p class="translate-error">意訳データがありません。「翻訳を再取得」をお試しください。</p>';
+    } else {
+      sentences.forEach(s => {
+        const jaSpan = document.createElement('span');
+        jaSpan.className = 'natural-seg';
+        jaSpan.textContent = s.ja + ' ';
+        jaCol.appendChild(jaSpan);
+        if (s.lineBreak) jaCol.appendChild(document.createElement('br'));
+      });
+    }
+  }
+
   wideWrap.appendChild(jaCol);
   container.appendChild(wideWrap);
   setSeg(0);
-}
-
-// 意訳モード: 文単位でEN(下線のみ・常時表示)⇄JA(自然な訳・常時表示)を対応させる。
-// 直訳モードと違い黒塗り→クリックで めくる、という仕組みは無く、最初から両方見えた
-// ままにする(意訳なのでハイライトは不要、対応する文がどれか分かるよう下線のみ引く)。
-// クリックすると、その文の直訳・語彙・解説のポップアップを開ける(直訳モードと共通)。
-function renderNaturalSentences(container, sentences, notesArea) {
-  container.innerHTML = '';
-  if (!sentences.length) {
-    container.innerHTML = '<p class="translate-error">意訳データがありません。「翻訳を再取得」をお試しください。</p>';
-    return;
-  }
-  const wideWrap = document.createElement('div');
-  wideWrap.className = 'translate-wide';
-  const enCol = document.createElement('div');
-  enCol.className = 'translate-col translate-col-en';
-  const jaCol = document.createElement('div');
-  jaCol.className = 'translate-col translate-col-ja';
-
-  sentences.forEach((s, i) => {
-    const enSpan = document.createElement('span');
-    enSpan.className = 'chunk-seg natural-seg';
-    enSpan.dataset.seg = i;
-    enSpan.textContent = s.en + ' ';
-    enSpan.addEventListener('click', () => {
-      wideWrap.querySelectorAll('.natural-seg.seg-active').forEach(n => n.classList.remove('seg-active'));
-      wideWrap.querySelectorAll(`.natural-seg[data-seg="${i}"]`).forEach(n => n.classList.add('seg-active'));
-      showChunkPopup({ en: s.en, ja: s.ja, keyTerms: [] }, enSpan, notesArea);
-    });
-    const jaSpan = document.createElement('span');
-    jaSpan.className = 'chunk-seg natural-seg';
-    jaSpan.dataset.seg = i;
-    jaSpan.textContent = s.ja + ' ';
-    jaSpan.addEventListener('click', () => enSpan.click());
-    enCol.appendChild(enSpan);
-    jaCol.appendChild(jaSpan);
-    if (s.lineBreak) {
-      enCol.appendChild(document.createElement('br'));
-      jaCol.appendChild(document.createElement('br'));
-    }
-  });
-
-  wideWrap.appendChild(enCol);
-  wideWrap.appendChild(jaCol);
-  container.appendChild(wideWrap);
 }
 
 // 解説画面用の翻訳ウィジェット: 表示された時点で自動的に翻訳を取得し、最初から
@@ -803,8 +784,7 @@ function buildTranslatableBlock(text, cacheKey) {
     restoreNotesIfSaved(notesArea, cacheKey);
 
     function renderCurrentMode() {
-      if (mode === 'literal') renderTranslationChunks(contentContainer, data.segments, notesArea);
-      else renderNaturalSentences(contentContainer, data.naturalSentences, notesArea);
+      renderTranslateColumns(contentContainer, data, mode, notesArea);
     }
 
     modeBtn.onclick = () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); renderCurrentMode(); };
