@@ -321,13 +321,51 @@ function getCachedNaturalJa(cacheKey) {
   } catch (e) { return null; }
 }
 
-// クリックしたチャンクを1文として、TOEIC講師視点の文法・語彙解説を生成する
-// (decode-toeicの「この文を解説→学習メモ」と同じ発想。単語の意味だけでなく文単位の解説)。
+// クリックしたチャンクが属する「一文全体」を対象に、SVOC(+修飾語M)分解つきの
+// 文法解説を生成する(decode-toeicの「この文を解説→学習メモ」と同じ発想だが、
+// チャンク単体ではなく文全体を解説する)。ノート欄はプレーンテキストで下線が
+// 引けないため、下線の代わりにS/V/O/C/Mのタグ行で文の構造を示す。
 const CLAUSE_EXPLAIN_PROMPT_READING = `あなたはTOEIC満点を何度も取得し、初心者指導歴20年以上の英語講師です。
-入力される英文について、日本語で解説してください。英文そのものは既に別の場所に表示されているので、絶対に繰り返し書かないこと。
-まず1行目に、その英文の日本語訳を（）で囲んで書くこと。
-その次の行から、この文に含まれる、TOEICで狙われやすい、あるいは「これを知っておかないと絶対正しく読めない」であろう文法・語彙・構文・表現の知識について、簡潔に日本語で解説してください。
-装飾やMarkdown記号(**など)は使わず、プレーンテキストのみで出力してください。`;
+入力される英文(一文全体)を、S(主語)V(動詞)O(目的語)C(補語)M(修飾語句)に分解して、プレーンテキストで解説してください。
+装飾やMarkdown記号(**など)は一切使わないこと。必ず次の形式に従うこと。
+
+1行目: ■ に続けて、入力文全体を省略せず、意味・働きのまとまりごとに半角スラッシュ(/)で区切って書く。
+2行目: 1行目の各まとまりの真下あたりに半角スペースでおおよそ位置を合わせながら、そのまとまりが持つ働きを (S) (V) (O) (C) (M) の記号で書く。1つのまとまりの中に複数の働きが含まれる場合は、その中でさらに単語単位で分けてそれぞれにタグを付けてよい。that節・関係詞節など従属節の中の要素には (S') (V') (O') (C') (M') のようにダッシュを付けて区別し、節を導く語(that/whichなど)には (S (that節)) のように節の種類が分かるラベルを付ける。
+
+空行を1行入れる。
+
+その後、1行目・2行目で登場した(タグ)を出現順に1つずつ取り上げ、
+(タグ) その部分の英語：日本語訳
+の形式で書く。従属節の中の要素は行頭に半角スペース4つを入れて字下げする。動詞は時制・態(受動態・完了形・進行形など)のニュアンスも訳に反映すること。
+
+最後に空行を1行入れ、この文を正しく読むために知っておくべき文法・語彙・構文のポイントを2〜3行で解説する。
+
+出力例1(入力文: "We have a logbook on the wall over there for this purpose."):
+■ We have a logbook / on the wall over there / for this purpose.
+   (S)  (V)   (O)              (M)                        (M)
+
+(S) We：私達は
+(V) have：持っている(用意している)
+(O) a logbook：記録簿を
+(M) on the wall over there：あそこの壁の上に
+(M) for this purpose：この目的のために
+
+「have + 目的語」で「〜を持っている、備えている」という所有・設置のニュアンス。前置詞句(on 〜/for 〜)は文の後ろに続けて置かれる修飾語。
+
+出力例2(入力文: "It's come to my attention that only the crew working the morning shift has been completing the forklift inspection checklist."):
+■ It's come to my attention / that only the crew / working the morning shift / has been completing / the forklift inspection checklist.
+   (S) (V)    (M)             (S)       (S')              (M')                        (V')                    (O')
+
+(S) It：それは
+(V) 's come：きている
+(M) to my attention：私の注意に(私の知るところとなった)
+(S (that節)) that：〜ということを
+    (S') only the crew：クルーだけが
+    (M') working the morning shift：午前のシフトで働いている
+    (V') has been completing：記入し続けている
+    (O') the forklift inspection checklist：フォークリフトの点検チェックリストを
+
+「It has come to one's attention that 〜」は「〜ということが分かった/明らかになった」という定型表現。has been completingは現在完了進行形で、継続的に行われてきた動作を表す。`;
 
 async function getClauseExplanation(clauseText) {
   return await callGemini(CLAUSE_EXPLAIN_PROMPT_READING, clauseText, { maxOutputTokens: 800 });
@@ -551,7 +589,7 @@ document.addEventListener('click', e => {
   }
 });
 
-function showChunkPopup(seg, anchorEl, notesArea) {
+function showChunkPopup(seg, anchorEl, notesArea, sentenceText) {
   const terms = seg.keyTerms || [];
   const literalHtml = seg.ja
     ? `<div class="chunk-popup-item chunk-popup-literal" data-action="literal"><strong>${escapeHtml(seg.ja)}</strong></div>`
@@ -592,9 +630,10 @@ function showChunkPopup(seg, anchorEl, notesArea) {
     if (!trigger || trigger.dataset.loading === '1') return;
     trigger.dataset.loading = '1';
     trigger.querySelector('strong').textContent = '解説中...';
+    const fullSentence = sentenceText || seg.en;
     try {
-      const explanation = await getClauseExplanation(seg.en);
-      appendToNotes(notesArea, seg.en, explanation);
+      const explanation = await getClauseExplanation(fullSentence);
+      appendToNotes(notesArea, fullSentence, explanation);
       trigger.querySelector('strong').textContent = 'ノートに追記しました';
     } catch (err) {
       trigger.querySelector('strong').textContent = '解説の生成に失敗しました: ' + err.message;
@@ -652,15 +691,23 @@ function renderTranslateColumns(container, data, mode, notesArea) {
     }
   });
 
-  // 意訳モード: 文単位のJA表示を作りつつ、各チャンク(segments)が原文中のどこに
-  // あるか(start)から、それがどの文(naturalSentences)に含まれるかの対応表を作る。
-  // segments/naturalSentencesはAIが別々に分割するため、文字位置(start/end)を
-  // 突き合わせないと対応関係が分からない。
+  // 文単位のデータ(naturalSentences)は、意訳モードのJA表示だけでなく、直訳モード
+  // でも「この文を解説」機能(クリックしたチャンクが属する文全体を解説する)のために
+  // 必要なので、モードに関わらず常に対応表(segToSentenceIdx)を作っておく。
+  // segments/naturalSentencesはAIが別々に分割するため、原文中の文字位置(start/end)
+  // を突き合わせないと対応関係が分からない。
+  const sentences = data.naturalSentences || [];
+  const segToSentenceIdx = segments.map(seg => {
+    if (!sentences.length) return -1;
+    let idx = sentences.findIndex(s => seg.start >= s.start && seg.start < s.end);
+    if (idx === -1) idx = sentences.findIndex(s => seg.start < s.end);
+    if (idx === -1) idx = sentences.length - 1;
+    return idx;
+  });
+
   const naturalJaSpans = [];
-  let segToSentenceIdx = [];
   if (mode === 'natural') {
     jaCol.classList.add('natural-mode');
-    const sentences = data.naturalSentences || [];
     if (!sentences.length) {
       jaCol.innerHTML = '<p class="translate-error">意訳データがありません。「翻訳を再取得」をお試しください。</p>';
     } else {
@@ -673,13 +720,19 @@ function renderTranslateColumns(container, data, mode, notesArea) {
         naturalJaSpans.push(jaSpan);
         if (s.lineBreak) jaCol.appendChild(document.createElement('br'));
       });
-      segToSentenceIdx = segments.map(seg => {
-        let idx = sentences.findIndex(s => seg.start >= s.start && seg.start < s.end);
-        if (idx === -1) idx = sentences.findIndex(s => seg.start < s.end);
-        if (idx === -1) idx = sentences.length - 1;
-        return idx;
-      });
     }
+  }
+
+  // 開いているポップアップが今どのチャンク向けかを覚えておき、同じチャンクを
+  // もう一度クリックしたら閉じる(モードに関わらず共通の挙動)。
+  let popupOpenSeg = -1;
+
+  function closePopup() {
+    if (mode === 'literal' && curSeg >= 0) {
+      wideWrap.querySelectorAll(`.chunk-seg[data-seg="${curSeg}"]`).forEach(n => n.classList.remove('seg-revealed'));
+    }
+    chunkPopupEl.classList.remove('show');
+    popupOpenSeg = -1;
   }
 
   function setSeg(i) {
@@ -692,25 +745,32 @@ function renderTranslateColumns(container, data, mode, notesArea) {
     const hovered = wideWrap.querySelectorAll(`.chunk-seg[data-seg="${i}"]`);
     hovered.forEach(n => n.classList.add('seg-hover'));
     if (hovered[0] && !wasInit) hovered[0].scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    if (mode === 'natural' && naturalJaSpans.length) {
+    if (naturalJaSpans.length) {
       naturalJaSpans.forEach(n => n.classList.remove('seg-active'));
       const sentIdx = segToSentenceIdx[i];
-      if (sentIdx != null && naturalJaSpans[sentIdx]) naturalJaSpans[sentIdx].classList.add('seg-active');
+      if (sentIdx != null && sentIdx >= 0 && naturalJaSpans[sentIdx]) naturalJaSpans[sentIdx].classList.add('seg-active');
     }
+    // 別のチャンクに移動したら、開いていたポップアップは(内容が古いチャンクの
+    // ままになってしまうので)閉じる。
+    if (popupOpenSeg !== -1 && popupOpenSeg !== i) closePopup();
   }
 
   function revealCurrent() {
     if (curSeg < 0) return;
+    // popupOpenSegだけでなく実際にポップアップが表示中かも見る(外側クリックなど
+    // で閉じられていた場合、popupOpenSegの値だけでは古い状態のままになるため)。
+    if (popupOpenSeg === curSeg && chunkPopupEl.classList.contains('show')) {
+      // 同じチャンクをもう一度クリック: ポップアップを閉じる
+      closePopup();
+      return;
+    }
     if (mode === 'literal') {
-      if (jaSpans[curSeg].classList.contains('seg-revealed')) {
-        // もう一度クリック: ポップアップを閉じ、ハイライトも黒塗りに戻す
-        wideWrap.querySelectorAll(`.chunk-seg[data-seg="${curSeg}"]`).forEach(n => n.classList.remove('seg-revealed'));
-        chunkPopupEl.classList.remove('show');
-        return;
-      }
       wideWrap.querySelectorAll(`.chunk-seg[data-seg="${curSeg}"]`).forEach(n => n.classList.add('seg-revealed'));
     }
-    showChunkPopup(segments[curSeg], enSpans[curSeg], notesArea);
+    const sentIdx = segToSentenceIdx[curSeg];
+    const sentenceText = sentIdx != null && sentIdx >= 0 && sentences[sentIdx] ? sentences[sentIdx].en : null;
+    showChunkPopup(segments[curSeg], enSpans[curSeg], notesArea, sentenceText);
+    popupOpenSeg = curSeg;
   }
 
   wideWrap.addEventListener('wheel', e => {
