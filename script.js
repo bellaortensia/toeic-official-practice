@@ -256,20 +256,22 @@ function buildP12ExplainHtml(q, isPart1, choiceTexts, jaTexts, letters, selected
 // ---------- Part6/7用の簡易チャンク翻訳(decode-toeicの直訳表示のスコープを絞った版) ----------
 
 const TRANSLATE_PROMPT = `あなたは英語学習者向けの解析エンジンです。与えられた英文全体を解析してください。
-1) 最初の1文字から最後の1文字まで省略せず、意味のまとまり(チャンク)ごとに分割し、各チャンクに英語の語順のまま前から順番に理解できる「直訳調」の日本語訳を付けてください(自然な日本語の語順に並べ替えないこと)。1チャンクの目安は英単語3〜8語程度です(1文をまるごと1つのチャンクにしないこと)。
+1) 最初の1文字から最後の1文字まで省略せず、意味のまとまり(チャンク)ごとに分割し、各チャンクに英語の語順のまま前から順番に理解できる「直訳調」の日本語訳を付けてください(自然な日本語の語順に並べ替えないこと)。1チャンクは必ず英単語3〜8語程度に収めること。8語を超えそうな場合は、接続詞・関係詞・前置詞句の前やカンマの後など意味の区切りで必ずさらに分割すること。どんなに短い文でも、1文をまるごと1つのチャンクにするのは禁止(主語のまとまりと動詞以降のまとまりなど、最低2つ以上に分けること)。
 2) 各チャンクの中にTOEIC頻出の単語・熟語・言い回しがあれば、その語句を一字一句原文のまま抜き出し、keyTermsに追加してください(該当が無いチャンクではkeyTermsを空配列にする)。
 3) 原文中でそのチャンクの直後に改行(\\n)がある場合(会話の話者交代や段落の変わり目など)は、そのチャンクに "lineBreak": true を付けてください(改行が無ければ省略またはfalseでよい)。
-4) 英文全体の、自然な日本語の語順・言い回しでの意訳(naturalJa)も作成してください。原文の改行位置に対応する箇所には、必ず\\nを入れて改行を再現すること。
+4) 英文全体を文単位(ピリオド・感嘆符・疑問符などの文末記号まで)に区切り、それぞれの原文(en、一字一句そのまま抜粋)と、自然な日本語の語順・言い回しでの意訳(ja)のペアをnaturalSentencesに入れてください。長すぎない限り1文=1要素とすること。原文中でその文の直後に改行がある場合は、segmentsと同様に"lineBreak": trueを付けてください。
 出力は必ず次のJSON形式のみを返し、説明文やコードフェンスは一切含めないこと。
 {
   "segments": [
     { "en": "原文チャンク(原文から一字一句変えずに抜粋)", "ja": "直訳調の日本語訳チャンク", "keyTerms": [{"term":"抜き出した語句(原文表記のまま)","meaning":"意味(短く)"}], "lineBreak": true }
   ],
-  "naturalJa": "英文全体の自然な日本語訳(改行を\\nで保持する)"
+  "naturalSentences": [
+    { "en": "原文の1文(原文から一字一句変えずに抜粋)", "ja": "その文の自然な日本語訳", "lineBreak": true }
+  ]
 }
-segmentsの"en"を出現順にそのまま連結すると、空白の増減を除いて原文と完全に一致するようにしてください。`;
+segmentsの"en"を出現順にそのまま連結すると、空白の増減を除いて原文と完全に一致するようにしてください。naturalSentencesの"en"を出現順にそのまま連結した場合も同様に原文と完全に一致させてください。`;
 
-const TRANSLATE_PROMPT_VERSION = 'v4';
+const TRANSLATE_PROMPT_VERSION = 'v5';
 
 // AIが返すlineBreakは「ピリオドの直後」など原文に無い位置でもtrueを付けがちで、
 // EN/JA両カラムの改行位置がずれる原因になる。原文中の実際の改行位置とチャンクの
@@ -295,26 +297,29 @@ async function getTranslationChunks(cacheKey, text, forceRefresh) {
   let parsed;
   try { parsed = JSON.parse(outText); } catch (e) { throw new Error('翻訳結果の解析に失敗しました'); }
   const segments = reconcileLineBreaks(Array.isArray(parsed.segments) ? parsed.segments : [], text);
-  const result = { segments, naturalJa: parsed.naturalJa || '' };
+  const naturalSentences = reconcileLineBreaks(Array.isArray(parsed.naturalSentences) ? parsed.naturalSentences : [], text);
+  const result = { segments, naturalSentences };
   try { localStorage.setItem(lsKey, JSON.stringify(result)); } catch (e) { /* 保存容量オーバー等は無視 */ }
   return result;
 }
 
-// 解説画面で既に「翻訳」を押していれば、その意訳(naturalJa)をシャドーイング画面の
-// 日本語訳としてそのまま使い回す(新たにAIを呼ばない)。未翻訳ならnullを返す。
+// 解説画面で既に翻訳済みなら、その意訳(naturalSentencesを連結したもの)をシャドーイング
+// 画面の日本語訳としてそのまま使い回す(新たにAIを呼ばない)。未翻訳ならnullを返す。
 function getCachedNaturalJa(cacheKey) {
   try {
     const raw = localStorage.getItem('toeicTranslate.' + TRANSLATE_PROMPT_VERSION + '.' + cacheKey);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    return parsed.naturalJa || null;
+    if (!Array.isArray(parsed.naturalSentences) || !parsed.naturalSentences.length) return null;
+    return parsed.naturalSentences.map(s => s.ja).join('\n') || null;
   } catch (e) { return null; }
 }
 
 // クリックしたチャンクを1文として、TOEIC講師視点の文法・語彙解説を生成する
 // (decode-toeicの「この文を解説→学習メモ」と同じ発想。単語の意味だけでなく文単位の解説)。
 const CLAUSE_EXPLAIN_PROMPT_READING = `あなたはTOEIC満点を何度も取得し、初心者指導歴20年以上の英語講師です。
-まず1行目に、入力された英文をそのまま「■」に続けて書くこと。次の行に、その日本語訳を（）で囲んで書くこと。
+入力される英文について、日本語で解説してください。英文そのものは既に別の場所に表示されているので、絶対に繰り返し書かないこと。
+まず1行目に、その英文の日本語訳を（）で囲んで書くこと。
 その次の行から、この文に含まれる、TOEICで狙われやすい、あるいは「これを知っておかないと絶対正しく読めない」であろう文法・語彙・構文・表現の知識について、簡潔に日本語で解説してください。
 装飾やMarkdown記号(**など)は使わず、プレーンテキストのみで出力してください。`;
 
@@ -407,6 +412,32 @@ async function saveAllVisibleNotes() {
 
 // シャドーイング画面・各Partの解説画面で共通に使う、自由記述のノート欄。
 // noteKeyが同じであれば同じ内容を共有する(例: シャドーイングと解説画面で同じノート)。
+// 全ノート欄共通の書式設定ツールバー(赤字・青字・太字・下線・区切り線)。
+// document.execCommandは、直前にフォーカス・選択範囲があったcontentEditable要素に
+// 適用されるため、ボタンのmousedownでpreventDefaultしてノート欄側の選択範囲を
+// クリック後も保持させておく(ボタン自体にフォーカスを奪わせない)。
+function buildNotesToolbar(notesArea) {
+  const bar = document.createElement('div');
+  bar.className = 'notes-toolbar';
+  const buttons = [
+    { label: '赤字', run: () => document.execCommand('foreColor', false, '#c1503f') },
+    { label: '青字', run: () => document.execCommand('foreColor', false, '#2f5fa8') },
+    { label: '太字', run: () => document.execCommand('bold') },
+    { label: '下線', run: () => document.execCommand('underline') },
+    { label: '区切り線', run: () => document.execCommand('insertHorizontalRule') }
+  ];
+  buttons.forEach(({ label, run }) => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'notes-toolbar-btn';
+    btn.textContent = label;
+    btn.addEventListener('mousedown', e => e.preventDefault());
+    btn.addEventListener('click', () => { notesArea.focus(); run(); });
+    bar.appendChild(btn);
+  });
+  return bar;
+}
+
 function buildNotesWidget(noteKey, label) {
   const wrap = document.createElement('div');
   wrap.className = 'notes-wrap';
@@ -417,6 +448,7 @@ function buildNotesWidget(noteKey, label) {
   area.className = 'notes-area';
   area.contentEditable = 'true';
   wrap.appendChild(lbl);
+  wrap.appendChild(buildNotesToolbar(area));
   wrap.appendChild(area);
   restoreNotesIfSaved(area, noteKey);
   return wrap;
@@ -515,11 +547,22 @@ document.addEventListener('click', e => {
 
 function showChunkPopup(seg, anchorEl, notesArea) {
   const terms = seg.keyTerms || [];
+  const literalHtml = seg.ja
+    ? `<div class="chunk-popup-item chunk-popup-literal" data-action="literal"><strong>${escapeHtml(seg.ja)}</strong></div>`
+    : '';
   const termsHtml = terms.map((t, i) =>
     `<div class="chunk-popup-item chunk-popup-term" data-action="term" data-term-idx="${i}"><strong>${escapeHtml(t.term || '')}</strong><div>${escapeHtml(t.meaning || '')}</div></div>`
   ).join('');
-  chunkPopupEl.innerHTML = termsHtml + '<div class="chunk-popup-item chunk-popup-explain" data-action="explain"><strong>この文を解説→ノートへ</strong></div>';
+  chunkPopupEl.innerHTML = literalHtml + termsHtml + '<div class="chunk-popup-item chunk-popup-explain" data-action="explain"><strong>この文を解説→ノートへ</strong></div>';
   chunkPopupEl.onclick = async e => {
+    const literalTrigger = e.target.closest('[data-action="literal"]');
+    if (literalTrigger) {
+      if (literalTrigger.dataset.added === '1') return;
+      appendToNotes(notesArea, seg.en, seg.ja);
+      literalTrigger.classList.add('added');
+      literalTrigger.dataset.added = '1';
+      return;
+    }
     const termTrigger = e.target.closest('[data-action="term"]');
     if (termTrigger) {
       const t = terms[Number(termTrigger.dataset.termIdx)];
@@ -579,7 +622,9 @@ function renderTranslationChunks(container, segments, notesArea) {
     const enSpan = document.createElement('span');
     enSpan.className = 'chunk-seg';
     enSpan.dataset.seg = i;
-    enSpan.textContent = seg.en + ' ';
+    // チャンクの区切りが視覚的に必ず分かるよう、改行の直前を除いて毎回「/」を
+    // 明示的に挟む(スラッシュリーディング表示を確実にするため)。
+    enSpan.textContent = seg.en + (seg.lineBreak ? ' ' : ' / ');
     const jaSpan = document.createElement('span');
     jaSpan.className = 'chunk-seg';
     jaSpan.dataset.seg = i;
@@ -633,44 +678,63 @@ function renderTranslationChunks(container, segments, notesArea) {
   setSeg(0);
 }
 
-// スラッシュリーディング用に、接続詞・関係詞・主要な前置詞の直前とカンマの直後に
-// "/"を挿入する(AIを呼ばずルールベースで行うため無料・即時)。原文の文字自体は
-// 一切変更・削除しない(空白と"/"の挿入のみ)。
-const SLASH_CONNECTORS = [
-  'because', 'although', 'though', 'unless', 'until', 'while', 'whereas', 'if', 'when', 'before', 'after', 'since',
-  'that', 'which', 'who', 'whom', 'whose', 'where',
-  'and', 'but', 'or',
-  'in', 'on', 'at', 'with', 'for', 'from', 'about', 'during', 'without', 'within', 'between', 'among'
-];
-const SLASH_CONNECTOR_RE = new RegExp('\\s+(' + SLASH_CONNECTORS.join('|') + ')\\s+', 'gi');
-function insertSlashMarks(text) {
-  return text.split('\n').map(line => {
-    if (!line.trim()) return line;
-    let out = line.replace(/,\s+/g, ', / ');
-    out = out.replace(SLASH_CONNECTOR_RE, (m, word) => ` / ${word} `);
-    out = out.replace(/\s*\/\s*\/\s*/g, ' / ');
-    out = out.replace(/^\s*\/\s*/, '');
-    return out;
-  }).join('\n');
+// 意訳モード: 文単位でEN(下線のみ・常時表示)⇄JA(自然な訳・常時表示)を対応させる。
+// 直訳モードと違い黒塗り→クリックで めくる、という仕組みは無く、最初から両方見えた
+// ままにする(意訳なのでハイライトは不要、対応する文がどれか分かるよう下線のみ引く)。
+// クリックすると、その文の直訳・語彙・解説のポップアップを開ける(直訳モードと共通)。
+function renderNaturalSentences(container, sentences, notesArea) {
+  container.innerHTML = '';
+  if (!sentences.length) {
+    container.innerHTML = '<p class="translate-error">意訳データがありません。「翻訳を再取得」をお試しください。</p>';
+    return;
+  }
+  const wideWrap = document.createElement('div');
+  wideWrap.className = 'translate-wide';
+  const enCol = document.createElement('div');
+  enCol.className = 'translate-col translate-col-en';
+  const jaCol = document.createElement('div');
+  jaCol.className = 'translate-col translate-col-ja';
+
+  sentences.forEach((s, i) => {
+    const enSpan = document.createElement('span');
+    enSpan.className = 'chunk-seg natural-seg';
+    enSpan.dataset.seg = i;
+    enSpan.textContent = s.en + ' ';
+    enSpan.addEventListener('click', () => {
+      wideWrap.querySelectorAll('.natural-seg.seg-active').forEach(n => n.classList.remove('seg-active'));
+      wideWrap.querySelectorAll(`.natural-seg[data-seg="${i}"]`).forEach(n => n.classList.add('seg-active'));
+      showChunkPopup({ en: s.en, ja: s.ja, keyTerms: [] }, enSpan, notesArea);
+    });
+    const jaSpan = document.createElement('span');
+    jaSpan.className = 'chunk-seg natural-seg';
+    jaSpan.dataset.seg = i;
+    jaSpan.textContent = s.ja + ' ';
+    jaSpan.addEventListener('click', () => enSpan.click());
+    enCol.appendChild(enSpan);
+    jaCol.appendChild(jaSpan);
+    if (s.lineBreak) {
+      enCol.appendChild(document.createElement('br'));
+      jaCol.appendChild(document.createElement('br'));
+    }
+  });
+
+  wideWrap.appendChild(enCol);
+  wideWrap.appendChild(jaCol);
+  container.appendChild(wideWrap);
 }
 
-// 解説画面用の翻訳ウィジェット:「翻訳」ボタンで開き、直訳(チャンク表示)⇄意訳の
-// 切り替え、ワイド/トールモード、クリックしたチャンクの解説をノートへ書き写す機能を持つ。
-// 問題文の原文表示そのものを、decode-toeicの英文貼り付け欄のように
-// 「翻訳」ボタン1つでチャンク訳のワイド表示に置き換えるウィジェット。
+// 解説画面用の翻訳ウィジェット: 表示された時点で自動的に翻訳を取得し、最初から
+// ワイド・トールモード/意訳表示済みの状態で見せる(「翻訳」ボタンを押す手間や、
+// 原文だけの状態に戻す操作は不要)。意訳⇄直訳の切り替え、ワイド/トールモード、
+// クリックしたチャンク・文の解説をノートへ書き写す機能を持つ。
 function buildTranslatableBlock(text, cacheKey) {
   const wrap = document.createElement('div');
   wrap.className = 'translate-block';
 
-  // 常設の操作バー: 翻訳⇄原文表示に戻す / 翻訳を再取得 / ワイドモード / トールモード / ◀ 直訳・意訳 ▶
-  // を1列に並べる。翻訳前は再取得・表示切り替え系のボタンは無効化しておく。
+  // 常設の操作バー: 翻訳を再取得 / ワイドモード / トールモード / 意訳⇄直訳切り替え。
+  // データ取得が終わるまでは再取得・表示切り替え系のボタンを無効化しておく。
   const controls = document.createElement('div');
   controls.className = 'translate-controls';
-
-  const btn = document.createElement('button');
-  btn.className = 'audio-btn';
-  btn.textContent = '翻訳';
-  controls.appendChild(btn);
 
   const refetchBtn = document.createElement('button');
   refetchBtn.className = 'mode-toggle-btn';
@@ -688,55 +752,32 @@ function buildTranslatableBlock(text, cacheKey) {
   tallBtn.disabled = true;
   controls.appendChild(tallBtn);
 
-  const modeLeftBtn = document.createElement('button');
-  modeLeftBtn.className = 'mode-toggle-btn edge-nav-btn';
-  modeLeftBtn.textContent = '◀';
-  modeLeftBtn.disabled = true;
-  controls.appendChild(modeLeftBtn);
-
-  const modeLabel = document.createElement('span');
-  modeLabel.className = 'translate-mode-label';
-  controls.appendChild(modeLabel);
-
-  const modeRightBtn = document.createElement('button');
-  modeRightBtn.className = 'mode-toggle-btn edge-nav-btn';
-  modeRightBtn.textContent = '▶';
-  modeRightBtn.disabled = true;
-  controls.appendChild(modeRightBtn);
+  const modeBtn = document.createElement('button');
+  modeBtn.className = 'mode-toggle-btn';
+  modeBtn.disabled = true;
+  controls.appendChild(modeBtn);
 
   wrap.appendChild(controls);
 
-  const slashText = insertSlashMarks(text);
-
   const box = document.createElement('div');
   box.className = 'doc-box translate-box';
-  box.textContent = slashText;
+  box.textContent = '翻訳を準備中...';
   wrap.appendChild(box);
 
-  let loaded = false;
-  let showing = false;
   let data = null;
-  let mode = 'literal'; // 'literal' | 'natural'
-  let wide = false; // デフォルトで通常モード
-  let tall = false;
-
-  // 解説が表示された(=このウィジェットが作られた)タイミングで、裏で翻訳を
-  // 先読みしておく。ユーザーが後で「翻訳」ボタンを押した時に待たされないようにする
-  // ためで、画面表示には反映しない(表示はユーザーが「翻訳」を押した時のみ)。
-  // 既にキャッシュ済みならAPIは呼ばれない(getTranslationChunks内でキャッシュ確認)。
-  getTranslationChunks(cacheKey, text).then(d => {
-    if (!loaded) { data = d; loaded = true; }
-  }).catch(() => { /* 先読み失敗時は、後でボタンを押した時に通常通り再試行される */ });
+  let mode = 'natural'; // 'literal' | 'natural'(デフォルトは意訳)
+  let wide = true; // デフォルトでワイドモード
+  let tall = true; // デフォルトでトールモード
 
   function refreshModeUI() {
     wideBtn.textContent = wide ? '⛶ ワイド解除' : '⛶ ワイドモード';
     tallBtn.textContent = tall ? '⬍ トール解除' : '⬍ トールモード';
-    modeLabel.textContent = mode === 'literal' ? '直訳' : '意訳';
+    modeBtn.textContent = mode === 'literal' ? '意訳に変更' : '直訳に変更';
   }
   refreshModeUI();
 
   function setControlsEnabled(enabled) {
-    [refetchBtn, wideBtn, tallBtn, modeLeftBtn, modeRightBtn].forEach(b => b.disabled = !enabled);
+    [refetchBtn, wideBtn, tallBtn, modeBtn].forEach(b => b.disabled = !enabled);
   }
 
   function renderChunkView() {
@@ -744,12 +785,8 @@ function buildTranslatableBlock(text, cacheKey) {
     box.classList.toggle('wide-mode', wide);
     box.classList.toggle('tall-mode', tall);
 
-    const chunkContainer = document.createElement('div');
-    box.appendChild(chunkContainer);
-
-    const naturalContainer = document.createElement('div');
-    naturalContainer.className = 'natural-ja-box';
-    box.appendChild(naturalContainer);
+    const contentContainer = document.createElement('div');
+    box.appendChild(contentContainer);
 
     const notesWrap = document.createElement('div');
     notesWrap.className = 'notes-wrap';
@@ -760,65 +797,46 @@ function buildTranslatableBlock(text, cacheKey) {
     notesArea.className = 'notes-area';
     notesArea.contentEditable = 'true';
     notesWrap.appendChild(notesLabel);
+    notesWrap.appendChild(buildNotesToolbar(notesArea));
     notesWrap.appendChild(notesArea);
     box.appendChild(notesWrap);
     restoreNotesIfSaved(notesArea, cacheKey);
 
-    function updateModeDisplay() {
-      chunkContainer.style.display = mode === 'literal' ? 'block' : 'none';
-      naturalContainer.style.display = mode === 'natural' ? 'block' : 'none';
+    function renderCurrentMode() {
+      if (mode === 'literal') renderTranslationChunks(contentContainer, data.segments, notesArea);
+      else renderNaturalSentences(contentContainer, data.naturalSentences, notesArea);
     }
 
-    modeLeftBtn.onclick = () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); updateModeDisplay(); };
-    modeRightBtn.onclick = () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); updateModeDisplay(); };
+    modeBtn.onclick = () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); renderCurrentMode(); };
     wideBtn.onclick = () => { wide = !wide; box.classList.toggle('wide-mode', wide); refreshModeUI(); };
     tallBtn.onclick = () => { tall = !tall; box.classList.toggle('tall-mode', tall); refreshModeUI(); };
 
-    renderTranslationChunks(chunkContainer, data.segments, notesArea);
-    naturalContainer.textContent = data.naturalJa || '';
-    updateModeDisplay();
-  }
-
-  function renderPlain() {
-    box.className = 'doc-box translate-box';
-    box.innerHTML = '';
-    box.textContent = slashText;
+    renderCurrentMode();
   }
 
   async function doTranslate(forceRefresh) {
-    btn.disabled = true;
-    btn.textContent = forceRefresh ? '再取得中...' : '翻訳中...';
+    setControlsEnabled(false);
+    refetchBtn.textContent = forceRefresh ? '再取得中...' : '翻訳を再取得';
+    if (!data) box.textContent = '翻訳を準備中...';
     try {
       data = await getTranslationChunks(cacheKey, text, forceRefresh);
-      loaded = true;
     } catch (e) {
-      btn.disabled = false;
-      btn.textContent = showing ? '原文表示に戻す' : '翻訳';
       box.innerHTML = `<p class="translate-error">翻訳に失敗しました: ${escapeHtml(e.message)}</p>`;
+      refetchBtn.disabled = false;
+      refetchBtn.textContent = '翻訳を再取得';
       return false;
     }
-    btn.disabled = false;
+    refetchBtn.textContent = '翻訳を再取得';
+    setControlsEnabled(true);
     return true;
   }
 
-  btn.addEventListener('click', async () => {
-    if (!showing) {
-      if (!loaded && !(await doTranslate(false))) return;
-      renderChunkView();
-      btn.textContent = '原文表示に戻す';
-      showing = true;
-      setControlsEnabled(true);
-    } else {
-      renderPlain();
-      btn.textContent = '翻訳';
-      showing = false;
-      setControlsEnabled(false);
-    }
-  });
+  // ウィジェットが作られた(=解説が表示された)時点で自動的に翻訳を取得し、
+  // そのまま最初からワイド・トールモード/意訳表示で見せる。
+  doTranslate(false).then(ok => { if (ok) renderChunkView(); });
 
   refetchBtn.addEventListener('click', async () => {
-    if (!(await doTranslate(true))) return;
-    if (showing) renderChunkView();
+    if (await doTranslate(true)) renderChunkView();
   });
 
   return wrap;
