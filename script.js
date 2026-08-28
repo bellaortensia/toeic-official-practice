@@ -1551,11 +1551,21 @@ function renderHistorySidebar() {
     row.appendChild(dateEl);
     row.appendChild(badge);
     row.appendChild(deleteBtn);
-    // 一般ノート欄と、翻訳ウィジェット内の専用ノート欄(チャンククリックの解説などが
-    // 書き写される方)の両方をチェックし、どちらかにあれば両方まとめて表示する。
+    // 一般ノート欄・翻訳ウィジェット内の専用ノート欄・「AIに質問する」欄の3つを
+    // チェックし、あるものだけラベル付きでまとめて表示する。「AIに質問する」欄は
+    // Part3/4/6/7でもグループ単位ではなく設問ごとの個別キー(noteKeyとは別)で
+    // 保存されているので、test-part-numberから組み立てる。
     const generalNote = localStorage.getItem(NOTES_LS_PREFIX + item.noteKey);
     const translateNote = localStorage.getItem(NOTES_LS_PREFIX + item.noteKey + '-translate-notes');
-    const noteHtml = [generalNote, translateNote].filter(h => h && h.trim()).join('<hr>');
+    const aiNote = localStorage.getItem(NOTES_LS_PREFIX + `${item.test}-${item.part}-${item.number}-ai`);
+    const noteSections = [
+      { label: 'ノート', html: generalNote },
+      { label: '翻訳ウィジェットのノート', html: translateNote },
+      { label: 'AIへの質問', html: aiNote }
+    ].filter(s => s.html && s.html.trim());
+    const noteHtml = noteSections
+      .map(s => `<div class="history-note-popup-label">${s.label}</div>${s.html}`)
+      .join('<hr>');
     if (noteHtml) {
       row.classList.add('has-note');
       row.addEventListener('mouseenter', () => {
