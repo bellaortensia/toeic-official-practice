@@ -1453,7 +1453,7 @@ function formatHistoryDate(ts) {
 // ---------- 解説画面(設問コーナー)用の、そのグループ内設問だけの回答履歴欄 ----------
 // トップ画面の履歴欄と違い、削除・ノートポップアップは無く、問題番号・前回の日時・
 // 前回○×だけを表示する簡易版。Part3/4/6/7の解説画面で、翻訳欄の下・設問コーナーの
-// 左に添える。
+// 右に添える。
 
 function buildGroupHistorySidebar(test, questionNumbers) {
   const items = buildAnswerHistoryList()
@@ -1494,15 +1494,15 @@ function buildGroupHistorySidebar(test, questionNumbers) {
   return box;
 }
 
-// blocksContainer(設問コーナー本体)の左にbuildGroupHistorySidebar()を並べた
+// blocksContainer(設問コーナー本体)の右にbuildGroupHistorySidebar()を並べた
 // 2カラムのラッパーを作って返す。呼び出し側は、今までwrapへ直接ブロックを
 // appendしていた代わりに、この関数が返す要素をwrapへappendする。
 function wrapWithGroupHistorySidebar(blocksContainer, test, questionNumbers) {
   const row = document.createElement('div');
   row.className = 'question-corner-layout';
-  row.appendChild(buildGroupHistorySidebar(test, questionNumbers));
   blocksContainer.classList.add('question-corner-main');
   row.appendChild(blocksContainer);
+  row.appendChild(buildGroupHistorySidebar(test, questionNumbers));
   return row;
 }
 
