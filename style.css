@@ -568,6 +568,40 @@ audio{
 .history-item.has-note{cursor:pointer;}
 .history-item.has-note .history-item-label{border-bottom:1px dotted var(--accent-2);}
 
+.history-item-delete{
+  flex:0 0 auto;
+  background:none;border:none;color:var(--text-soft);
+  font-size:13px;font-weight:700;line-height:1;padding:0 0 0 4px;
+  opacity:0;cursor:pointer;
+}
+.history-item:hover .history-item-delete{opacity:1;}
+.history-item-delete:hover{color:var(--danger);filter:none;}
+
+.history-delete-confirm{
+  position:absolute;
+  z-index:95;
+  display:none;
+  min-width:200px;
+  background:var(--ink-2);
+  color:var(--paper);
+  border-radius:8px;
+  padding:12px 14px;
+  font-size:12.5px;
+  box-shadow:0 12px 32px rgba(0,0,0,.5);
+}
+.history-delete-confirm.show{display:block;}
+.history-delete-confirm-text{margin-bottom:10px;}
+.history-delete-confirm-actions{display:flex;gap:8px;justify-content:flex-end;}
+.history-delete-confirm-cancel{
+  background:none;color:var(--paper);border:1px solid #333f4b;
+  font-size:12px;padding:5px 10px;border-radius:6px;
+}
+.history-delete-confirm-cancel:hover{background:#333f4b;filter:none;}
+.history-delete-confirm-ok{
+  background:var(--danger);color:#fff;border:none;
+  font-size:12px;padding:5px 10px;border-radius:6px;
+}
+
 .history-note-popup{
   position:absolute;
   z-index:90;

@@ -321,51 +321,26 @@ function getCachedNaturalJa(cacheKey) {
   } catch (e) { return null; }
 }
 
-// クリックしたチャンクが属する「一文全体」を対象に、SVOC(+修飾語M)分解つきの
-// 文法解説を生成する(decode-toeicの「この文を解説→学習メモ」と同じ発想だが、
-// チャンク単体ではなく文全体を解説する)。ノート欄はプレーンテキストで下線が
-// 引けないため、下線の代わりにS/V/O/C/Mのタグ行で文の構造を示す。
+// クリックしたチャンクが属する「一文全体」を対象に、文構造がひと目で分かる解説を
+// 生成する(decode-toeicの「この文を解説→学習メモ」と同じ発想だが、チャンク単体
+// ではなく文全体を解説する)。ノート欄はプレーンテキストで実際の下線は引けないため、
+// {{語句|注記}} という専用記法を使い、formatNoteBody()側でこれを下線+右下の小さな
+// 注記(何を修飾しているか、接続詞の意味・用法、熟語の意味など)に変換して表示する。
 const CLAUSE_EXPLAIN_PROMPT_READING = `あなたはTOEIC満点を何度も取得し、初心者指導歴20年以上の英語講師です。
-入力される英文(一文全体)を、S(主語)V(動詞)O(目的語)C(補語)M(修飾語句)に分解して、プレーンテキストで解説してください。
-装飾やMarkdown記号(**など)は一切使わないこと。必ず次の形式に従うこと。
+入力される英文(一文全体)について、文構造がひと目で分かる解説を作成してください。
+文自体は省略せず全文を書くこと。次の記法だけを使って構造・意味を書き込み、それ以外の記号・Markdown(**など)は一切使わないこと。
 
-1行目: ■ に続けて、入力文全体を省略せず、意味・働きのまとまりごとに半角スラッシュ(/)で区切って書く。
-2行目: 1行目の各まとまりの真下あたりに半角スペースでおおよそ位置を合わせながら、そのまとまりが持つ働きを (S) (V) (O) (C) (M) の記号で書く。1つのまとまりの中に複数の働きが含まれる場合は、その中でさらに単語単位で分けてそれぞれにタグを付けてよい。that節・関係詞節など従属節の中の要素には (S') (V') (O') (C') (M') のようにダッシュを付けて区別し、節を導く語(that/whichなど)には (S (that節)) のように節の種類が分かるラベルを付ける。
+・修飾語句(前置詞句・不定詞句・関係詞節・分詞句など、直前の名詞や文全体を修飾する語句)は、必ず {{その語句|←かかる語を修飾}} の形で囲むこと。「かかる語」の部分は実際に修飾している語に置き換えること。
+・while, since, that, because, when, whichなど、意味・用法を取り違えやすい接続詞・関係詞・従属接続詞は、必ず {{その語|意味・用法の短い説明}} の形で囲むこと。
+・TOEICで狙われる熟語・言い回しがあれば、同じ形式でその意味を付けること。
+・{{}}で囲む対象は1語でも複数語でもよい。1文の中に必要なだけいくつでも使ってよい。重要でない語句は無理に囲まず、そのままの英文で書く。
 
-空行を1行入れる。
+文全体を書き終えたら空行を1つ入れ、この文を正しく読むために特に重要なポイントを1〜2行、日本語で補足する。
 
-その後、1行目・2行目で登場した(タグ)を出現順に1つずつ取り上げ、
-(タグ) その部分の英語：日本語訳
-の形式で書く。従属節の中の要素は行頭に半角スペース4つを入れて字下げする。動詞は時制・態(受動態・完了形・進行形など)のニュアンスも訳に反映すること。
+出力例(入力文: "One reason for lying has to do with minimizing a mistake."):
+One reason {{for lying|←reasonを修飾(同格的な説明)}} {{has to do with|〜と関係がある}} minimizing a mistake.
 
-最後に空行を1行入れ、この文を正しく読むために知っておくべき文法・語彙・構文のポイントを2〜3行で解説する。
-
-出力例1(入力文: "We have a logbook on the wall over there for this purpose."):
-■ We have a logbook / on the wall over there / for this purpose.
-   (S)  (V)   (O)              (M)                        (M)
-
-(S) We：私達は
-(V) have：持っている(用意している)
-(O) a logbook：記録簿を
-(M) on the wall over there：あそこの壁の上に
-(M) for this purpose：この目的のために
-
-「have + 目的語」で「〜を持っている、備えている」という所有・設置のニュアンス。前置詞句(on 〜/for 〜)は文の後ろに続けて置かれる修飾語。
-
-出力例2(入力文: "It's come to my attention that only the crew working the morning shift has been completing the forklift inspection checklist."):
-■ It's come to my attention / that only the crew / working the morning shift / has been completing / the forklift inspection checklist.
-   (S) (V)    (M)             (S)       (S')              (M')                        (V')                    (O')
-
-(S) It：それは
-(V) 's come：きている
-(M) to my attention：私の注意に(私の知るところとなった)
-(S (that節)) that：〜ということを
-    (S') only the crew：クルーだけが
-    (M') working the morning shift：午前のシフトで働いている
-    (V') has been completing：記入し続けている
-    (O') the forklift inspection checklist：フォークリフトの点検チェックリストを
-
-「It has come to one's attention that 〜」は「〜ということが分かった/明らかになった」という定型表現。has been completingは現在完了進行形で、継続的に行われてきた動作を表す。`;
+「one reason」の直後の語句がreasonを修飾する形(同格的な説明)。has to do withは頻出熟語で「〜と関係がある」という意味。`;
 
 async function getClauseExplanation(clauseText) {
   return await callGemini(CLAUSE_EXPLAIN_PROMPT_READING, clauseText, { maxOutputTokens: 800 });
@@ -386,6 +361,21 @@ async function getTermExplanation(term, meaning, contextSentence) {
   return await callGemini(TERM_EXPLAIN_PROMPT, input, { maxOutputTokens: 600 });
 }
 
+// CLAUSE_EXPLAIN_PROMPT_READINGが使う {{語句|注記}} 記法を、下線+右下の小さな注記
+// (Part5解説のS[...]/V[...]等と同じ、下線+subラベルの見た目)に変換する。まず
+// escapeHtmlでエスケープしてから変換するので、{{}}を使わない普通の解説文(単語の
+// 意味など)をそのまま渡しても安全にそのまま表示される(該当する記法が無ければ
+// 何も変換されない)。
+function formatNoteBody(text) {
+  const escaped = escapeHtml(text);
+  return escaped.replace(/\{\{([^|{}]+)\|([^{}]*)\}\}/g, (m, phrase, note) => {
+    const noteHtml = note
+      ? `<sub style="color:#2f5fa8;font-weight:700;font-size:9.5px;">${note}</sub>`
+      : '';
+    return `<span style="text-decoration:underline;text-decoration-color:#2f5fa8;text-underline-offset:3px;">${phrase}</span>${noteHtml}`;
+  });
+}
+
 function appendToNotes(notesArea, enText, explanation) {
   const block = document.createElement('div');
   block.className = 'notes-entry';
@@ -394,7 +384,7 @@ function appendToNotes(notesArea, enText, explanation) {
   quote.textContent = enText;
   const body = document.createElement('div');
   body.className = 'notes-entry-body';
-  body.textContent = explanation;
+  body.innerHTML = formatNoteBody(explanation);
   block.appendChild(quote);
   block.appendChild(body);
   notesArea.appendChild(block);
@@ -777,10 +767,10 @@ function renderTranslateColumns(container, data, mode, notesArea) {
     e.preventDefault();
     setSeg((curSeg < 0 ? 0 : curSeg) + (e.deltaY > 0 ? 1 : -1));
   }, { passive: false });
-  // 直訳モードはJA欄・EN欄どちらでクリックしても現在位置のポップアップが開く。
-  // 意訳モードはJA欄が文単位で独立表示のため、EN欄のクリックのみで開く。
+  // JA欄・EN欄どちらでクリックしても現在位置のポップアップが開閉する
+  // (意訳モードでもJA側クリックで反応させる。ポップアップ自体は常にEN側に表示)。
   enCol.addEventListener('click', revealCurrent);
-  if (mode === 'literal') jaCol.addEventListener('click', revealCurrent);
+  jaCol.addEventListener('click', revealCurrent);
 
   wideWrap.appendChild(enCol);
   wideWrap.appendChild(jaCol);
@@ -865,7 +855,12 @@ function buildTranslatableBlock(text, cacheKey) {
     notesWrap.appendChild(buildNotesToolbar(notesArea));
     notesWrap.appendChild(notesArea);
     box.appendChild(notesWrap);
-    restoreNotesIfSaved(notesArea, cacheKey);
+    // 注意: この翻訳ウィジェット専用のノート欄は、同じ設問/パッセージの一般ノート欄
+    // (buildNotesWidget、こちらはcacheKeyそのままをキーに使う)と同じキーにしないこと。
+    // 以前は同じキーを共有しており、画面上に両方のノート欄が同時に存在する状態で
+    // saveAllVisibleNotes()が呼ばれると、後からDOM順で保存された方がもう一方を
+    // 上書きしてしまい、一般ノート欄に書いた内容が消えてしまうバグがあった。
+    restoreNotesIfSaved(notesArea, cacheKey + '-translate-notes');
 
     function renderCurrentMode() {
       renderTranslateColumns(contentContainer, data, mode, notesArea);
@@ -1416,6 +1411,7 @@ function buildAnswerHistoryList() {
     if (!parsed || !parsed.perQuestion) return;
     const entry = normalizeAttemptRaw(store[key]);
     items.push({
+      key,
       test: parsed.test, part: parsed.part, number: parsed.number,
       lastCorrect: entry.lastCorrect, lastAt: entry.lastAt,
       noteKey: entry.noteKey || `${parsed.test}-${parsed.part}-${parsed.number}`
@@ -1468,6 +1464,53 @@ document.addEventListener('click', e => {
   }
 });
 
+// 履歴欄の右端の×から呼ぶ削除確認ポップアップ。挑戦記録(ATTEMPTS_LS内のそのキー)
+// だけを消し、ノート本文には触れない(ノートは残す)。
+const historyDeleteConfirmEl = document.createElement('div');
+historyDeleteConfirmEl.className = 'history-delete-confirm';
+document.body.appendChild(historyDeleteConfirmEl);
+
+function hideDeleteConfirm() {
+  historyDeleteConfirmEl.classList.remove('show');
+}
+function showDeleteConfirm(anchorEl, onConfirm) {
+  historyDeleteConfirmEl.innerHTML = '';
+  const text = document.createElement('div');
+  text.className = 'history-delete-confirm-text';
+  text.textContent = 'この回答記録を削除しますか?';
+  const actions = document.createElement('div');
+  actions.className = 'history-delete-confirm-actions';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.type = 'button';
+  cancelBtn.className = 'history-delete-confirm-cancel';
+  cancelBtn.textContent = 'キャンセル';
+  cancelBtn.addEventListener('click', hideDeleteConfirm);
+  const okBtn = document.createElement('button');
+  okBtn.type = 'button';
+  okBtn.className = 'history-delete-confirm-ok';
+  okBtn.textContent = '消去';
+  okBtn.addEventListener('click', () => { hideDeleteConfirm(); onConfirm(); });
+  actions.appendChild(cancelBtn);
+  actions.appendChild(okBtn);
+  historyDeleteConfirmEl.appendChild(text);
+  historyDeleteConfirmEl.appendChild(actions);
+  const rect = anchorEl.getBoundingClientRect();
+  historyDeleteConfirmEl.style.left = Math.max(8, rect.left - 150) + 'px';
+  historyDeleteConfirmEl.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+  historyDeleteConfirmEl.classList.add('show');
+}
+document.addEventListener('click', e => {
+  if (!historyDeleteConfirmEl.contains(e.target) && !e.target.closest('.history-item-delete')) {
+    hideDeleteConfirm();
+  }
+});
+
+function deleteAttemptEntry(key) {
+  const store = getAttemptsStore();
+  delete store[key];
+  localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
+}
+
 function renderHistorySidebar() {
   const listEl = document.getElementById('historySidebarList');
   if (!listEl) return;
@@ -1475,6 +1518,7 @@ function renderHistorySidebar() {
   listEl.innerHTML = '';
   historyPopupPinnedRow = null;
   hideHistoryNotePopup();
+  hideDeleteConfirm();
   if (!items.length) {
     listEl.innerHTML = '<p class="history-sidebar-empty">まだ解いた問題がありません。</p>';
     return;
@@ -1491,11 +1535,28 @@ function renderHistorySidebar() {
     const badge = document.createElement('span');
     badge.className = 'history-item-badge ' + (item.lastCorrect === true ? 'correct' : item.lastCorrect === false ? 'wrong' : 'unknown');
     badge.textContent = item.lastCorrect === true ? '○' : item.lastCorrect === false ? '×' : '-';
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.className = 'history-item-delete';
+    deleteBtn.title = 'この記録を削除';
+    deleteBtn.textContent = '×';
+    deleteBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      showDeleteConfirm(deleteBtn, () => {
+        deleteAttemptEntry(item.key);
+        renderHistorySidebar();
+      });
+    });
     row.appendChild(label);
     row.appendChild(dateEl);
     row.appendChild(badge);
-    const noteHtml = localStorage.getItem(NOTES_LS_PREFIX + item.noteKey);
-    if (noteHtml && noteHtml.trim()) {
+    row.appendChild(deleteBtn);
+    // 一般ノート欄と、翻訳ウィジェット内の専用ノート欄(チャンククリックの解説などが
+    // 書き写される方)の両方をチェックし、どちらかにあれば両方まとめて表示する。
+    const generalNote = localStorage.getItem(NOTES_LS_PREFIX + item.noteKey);
+    const translateNote = localStorage.getItem(NOTES_LS_PREFIX + item.noteKey + '-translate-notes');
+    const noteHtml = [generalNote, translateNote].filter(h => h && h.trim()).join('<hr>');
+    if (noteHtml) {
       row.classList.add('has-note');
       row.addEventListener('mouseenter', () => {
         if (!historyPopupPinnedRow) showHistoryNotePopup(row, noteHtml);
