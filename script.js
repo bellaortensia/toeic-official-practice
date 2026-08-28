@@ -1527,11 +1527,17 @@ function parseCssColorToRgb(colorStr) {
   return m ? m.slice(0, 3).map(Number) : null;
 }
 
+// 色を白寄りに混ぜて明るくする(amount=0で元の色のまま、1で真っ白)。色相(赤・青・
+// 緑といった色の種類)は保ったまま明るさだけ上げる。
+function lightenTowardWhite([r, g, b], amount) {
+  return [r, g, b].map(c => Math.round(c + (255 - c) * amount));
+}
+
 // ノート欄(明るい背景が前提)で書いた文字色を、そのまま暗い背景のポップアップに
-// 持ってくると、黒や濃い色の文字が背景に沈んで読めなくなる。ポップアップに表示する
-// 直前に、暗すぎる指定色(inline style/font color属性どちらも)だけを取り除き、
-// ポップアップ自身の文字色(明るい色)にフォールバックさせる。赤字・青字ツールバーで
-// 付けたような十分に明るい色はそのまま残す。
+// 持ってくると、黒や赤字・青字ツールバーの赤・青、ノートの引用文の緑なども背景に
+// 沈んで見えにくくなる。ポップアップに表示する直前に、暗い背景での輝度が十分でない
+// 指定色(inline style/font color属性どちらも)を、色相を保ったまま白寄りに明るく
+// 変換する(黒に近いほど強く明るくする)。既に十分明るい色はそのまま残す。
 function sanitizeNoteHtmlForDarkPopup(html) {
   const container = document.createElement('div');
   container.innerHTML = html;
@@ -1542,8 +1548,12 @@ function sanitizeNoteHtmlForDarkPopup(html) {
     if (!rgb) return;
     const [r, g, b] = rgb;
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-    if (luminance < 0.3) {
-      el.style.color = '';
+    const targetLuminance = 0.72;
+    if (luminance < targetLuminance) {
+      // 暗いほど強く白を混ぜ、明るいほど混ぜる量を控えめにする。
+      const amount = Math.min(0.75, Math.max(0.35, (targetLuminance - luminance) / targetLuminance));
+      const [lr, lg, lb] = lightenTowardWhite([r, g, b], amount);
+      el.style.color = `rgb(${lr}, ${lg}, ${lb})`;
       el.removeAttribute('color');
     }
   });
