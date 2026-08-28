@@ -346,19 +346,29 @@ async function getClauseExplanation(clauseText) {
   return await callGemini(CLAUSE_EXPLAIN_PROMPT_READING, clauseText, { maxOutputTokens: 800 });
 }
 
-// 単語ポップアップから「用語を解説」した際に呼ぶ。意味だけでなく、その語(または熟語)の
-// コアイメージと、熟語・言い回しなら由来・成り立ちまで踏み込んで解説する。
-const TERM_EXPLAIN_PROMPT = `あなたはTOEIC満点を何度も取得し、初心者指導歴20年以上の英語講師です。
-入力される「語句」(単語または熟語・言い回し)と、それが使われている「文脈」の英文について、日本語で解説してください。
+// 単語ポップアップから「用語を解説」した際に呼ぶ。単語1つの場合だけコアイメージ
+// (語源的な核となるイメージ)を説明し、熟語・言い回し(複数語)の場合はコアイメージの
+// 行を省略して、なぜその単語の組み合わせでその意味になるかの由来・成り立ちだけを書く
+// (単語か熟語かはAIの判断に任せず、語句のスペースの有無で機械的に判定する)。
+const TERM_EXPLAIN_PROMPT_WORD = `あなたはTOEIC満点を何度も取得し、初心者指導歴20年以上の英語講師です。
+入力される「語句」(単語1つ)と、それが使われている「文脈」の英文について、日本語で解説してください。
 必ず次の構成で、装飾やMarkdown記号(**など)は使わず、プレーンテキストで簡潔に(全体で4〜6行程度)出力してください。
 
 1行目: ■語句 に続けて、この文脈での意味を書く。
-次の行: ▲コアイメージ に続けて、この語・表現が持つ中心的なイメージ・語感を短く説明する。単語1つの場合でも、その語源的な核となるイメージを書くこと。
-次の行以降: 熟語・イディオム・言い回しの場合は、なぜその単語の組み合わせでその意味になるのか、由来や成り立ちを1〜2行で説明する。単純な基本単語の場合はこの行を省略してよい。`;
+次の行: ▲コアイメージ に続けて、この語が持つ語源的な核となるイメージ・語感を短く説明する。`;
+
+const TERM_EXPLAIN_PROMPT_PHRASE = `あなたはTOEIC満点を何度も取得し、初心者指導歴20年以上の英語講師です。
+入力される「語句」(熟語・イディオム・言い回し)と、それが使われている「文脈」の英文について、日本語で解説してください。
+必ず次の構成で、装飾やMarkdown記号(**など)は使わず、プレーンテキストで簡潔に(全体で3〜5行程度)出力してください。コアイメージの説明は不要(単語1つの場合のみ使う項目のため)。
+
+1行目: ■語句 に続けて、この文脈での意味を書く。
+次の行以降: なぜその単語の組み合わせでその意味になるのか、由来や成り立ちを1〜2行で説明する。`;
 
 async function getTermExplanation(term, meaning, contextSentence) {
   const input = `語句: ${term}\n簡易な意味: ${meaning || '(不明)'}\n文脈: ${contextSentence || ''}`;
-  return await callGemini(TERM_EXPLAIN_PROMPT, input, { maxOutputTokens: 600 });
+  const isPhrase = term.trim().split(/\s+/).length > 1;
+  const prompt = isPhrase ? TERM_EXPLAIN_PROMPT_PHRASE : TERM_EXPLAIN_PROMPT_WORD;
+  return await callGemini(prompt, input, { maxOutputTokens: 600 });
 }
 
 // CLAUSE_EXPLAIN_PROMPT_READINGが使う {{語句|注記}} 記法を、下線+右下の小さな注記
@@ -822,7 +832,7 @@ function buildTranslatableBlock(text, cacheKey) {
   let data = null;
   let mode = 'natural'; // 'literal' | 'natural'(デフォルトは意訳)
   let wide = true; // デフォルトでワイドモード
-  let tall = true; // デフォルトでトールモード
+  let tall = false; // デフォルトではトールモードは解除された状態
 
   function refreshModeUI() {
     wideBtn.textContent = wide ? '⛶ ワイド解除' : '⛶ ワイドモード';
@@ -1276,6 +1286,11 @@ function buildPdfExplainWidget(test, questionNumber) {
 
 const state = { test: null, part: null, data: null, index: 0 };
 
+// 回答履歴の「解説を見る」から飛んできた場合にtrueにする。各Partのrender関数が
+// これを見て、正解の選択肢を自動でクリック→採点まで自動で進め、解説をすぐ
+// 表示する(素の問題画面だけでは意味が無いため)。一度使ったら必ずfalseに戻す。
+let pendingAutoReveal = false;
+
 const practiceEl = document.getElementById('practice');
 const emptyStateEl = document.getElementById('empty-state');
 const practiceBodyEl = document.getElementById('practice-body');
@@ -1435,6 +1450,62 @@ function formatHistoryDate(ts) {
   return `${d.getMonth() + 1}/${d.getDate()}${JP_WEEKDAYS[d.getDay()]}`;
 }
 
+// ---------- 解説画面(設問コーナー)用の、そのグループ内設問だけの回答履歴欄 ----------
+// トップ画面の履歴欄と違い、削除・ノートポップアップは無く、問題番号・前回の日時・
+// 前回○×だけを表示する簡易版。Part3/4/6/7の解説画面で、翻訳欄の下・設問コーナーの
+// 左に添える。
+
+function buildGroupHistorySidebar(test, questionNumbers) {
+  const items = buildAnswerHistoryList()
+    .filter(it => it.test === test && questionNumbers.includes(it.number))
+    .sort((a, b) => a.number - b.number);
+
+  const box = document.createElement('div');
+  box.className = 'group-history-sidebar';
+  const title = document.createElement('div');
+  title.className = 'group-history-sidebar-title';
+  title.textContent = '解答履歴';
+  box.appendChild(title);
+
+  if (!items.length) {
+    const empty = document.createElement('p');
+    empty.className = 'group-history-sidebar-empty';
+    empty.textContent = 'まだ記録がありません。';
+    box.appendChild(empty);
+    return box;
+  }
+  items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'group-history-sidebar-row';
+    const num = document.createElement('span');
+    num.className = 'group-history-sidebar-num';
+    num.textContent = `Q${item.number}`;
+    const date = document.createElement('span');
+    date.className = 'group-history-sidebar-date';
+    date.textContent = formatHistoryDate(item.lastAt);
+    const badge = document.createElement('span');
+    badge.className = 'group-history-sidebar-badge ' + (item.lastCorrect === true ? 'correct' : item.lastCorrect === false ? 'wrong' : 'unknown');
+    badge.textContent = item.lastCorrect === true ? '○' : item.lastCorrect === false ? '×' : '-';
+    row.appendChild(num);
+    row.appendChild(date);
+    row.appendChild(badge);
+    box.appendChild(row);
+  });
+  return box;
+}
+
+// blocksContainer(設問コーナー本体)の左にbuildGroupHistorySidebar()を並べた
+// 2カラムのラッパーを作って返す。呼び出し側は、今までwrapへ直接ブロックを
+// appendしていた代わりに、この関数が返す要素をwrapへappendする。
+function wrapWithGroupHistorySidebar(blocksContainer, test, questionNumbers) {
+  const row = document.createElement('div');
+  row.className = 'question-corner-layout';
+  row.appendChild(buildGroupHistorySidebar(test, questionNumbers));
+  blocksContainer.classList.add('question-corner-main');
+  row.appendChild(blocksContainer);
+  return row;
+}
+
 // 履歴欄の項目にマウスオーバーしたとき、その設問(が属するパッセージ)のノートが
 // あれば大きめのポップアップで表示する。chunk-popupとは別の専用ポップアップを使う。
 // マウスオーバーだけだと少し動いただけで消えてしまうため、左クリックで「固定」でき、
@@ -1566,9 +1637,14 @@ function renderHistorySidebar() {
     // 一般ノート欄・翻訳ウィジェット内の専用ノート欄・「AIに質問する」欄の3つを
     // チェックし、あるものだけラベル付きでまとめて表示する。「AIに質問する」欄は
     // Part3/4/6/7でもグループ単位ではなく設問ごとの個別キー(noteKeyとは別)で
-    // 保存されているので、test-part-numberから組み立てる。
+    // 保存されているので、test-part-numberから組み立てる。Part7は1パッセージに
+    // 複数文書(最大3つ)あり、それぞれ翻訳ウィジェットのキーに-doc0/-doc1/-doc2の
+    // 接尾辞が付くので、接尾辞なし・あり(0〜2)を全部チェックしてまとめる。
     const generalNote = localStorage.getItem(NOTES_LS_PREFIX + item.noteKey);
-    const translateNote = localStorage.getItem(NOTES_LS_PREFIX + item.noteKey + '-translate-notes');
+    const translateNote = ['', '-doc0', '-doc1', '-doc2']
+      .map(suffix => localStorage.getItem(NOTES_LS_PREFIX + item.noteKey + suffix + '-translate-notes'))
+      .filter(h => h && h.trim())
+      .join('<hr>');
     const aiNote = localStorage.getItem(NOTES_LS_PREFIX + `${item.test}-${item.part}-${item.number}-ai`);
     const noteSections = [
       { label: 'ノート', html: generalNote },
@@ -1579,7 +1655,7 @@ function renderHistorySidebar() {
       .map(s => `<div class="history-note-popup-label">${s.label}</div>${s.html}`)
       .join('<hr>');
     if (noteHtml) {
-      const onViewExplain = () => jumpToQuestionNumber(item.test, item.part, item.number);
+      const onViewExplain = () => jumpToQuestionNumber(item.test, item.part, item.number, true);
       row.classList.add('has-note');
       row.addEventListener('mouseenter', () => {
         if (!historyPopupPinnedRow) showHistoryNotePopup(row, noteHtml, onViewExplain);
@@ -2074,9 +2150,11 @@ async function jumpToUnit(test, part, unitIndex) {
 
 // 回答履歴のポップアップ「解説を見る」から、問題番号だけを頼りにその設問の画面まで
 // ジャンプする。jumpToUnitは「何番目のユニットか」で指定するが、ユニット構成
-// (Part3/4は会話グループ単位、Part6/7はパッセージ単位)はデータを読み込むまで
-// 分からないため、先にデータを読み込んでから該当ユニットを探す。
-async function jumpToQuestionNumber(test, part, number) {
+// (Part3/4は会話グループ単位、Part5は5問バッチ単位、Part6/7はパッセージ単位)は
+// データを読み込むまで分からないため、先にデータを読み込んでから該当ユニットを探す。
+// autoReveal=trueなら、画面が描画された直後に正解の選択肢を自動でクリック→採点まで
+// 自動で進め、素の問題画面ではなく解説が出た状態まで一気に見せる。
+async function jumpToQuestionNumber(test, part, number, autoReveal) {
   state.test = test;
   state.part = part;
   state.index = 0;
@@ -2089,8 +2167,13 @@ async function jumpToQuestionNumber(test, part, number) {
   document.getElementById('setupDetails').removeAttribute('open');
   state.data = await loadPartData(test, part);
   let unitIndex = 0;
-  if (part === 1 || part === 2 || part === 5) {
+  if (part === 1 || part === 2) {
     unitIndex = Math.max(0, state.data.questions.findIndex(q => q.number === number));
+  } else if (part === 5) {
+    // Part5はgetItemList()がchunk(questions,5)を返すため、unitIndexは「5問バッチ」の
+    // インデックス(questions配列内の生インデックスではない)。
+    const qIdx = Math.max(0, state.data.questions.findIndex(q => q.number === number));
+    unitIndex = Math.floor(qIdx / 5);
   } else if (part === 3 || part === 4) {
     unitIndex = Math.max(0, state.data.groups.findIndex(g => g.questions.includes(number)));
   } else {
@@ -2106,6 +2189,7 @@ async function jumpToQuestionNumber(test, part, number) {
   } else {
     p67 = { idx: unitIndex, phase: 'question', selections: {} };
   }
+  if (autoReveal) pendingAutoReveal = true;
   renderPractice();
 }
 
@@ -2813,6 +2897,13 @@ function renderPart1or2() {
 
   practiceBodyEl.innerHTML = '';
   practiceBodyEl.appendChild(wrap);
+
+  if (pendingAutoReveal) {
+    pendingAutoReveal = false;
+    const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${q.answer})`);
+    if (correctBtn) correctBtn.click();
+    nextBtn.click();
+  }
 }
 
 let p34 = null; // { groupIdx, phase, selections }
@@ -2874,6 +2965,7 @@ function renderPart3or4() {
   wrap.appendChild(translateSlot);
 
   const blocks = {};
+  const blocksContainer = document.createElement('div');
   g.items.forEach(item => {
     const block = document.createElement('div');
     block.className = 'q-block';
@@ -2909,8 +3001,9 @@ function renderPart3or4() {
     block.appendChild(pdfSlot);
 
     blocks[item.number] = { choicesDiv, explainDiv, letters, askAiSlot, pdfSlot };
-    wrap.appendChild(block);
+    blocksContainer.appendChild(block);
   });
+  wrap.appendChild(wrapWithGroupHistorySidebar(blocksContainer, state.test, g.questions));
 
   const nextBtn = document.createElement('button');
   nextBtn.textContent = '次へ';
@@ -2976,6 +3069,16 @@ function renderPart3or4() {
 
   practiceBodyEl.innerHTML = '';
   practiceBodyEl.appendChild(wrap);
+
+  if (pendingAutoReveal) {
+    pendingAutoReveal = false;
+    g.items.forEach(item => {
+      const { choicesDiv } = blocks[item.number];
+      const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${item.answer}) ${item.choices[item.answer]}`);
+      if (correctBtn) correctBtn.click();
+    });
+    nextBtn.click();
+  }
 }
 
 function renderPart5() {
@@ -3064,6 +3167,16 @@ function renderPart5() {
   wrap.appendChild(gradeBtn);
 
   practiceBodyEl.appendChild(wrap);
+
+  if (pendingAutoReveal) {
+    pendingAutoReveal = false;
+    batch.forEach(q => {
+      const { choicesDiv } = blocks[q.number];
+      const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${q.answer}) ${q.choices[q.answer]}`);
+      if (correctBtn) correctBtn.click();
+    });
+    gradeBtn.click();
+  }
 }
 
 // ---------- Part6/7 共通(1セット解答→まとめて解説→シャドーイング) ----------
@@ -3085,8 +3198,9 @@ function p67AdvancePassage(renderFn) {
   }
 }
 
-function p67RenderQuestionBlocks(wrap, items, getBlockLabel) {
+function p67RenderQuestionBlocks(wrap, items, getBlockLabel, questionNumbers) {
   const blocks = {};
+  const blocksContainer = document.createElement('div');
   items.forEach(item => {
     const block = document.createElement('div');
     block.className = 'q-block';
@@ -3122,8 +3236,9 @@ function p67RenderQuestionBlocks(wrap, items, getBlockLabel) {
     block.appendChild(pdfSlot);
 
     blocks[item.number] = { choicesDiv, explainDiv, letters, askAiSlot, pdfSlot };
-    wrap.appendChild(block);
+    blocksContainer.appendChild(block);
   });
+  wrap.appendChild(wrapWithGroupHistorySidebar(blocksContainer, state.test, questionNumbers || items.map(it => it.number)));
 
   const nextBtnRef = document.createElement('button');
   nextBtnRef.textContent = '次へ';
@@ -3203,11 +3318,15 @@ function renderPart6() {
   }
   wrap.appendChild(doc);
 
+  const audioSlot = document.createElement('div');
+  audioSlot.style.display = 'none';
+  wrap.appendChild(audioSlot);
+
   const translateSlot = document.createElement('div');
   translateSlot.style.display = 'none';
   wrap.appendChild(translateSlot);
 
-  const { blocks, nextBtn } = p67RenderQuestionBlocks(wrap, p.items, item => `(${item.number})`);
+  const { blocks, nextBtn } = p67RenderQuestionBlocks(wrap, p.items, item => `(${item.number})`, p.questions);
   const revealed = { done: false };
   nextBtn.addEventListener('click', async () => {
     if (!revealed.done) {
@@ -3218,6 +3337,10 @@ function renderPart6() {
         item => `${state.test}-6-${item.number}-${p67.selections[item.number]}`,
         `${state.test}-6-${p.questions[0]}`
       );
+      if (p.audio) {
+        audioSlot.style.display = 'block';
+        audioSlot.appendChild(createAudioPlayerWidget(p.audio, {}));
+      }
       translateSlot.style.display = 'block';
       translateSlot.appendChild(buildTranslatableBlock(p.text, `${state.test}-6-${p.questions[0]}`));
     } else {
@@ -3227,6 +3350,16 @@ function renderPart6() {
 
   practiceBodyEl.innerHTML = '';
   practiceBodyEl.appendChild(wrap);
+
+  if (pendingAutoReveal) {
+    pendingAutoReveal = false;
+    p.items.forEach(item => {
+      const { choicesDiv } = blocks[item.number];
+      const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${item.answer}) ${item.choices[item.answer]}`);
+      if (correctBtn) correctBtn.click();
+    });
+    nextBtn.click();
+  }
 }
 
 function renderPart7() {
@@ -3280,6 +3413,10 @@ function renderPart7() {
     wrap.appendChild(docDiv);
   });
 
+  const audioSlot = document.createElement('div');
+  audioSlot.style.display = 'none';
+  wrap.appendChild(audioSlot);
+
   const translateSlots = [];
   p.documents.forEach((doc, di) => {
     const slot = document.createElement('div');
@@ -3288,7 +3425,7 @@ function renderPart7() {
     translateSlots.push({ slot, doc, di });
   });
 
-  const { blocks, nextBtn } = p67RenderQuestionBlocks(wrap, p.items, item => `${item.number}. ${item.text}`);
+  const { blocks, nextBtn } = p67RenderQuestionBlocks(wrap, p.items, item => `${item.number}. ${item.text}`, p.questions);
   const revealed = { done: false };
   nextBtn.addEventListener('click', async () => {
     if (!revealed.done) {
@@ -3300,6 +3437,10 @@ function renderPart7() {
         item => `${state.test}-7-${item.number}-${p67.selections[item.number]}`,
         `${state.test}-7-${p.questions[0]}`
       );
+      if (p.audio) {
+        audioSlot.style.display = 'block';
+        audioSlot.appendChild(createAudioPlayerWidget(p.audio, {}));
+      }
       translateSlots.forEach(({ slot, doc, di }) => {
         slot.style.display = 'block';
         slot.appendChild(buildTranslatableBlock(doc.text, `${state.test}-7-${p.questions[0]}-doc${di}`));
@@ -3311,6 +3452,16 @@ function renderPart7() {
 
   practiceBodyEl.innerHTML = '';
   practiceBodyEl.appendChild(wrap);
+
+  if (pendingAutoReveal) {
+    pendingAutoReveal = false;
+    p.items.forEach(item => {
+      const { choicesDiv } = blocks[item.number];
+      const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${item.answer}) ${item.choices[item.answer]}`);
+      if (correctBtn) correctBtn.click();
+    });
+    nextBtn.click();
+  }
 }
 
 loginBtn.addEventListener('click', startLogin);

@@ -191,6 +191,62 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
 }
 .q-block:first-child{border-top:none;padding-top:0;margin-top:0;}
 
+.question-corner-layout{display:flex;gap:16px;align-items:flex-start;}
+.question-corner-main{flex:1 1 auto;min-width:0;}
+@media (max-width:640px){.question-corner-layout{flex-direction:column;}}
+
+.group-history-sidebar{
+  flex:0 0 20%;
+  min-width:130px;
+  max-width:190px;
+  background:#faf7ee;
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  padding:12px 14px;
+}
+@media (max-width:640px){.group-history-sidebar{max-width:100%;width:100%;}}
+.group-history-sidebar-title{
+  font-size:12.5px;
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:8px;
+}
+.group-history-sidebar-empty{
+  font-size:11.5px;
+  color:var(--text-soft);
+  margin:0;
+}
+.group-history-sidebar-row{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:4px 6px;
+  padding:5px 0;
+  border-bottom:1px dashed var(--line);
+}
+.group-history-sidebar-row:last-child{border-bottom:none;}
+.group-history-sidebar-num{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11.5px;
+  font-weight:700;
+  color:var(--text);
+  flex:0 0 auto;
+}
+.group-history-sidebar-date{
+  font-family:'JetBrains Mono',monospace;
+  font-size:10px;
+  color:var(--text-soft);
+  flex:1 1 auto;
+}
+.group-history-sidebar-badge{
+  font-weight:700;
+  font-size:12px;
+  flex:0 0 auto;
+}
+.group-history-sidebar-badge.correct{color:var(--ok);}
+.group-history-sidebar-badge.wrong{color:var(--danger);}
+.group-history-sidebar-badge.unknown{color:var(--text-soft);}
+
 .q-text{
   font-weight:700;
   margin-bottom:10px;
