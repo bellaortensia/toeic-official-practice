@@ -1444,8 +1444,20 @@ historyNotePopupEl.className = 'history-note-popup';
 document.body.appendChild(historyNotePopupEl);
 let historyPopupPinnedRow = null;
 
-function showHistoryNotePopup(anchorEl, noteHtml) {
+function showHistoryNotePopup(anchorEl, noteHtml, onViewExplain) {
   historyNotePopupEl.innerHTML = noteHtml;
+  if (onViewExplain) {
+    const link = document.createElement('button');
+    link.type = 'button';
+    link.className = 'history-note-popup-link';
+    link.textContent = '解説を見る →';
+    link.addEventListener('click', e => {
+      e.stopPropagation();
+      hideHistoryNotePopup();
+      onViewExplain();
+    });
+    historyNotePopupEl.appendChild(link);
+  }
   const rect = anchorEl.getBoundingClientRect();
   // 右カラム(履歴欄)のすぐ左側に、右端をそろえて表示する(ポップアップ自体の
   // 幅が大きいので、アンカーからの左オフセット固定ではなく画面右端基準で置く)。
@@ -1567,9 +1579,10 @@ function renderHistorySidebar() {
       .map(s => `<div class="history-note-popup-label">${s.label}</div>${s.html}`)
       .join('<hr>');
     if (noteHtml) {
+      const onViewExplain = () => jumpToQuestionNumber(item.test, item.part, item.number);
       row.classList.add('has-note');
       row.addEventListener('mouseenter', () => {
-        if (!historyPopupPinnedRow) showHistoryNotePopup(row, noteHtml);
+        if (!historyPopupPinnedRow) showHistoryNotePopup(row, noteHtml, onViewExplain);
       });
       row.addEventListener('mouseleave', () => {
         if (historyPopupPinnedRow !== row) hideHistoryNotePopup();
@@ -1579,7 +1592,7 @@ function renderHistorySidebar() {
           hideHistoryNotePopup();
         } else {
           historyPopupPinnedRow = row;
-          showHistoryNotePopup(row, noteHtml);
+          showHistoryNotePopup(row, noteHtml, onViewExplain);
         }
       });
     }
@@ -2046,6 +2059,43 @@ async function jumpToUnit(test, part, unitIndex) {
   practiceBodyEl.innerHTML = '読み込み中...';
   document.getElementById('setupDetails').removeAttribute('open');
   state.data = await loadPartData(test, part);
+  if (part === 1 || part === 2) {
+    const groupStart = Math.floor(unitIndex / 3) * 3;
+    p12 = { groupStart, qIdx: unitIndex - groupStart, phase: 'question', selected: null };
+  } else if (part === 3 || part === 4) {
+    p34 = { groupIdx: unitIndex, phase: 'question', selections: {} };
+  } else if (part === 5) {
+    state.index = unitIndex;
+  } else {
+    p67 = { idx: unitIndex, phase: 'question', selections: {} };
+  }
+  renderPractice();
+}
+
+// 回答履歴のポップアップ「解説を見る」から、問題番号だけを頼りにその設問の画面まで
+// ジャンプする。jumpToUnitは「何番目のユニットか」で指定するが、ユニット構成
+// (Part3/4は会話グループ単位、Part6/7はパッセージ単位)はデータを読み込むまで
+// 分からないため、先にデータを読み込んでから該当ユニットを探す。
+async function jumpToQuestionNumber(test, part, number) {
+  state.test = test;
+  state.part = part;
+  state.index = 0;
+  p12 = null;
+  p34 = null;
+  p67 = null;
+  emptyStateEl.style.display = 'none';
+  practiceEl.style.display = 'block';
+  practiceBodyEl.innerHTML = '読み込み中...';
+  document.getElementById('setupDetails').removeAttribute('open');
+  state.data = await loadPartData(test, part);
+  let unitIndex = 0;
+  if (part === 1 || part === 2 || part === 5) {
+    unitIndex = Math.max(0, state.data.questions.findIndex(q => q.number === number));
+  } else if (part === 3 || part === 4) {
+    unitIndex = Math.max(0, state.data.groups.findIndex(g => g.questions.includes(number)));
+  } else {
+    unitIndex = Math.max(0, state.data.passages.findIndex(p => p.questions.includes(number)));
+  }
   if (part === 1 || part === 2) {
     const groupStart = Math.floor(unitIndex / 3) * 3;
     p12 = { groupStart, qIdx: unitIndex - groupStart, phase: 'question', selected: null };

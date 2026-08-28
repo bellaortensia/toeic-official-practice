@@ -627,6 +627,14 @@ audio{
   margin-bottom:6px;
 }
 .history-note-popup hr{border:none;border-top:1px solid #333f4b;margin:16px 0;}
+.history-note-popup-link{
+  display:block;
+  margin-top:16px;
+  background:none;color:var(--accent);border:1px solid var(--accent);
+  font-size:13px;font-weight:700;padding:8px 14px;border-radius:8px;
+  cursor:pointer;
+}
+.history-note-popup-link:hover{background:rgba(255,207,77,.12);filter:none;}
 @media (max-width:900px){
   .history-note-popup{min-width:0;max-width:calc(100vw - 32px);}
 }
