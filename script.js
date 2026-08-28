@@ -1515,8 +1515,43 @@ historyNotePopupEl.className = 'history-note-popup';
 document.body.appendChild(historyNotePopupEl);
 let historyPopupPinnedRow = null;
 
+// 任意のCSS色文字列(hex/rgb/色名など何でも)を実際のRGB値に変換する。ブラウザの
+// 色解決機構(getComputedStyle)にそのまま任せるのが最も確実。
+function parseCssColorToRgb(colorStr) {
+  const probe = document.createElement('span');
+  probe.style.color = colorStr;
+  document.body.appendChild(probe);
+  const computed = getComputedStyle(probe).color; // "rgb(r, g, b)" 等
+  document.body.removeChild(probe);
+  const m = computed.match(/\d+/g);
+  return m ? m.slice(0, 3).map(Number) : null;
+}
+
+// ノート欄(明るい背景が前提)で書いた文字色を、そのまま暗い背景のポップアップに
+// 持ってくると、黒や濃い色の文字が背景に沈んで読めなくなる。ポップアップに表示する
+// 直前に、暗すぎる指定色(inline style/font color属性どちらも)だけを取り除き、
+// ポップアップ自身の文字色(明るい色)にフォールバックさせる。赤字・青字ツールバーで
+// 付けたような十分に明るい色はそのまま残す。
+function sanitizeNoteHtmlForDarkPopup(html) {
+  const container = document.createElement('div');
+  container.innerHTML = html;
+  container.querySelectorAll('[style*="color"], font[color]').forEach(el => {
+    const raw = el.style.color || el.getAttribute('color');
+    if (!raw) return;
+    const rgb = parseCssColorToRgb(raw);
+    if (!rgb) return;
+    const [r, g, b] = rgb;
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    if (luminance < 0.3) {
+      el.style.color = '';
+      el.removeAttribute('color');
+    }
+  });
+  return container.innerHTML;
+}
+
 function showHistoryNotePopup(anchorEl, noteHtml, onViewExplain) {
-  historyNotePopupEl.innerHTML = noteHtml;
+  historyNotePopupEl.innerHTML = sanitizeNoteHtmlForDarkPopup(noteHtml);
   if (onViewExplain) {
     const link = document.createElement('button');
     link.type = 'button';
