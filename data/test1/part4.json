@@ -5,6 +5,7 @@
   "note": "talkTextは別冊解答・解説(PDF p.156-166)から書き起こしたトーク全文。Q88の正解が誤ってBと記録されていたことが判明したため、公式正解一覧(PDF p.132)に基づきCへ修正済み(2026-08-28)。",
   "groups": [
     { "questions": [71,72,73], "audioTalk": "073 T1 Pt4 Q71-73 トーク.mp3", "audioQuestions": "074 T1 Pt4 Q71-73 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"}],
       "talkText": "Do you have a big move coming up? Look no further than Martin Movers! We can pack up all your belongings and get them where they need to go in our spacious moving trucks. Customers rave about how fast, clean, and reliable our service is. We are proud of our ten years of experience serving the community. To celebrate our tenth anniversary, we're waiving the cost of supplies for the month of May. That's free boxes, tape, and foam wrap for your breakables! Schedule today to get this great deal!",
       "items": [
       { "number": 71, "text": "What type of service is being advertised?", "choices": {"A":"Cleaning","B":"Interior decorating","C":"Landscaping","D":"Moving"}, "answer": "D" },
@@ -12,6 +13,7 @@
       { "number": 73, "text": "What promotional offer does the speaker mention?", "choices": {"A":"Free supplies","B":"A free consultation","C":"A discounted membership","D":"A discounted hourly rate"}, "answer": "A" }
     ]},
     { "questions": [74,75,76], "audioTalk": "075 T1 Pt4 Q74-76 トーク.mp3", "audioQuestions": "076 T1 Pt4 Q74-76 設問.mp3",
+      "speakers": [{"nat":"us","gender":"W"}],
       "talkText": "Thank you to the Clayton Museum for inviting me to give this presentation about my most recent publication. My book focuses on the history of the pottery makers who used to thrive here in Clayton. In 1850 only one pottery company made clay bowls and containers. By the next century, over 50 factories were making tableware, such as plates and teacups. Tea sets were very popular at that time. As you can see, there are several antique tea sets on the table here next to the podium. You are welcome to come and take a closer look after I'm finished speaking.",
       "items": [
       { "number": 74, "text": "Who most likely is the speaker?", "choices": {"A":"A historian","B":"A filmmaker","C":"A factory owner","D":"A tour guide"}, "answer": "A" },
@@ -19,6 +21,7 @@
       { "number": 76, "text": "What does the speaker encourage the listeners to do?", "choices": {"A":"Take notes","B":"Ask questions","C":"View some objects","D":"Purchase an item"}, "answer": "C" }
     ]},
     { "questions": [77,78,79], "audioTalk": "077 T1 Pt4 Q77-79 トーク.mp3", "audioQuestions": "078 T1 Pt4 Q77-79 設問.mp3",
+      "speakers": [{"nat":"gb","gender":"W"}],
       "talkText": "Welcome to our twenty-fifth annual software development conference. We have an exciting agenda prepared for you, including three keynote speeches. Our first speaker, Rodrigo Flores, is the creator of the mobile phone application Pocket Me, which currently has over a million users. And it was launched six months ago! You can find where he'll be giving his speech in our online program. Remember that for the first time, this year the conference is paper-free — use any of the QR codes available to access the schedule.",
       "items": [
       { "number": 77, "text": "What industry do the listeners most likely work in?", "choices": {"A":"Entertainment","B":"Manufacturing","C":"Technology","D":"Hospitality"}, "answer": "C" },
@@ -26,6 +29,7 @@
       { "number": 79, "text": "What is new about this year's conference?", "choices": {"A":"It will be a three-day event.","B":"It includes a contest for attendees.","C":"It will not have on-site networking events.","D":"It is not providing printed materials."}, "answer": "D" }
     ]},
     { "questions": [80,81,82], "audioTalk": "079 T1 Pt4 Q80-82 トーク.mp3", "audioQuestions": "080 T1 Pt4 Q80-82 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"}],
       "talkText": "Good afternoon, everyone. As chief operating officer, one of my responsibilities is to look for ways to reduce costs. With this in mind, the executive leadership team and I have made the decision to consolidate our company from two locations to one — and one of our buildings will be sold. And since many of you have expressed interest in hybrid work schedules, employees will be able to work from home or in the office on different days of the week. Please think about a schedule that would best suit your work productivity. Be sure to discuss it with your manager by the end of this week.",
       "items": [
       { "number": 80, "text": "Who is the speaker?", "choices": {"A":"A real estate agent","B":"A shift manager","C":"A company executive","D":"A building inspector"}, "answer": "C" },
@@ -33,6 +37,7 @@
       { "number": 82, "text": "What should the listeners do by the end of this week?", "choices": {"A":"Speak with a manager","B":"Submit some photos","C":"Provide some suggestions","D":"Reply to an event invitation"}, "answer": "A" }
     ]},
     { "questions": [83,84,85], "audioTalk": "081 T1 Pt4 Q83-85 トーク.mp3", "audioQuestions": "082 T1 Pt4 Q83-85 設問.mp3",
+      "speakers": [{"nat":"gb","gender":"W"}],
       "talkText": "Would you like to go on a camping trip but don't have the right supplies? Grove Emporium is here to help. Right now during our year-end clearance event you can get incredible deals on new tents, sleeping bags, and other items. In addition, a portion of the proceeds will go towards repairing hiking trails at our local nature center. Our Greenville store location will not be participating in the sale this year because it's closed for renovations, so this sales event is taking place exclusively at our Town Square location. Take advantage of the great prices at Grove Emporium today.",
       "items": [
       { "number": 83, "text": "What products are being advertised?", "choices": {"A":"Outdoor furniture","B":"Camping supplies","C":"Gardening tools","D":"Bedroom furniture"}, "answer": "B" },
@@ -40,6 +45,7 @@
       { "number": 85, "text": "According to the speaker, why will an event not be held at the Greenville store?", "choices": {"A":"Renovations are taking place.","B":"Staff members are on vacation.","C":"Merchandise is sold out.","D":"Roads are under construction."}, "answer": "A" }
     ]},
     { "questions": [86,87,88], "audioTalk": "083 T1 Pt4 Q86-88 トーク.mp3", "audioQuestions": "084 T1 Pt4 Q86-88 設問.mp3",
+      "speakers": [{"nat":"au","gender":"M"}],
       "talkText": "I'll be conducting a refresher training for all certified forklift operators in the warehouse next week, but I need to make you aware of a few things now. It's come to my attention that only the crew working the morning shift has been completing the forklift inspection checklist. However, the forklifts must be inspected at the beginning of every eight-hour shift. That's three times a day. Also, if you notice anything that isn't functioning properly, please don't forget to document it. We have a logbook on the wall over there for this purpose.",
       "items": [
       { "number": 86, "text": "Who most likely are the listeners?", "choices": {"A":"Flight attendants","B":"Park rangers","C":"Warehouse workers","D":"Medical assistants"}, "answer": "C" },
@@ -47,6 +53,7 @@
       { "number": 88, "text": "What are the listeners asked to record in a logbook?", "choices": {"A":"Supply inventory","B":"Training hours","C":"Mechanical issues","D":"Driving distances"}, "answer": "C" }
     ]},
     { "questions": [89,90,91], "audioTalk": "085 T1 Pt4 Q89-91 トーク.mp3", "audioQuestions": "086 T1 Pt4 Q89-91 設問.mp3",
+      "speakers": [{"nat":"us","gender":"W"}],
       "talkText": "Today I'll be presenting the work of Moritz Hoffman. Moritz spent the last two years designing and renovating the city hall building, saving a truly historic building — one of the oldest in Madison. A project of this scale requires a great deal of careful planning and attention to detail. And Moritz spent a great deal of time on preparation. The whole process was documented with photographs. Now, let's look at some slides of the city hall before and after renovations.",
       "items": [
       { "number": 89, "text": "Who is Moritz Hoffman?", "choices": {"A":"An advertising executive","B":"An architect","C":"A city official","D":"A photographer"}, "answer": "B" },
@@ -54,6 +61,7 @@
       { "number": 91, "text": "What will the listeners do next?", "choices": {"A":"Sign up for a newsletter","B":"Have refreshments","C":"Tour a worksite","D":"Watch a slideshow"}, "answer": "D" }
     ]},
     { "questions": [92,93,94], "audioTalk": "087 T1 Pt4 Q92-94 トーク.mp3", "audioQuestions": "088 T1 Pt4 Q92-94 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"}],
       "talkText": "Hi, everyone, and welcome to Baking Matters, the show where famous cooks share their delicious recipes with us. Before we get started with today's program, don't forget to sign up for our newsletter. You can sign up on our Web site, and it will be delivered right to your in-box. And now, for today's show, we have a cake-designing lesson led by expert baker Heather Silva. Heather has placed first in the Havenville Baking Competition three years in a row. And, just this month, she published her first book, titled Heather's Cake-Designing Tips. Look for it at your local bookstore. Now, grab your apron, and let's get baking!",
       "items": [
       { "number": 92, "text": "What is the focus of the show?", "choices": {"A":"Gardening","B":"Baking","C":"Home repair","D":"Music"}, "answer": "B" },
@@ -61,6 +69,7 @@
       { "number": 94, "text": "According to the speaker, what did Heather Silva do this month?", "choices": {"A":"She moved to a new city.","B":"She went on tour.","C":"She opened a business.","D":"She published a book."}, "answer": "D" }
     ]},
     { "questions": [95,96,97], "audioTalk": "089 T1 Pt4 Q95-97 トーク.mp3", "audioQuestions": "090 T1 Pt4 Q95-97 設問.mp3", "graphic": "Project team grid: Team 4 (Globe Vitamins), Team 1 (Stelco Technologies), Team 3 (Greyrock Financial), Team 2 (Horizon Properties)", "graphicImage": "images/test1/part4/q95-97.jpg",
+      "speakers": [{"nat":"gb","gender":"W"}],
       "talkText": "As you know, in March, our marketing agency won the industry award for \"Most Innovative Television Commercial.\" After years of hard work, we're now an established name, and business is thriving. One of the individuals who has contributed significantly throughout our path to success is Scott Williams. So it's with some reluctance that I'm announcing that Scott has decided to embark on his retirement. It's certainly a loss for us, and we will miss his valuable insights. In light of this change, we'll need to modify a project team. Lauren is already successfully heading the marketing campaign for the Greyrock Financial account. So we're going to add her expertise to the Stelco Technologies account also.",
       "items": [
       { "number": 95, "text": "According to the speaker, what happened in March?", "choices": {"A":"A financial audit was conducted.","B":"An agency won an award.","C":"A company relocated its headquarters.","D":"A new policy was implemented."}, "answer": "B" },
@@ -68,6 +77,7 @@
       { "number": 97, "text": "Look at the graphic. Which additional team will Lauren be assigned to?", "choices": {"A":"Project Team 1","B":"Project Team 2","C":"Project Team 3","D":"Project Team 4"}, "answer": "A" }
     ]},
     { "questions": [98,99,100], "audioTalk": "091 T1 Pt4 Q98-100 トーク.mp3", "audioQuestions": "092 T1 Pt4 Q98-100 設問.mp3", "graphic": "Grandstand seating chart: Section A (Seats 1-11), Section B (12-22), Section C (23-30), Section D (31-40)", "graphicImage": "images/test1/part4/q98-100.jpg",
+      "speakers": [{"nat":"au","gender":"M"}],
       "talkText": "Welcome to Weston Sports Stadium! We are very pleased that you're joining us here for this special event. Tonight is the first time our hometown baseball team is playing in the regional championship! To celebrate, we'll be giving away prizes throughout the night. Our first prize goes to attendees who are in seats 23 through 30. They will each win a free ticket to a game next season! We'll announce more giveaways as tonight's game progresses. And don't forget to stay after the game. There will be a fireworks display.",
       "items": [
       { "number": 98, "text": "Why does the speaker say an event is special?", "choices": {"A":"A local team is playing in a championship game.","B":"Attendance reached a record high.","C":"It is the first game at a new stadium.","D":"It will be televised internationally."}, "answer": "A" },

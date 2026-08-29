@@ -3023,6 +3023,7 @@ function renderPart3or4() {
   const audioLabel = document.createElement('div');
   audioLabel.className = 'audio-label';
   audioLabel.textContent = `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`;
+  if (g.speakers) audioLabel.appendChild(buildSpeakerBadges(g.speakers));
   wrap.appendChild(audioLabel);
   wrap.appendChild(createAudioPlayerWidget([g.audioConversation || g.audioTalk, g.audioQuestions], { autoplay: true, sticky: true }));
   if (g.graphicImage) {

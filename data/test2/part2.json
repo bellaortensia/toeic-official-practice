@@ -6,6 +6,7 @@
   "questions": [
     {
       "number": 7, "audio": "159 T2 Pt2 Q7.mp3", "answer": "C",
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"ca","gender":"M"}],
       "question": "When is Ms. Phillips going to pick up her computer?", "questionJa": "Phillipsさんはいつ、自分のコンピューターを受け取る予定ですか。",
       "responses": {"A":"Yes, I had some.","B":"That's a new clock, isn't it?","C":"Not until next week."},
       "responsesJa": {"A":"はい、私は幾らか食べました。","B":"それは新しい時計ですよね？","C":"来週になってからです。"},
@@ -13,6 +14,7 @@
     },
     {
       "number": 8, "audio": "160 T2 Pt2 Q8.mp3", "answer": "B",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],
       "question": "Would you like me to help you hang the wallpaper?", "questionJa": "壁紙を貼るのをお手伝いしましょうか。",
       "responses": {"A":"It's a striped pattern.","B":"Yes, I'd appreciate it.","C":"I'll print it out now."},
       "responsesJa": {"A":"それはしま模様です。","B":"はい、そうしていただけるとありがたいです。","C":"今、それをプリントアウトします。"},
@@ -20,6 +22,7 @@
     },
     {
       "number": 9, "audio": "161 T2 Pt2 Q9.mp3", "answer": "A",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],
       "question": "Can you help me revise this budget report?", "questionJa": "この予算報告書を修正するのを手伝ってくれませんか。",
       "responses": {"A":"Sure, I'm free this afternoon.","B":"A pair of sunglasses.","C":"That was a great book."},
       "responsesJa": {"A":"いいですよ、今日の午後は手が空いています。","B":"サングラス1つです。","C":"それは素晴らしい本でした。"},
@@ -27,6 +30,7 @@
     },
     {
       "number": 10, "audio": "162 T2 Pt2 Q10.mp3", "answer": "C",
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"ca","gender":"M"}],
       "question": "Where will the sales staff be waiting for you?", "questionJa": "販売員はどこであなたを待つことになっていますか。",
       "responses": {"A":"That's my favorite shop.","B":"I'll make the dinner reservations.","C":"In the lobby."},
       "responsesJa": {"A":"それは私のお気に入りの店です。","B":"夕食の予約を取っておきます。","C":"ロビーです。"},
@@ -34,6 +38,7 @@
     },
     {
       "number": 11, "audio": "163 T2 Pt2 Q11.mp3", "answer": "A",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],
       "question": "When did Mr. Hang deliver the shipment?", "questionJa": "Hangさんはいつ発送品を配達しましたか。",
       "responses": {"A":"Yesterday afternoon.","B":"These boxes are heavy.","C":"No, it's over there."},
       "responsesJa": {"A":"昨日の午後です。","B":"これらの箱は重いです。","C":"いいえ、それは向こうにあります。"},
@@ -41,6 +46,7 @@
     },
     {
       "number": 12, "audio": "164 T2 Pt2 Q12.mp3", "answer": "B",
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"au","gender":"M"}],
       "question": "Why do you want to go to the Japanese garden?", "questionJa": "あなたはなぜ、その日本庭園に行きたいのですか。",
       "responses": {"A":"Yes, there's a map in here.","B":"Because it's quite famous.","C":"Around eleven o'clock."},
       "responsesJa": {"A":"はい、ここに地図がありますよ。","B":"そこはとても有名だからです。","C":"11時ごろです。"},
@@ -48,6 +54,7 @@
     },
     {
       "number": 13, "audio": "165 T2 Pt2 Q13.mp3", "answer": "A",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],
       "question": "Who'll buy the tickets for the performance?", "questionJa": "誰がその公演のチケットを購入するのですか。",
       "responses": {"A":"I can take care of that.","B":"No, Farida is a marketing specialist.","C":"Thanks, it'll be 30 dollars."},
       "responsesJa": {"A":"私がそれを引き受けてもいいですよ。","B":"いいえ、Faridaはマーケティングの専門家です。","C":"ありがとうございます、30ドルになります。"},
@@ -55,6 +62,7 @@
     },
     {
       "number": 14, "audio": "166 T2 Pt2 Q14.mp3", "answer": "A",
+      "speakers": [{"nat":"au","gender":"M"},{"nat":"us","gender":"W"}],
       "question": "The presentations will be in the afternoon, won't they?", "questionJa": "プレゼンは午後の予定ですよね？",
       "responses": {"A":"No, they've been postponed.","B":"The flowers on the table look beautiful.","C":"The back entrance is open."},
       "responsesJa": {"A":"いいえ、それは延期されました。","B":"卓上の花はきれいですね。","C":"裏口は開いています。"},
@@ -62,6 +70,7 @@
     },
     {
       "number": 15, "audio": "167 T2 Pt2 Q15.mp3", "answer": "C",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],
       "question": "Should we take the bus or the train downtown?", "questionJa": "私たちは中心街までバスを利用すべきですか、それとも電車を利用すべきですか。",
       "responses": {"A":"Yes, they should.","B":"About every half an hour.","C":"The train seats are very comfortable."},
       "responsesJa": {"A":"はい、彼らはそうすべきです。","B":"およそ30分おきに。","C":"電車の座席はとても快適ですよ。"},
@@ -69,6 +78,7 @@
     },
     {
       "number": 16, "audio": "168 T2 Pt2 Q16.mp3", "answer": "C",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],
       "question": "How soon will my lunch order be ready?", "questionJa": "注文した私の昼食はあとどれくらいでできますか。",
       "responses": {"A":"A large assortment.","B":"I'm feeling well, thanks.","C":"The chef just started preparing it."},
       "responsesJa": {"A":"盛りだくさんの詰め合わせです。","B":"体調はいいです、ありがとう。","C":"シェフはちょうど、それを調理し始めたところです。"},
@@ -76,6 +86,7 @@
     },
     {
       "number": 17, "audio": "169 T2 Pt2 Q17.mp3", "answer": "C",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],
       "question": "When is your daughter leaving for university?", "questionJa": "娘さんはいつ大学に出発しますか。",
       "responses": {"A":"No, but thank you for offering.","B":"The Engineering Department.","C":"I'm driving her there on Friday."},
       "responsesJa": {"A":"いいえ、でも申し出をありがとうございます。","B":"工学部です。","C":"私は金曜日に彼女をそこへ車で送ります。"},
@@ -83,6 +94,7 @@
     },
     {
       "number": 18, "audio": "170 T2 Pt2 Q18.mp3", "answer": "A",
+      "speakers": [{"nat":"au","gender":"M"},{"nat":"us","gender":"W"}],
       "question": "Aren't you looking forward to visiting Dubai?", "questionJa": "ドバイを訪れるのを楽しみにしているのではないのですか。",
       "responses": {"A":"My trip was canceled.","B":"The international airport.","C":"That shirt does look nice."},
       "responsesJa": {"A":"私の旅行は中止になりました。","B":"国際空港です。","C":"そのシャツは本当にすてきですね。"},
@@ -90,6 +102,7 @@
     },
     {
       "number": 19, "audio": "171 T2 Pt2 Q19.mp3", "answer": "B",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"ca","gender":"M"}],
       "question": "Where is the history museum that Sandrine recommended?", "questionJa": "Sandrineが薦めてくれた歴史博物館はどこにあるのですか。",
       "responses": {"A":"In the storage closet.","B":"Let's check online.","C":"Yes, at eleven thirty."},
       "responsesJa": {"A":"物置の中です。","B":"オンラインで確認しましょう。","C":"はい、11時30分に。"},
@@ -97,6 +110,7 @@
     },
     {
       "number": 20, "audio": "172 T2 Pt2 Q20.mp3", "answer": "A",
+      "speakers": [{"nat":"au","gender":"M"},{"nat":"gb","gender":"W"}],
       "question": "How much longer will the flight be delayed?", "questionJa": "飛行機はあとどれくらい遅れそうですか。",
       "responses": {"A":"The information desk is over there.","B":"I have a new monitor.","C":"No, it's quite far."},
       "responsesJa": {"A":"案内所はあそこにありますよ。","B":"私は新しいモニターを持っています。","C":"いいえ、そこはかなり遠いです。"},
@@ -104,6 +118,7 @@
     },
     {
       "number": 21, "audio": "173 T2 Pt2 Q21.mp3", "answer": "B",
+      "speakers": [{"nat":"au","gender":"M"},{"nat":"us","gender":"W"}],
       "question": "Is the lumber delivery arriving at the warehouse today?", "questionJa": "木材の配達物は今日、倉庫に到着しますか。",
       "responses": {"A":"Smith's Marketing and Sales.","B":"The driver is out sick today.","C":"A multiyear contract."},
       "responsesJa": {"A":"Smith'sマーケティング販売社です。","B":"担当ドライバーは今日、病欠です。","C":"複数年契約です。"},
@@ -111,6 +126,7 @@
     },
     {
       "number": 22, "audio": "174 T2 Pt2 Q22.mp3", "answer": "B",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],
       "question": "Our department needs to place an order for office supplies this week.", "questionJa": "うちの部署は今週、オフィス用品を注文する必要があります。",
       "responses": {"A":"My apartment's on the fifth floor.","B":"Do you need help making a list?","C":"A surprise party next week."},
       "responsesJa": {"A":"マンションの私の部屋は5階にあります。","B":"リスト作成の手伝いが必要ですか。","C":"来週のサプライズパーティーです。"},
@@ -118,6 +134,7 @@
     },
     {
       "number": 23, "audio": "175 T2 Pt2 Q23.mp3", "answer": "A",
+      "speakers": [{"nat":"au","gender":"M"},{"nat":"us","gender":"W"}],
       "question": "Doesn't this train go all the way to Springdale?", "questionJa": "この電車はスプリングデールまで行くのではないのですか。",
       "responses": {"A":"No, we have to transfer at the next stop.","B":"I'm going to the cafeteria too.","C":"The ticket counter on the left."},
       "responsesJa": {"A":"いいえ、私たちは次の停車駅で乗り換えないといけません。","B":"私もカフェテリアに行きます。","C":"左手にある切符売り場です。"},
@@ -125,6 +142,7 @@
     },
     {
       "number": 24, "audio": "176 T2 Pt2 Q24.mp3", "answer": "C",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"us","gender":"W"}],
       "question": "How soon will the new sales staff be arriving?", "questionJa": "新しい販売員はあとどれくらいで到着しますか。",
       "responses": {"A":"There's a bus stop out front.","B":"At the fitness center.","C":"In a few minutes."},
       "responsesJa": {"A":"表にバス停があります。","B":"フィットネスセンターで。","C":"数分後です。"},
@@ -132,6 +150,7 @@
     },
     {
       "number": 25, "audio": "177 T2 Pt2 Q25.mp3", "answer": "A",
+      "speakers": [{"nat":"au","gender":"M"},{"nat":"us","gender":"W"}],
       "question": "What will you be presenting on at the conference?", "questionJa": "あなたは会議で何についてプレゼンする予定ですか。",
       "responses": {"A":"Some of our recent engineering innovations.","B":"I've already bought a present.","C":"The conference center on Maple Street."},
       "responsesJa": {"A":"当社の最近の工学技術革新です。","B":"私はすでに贈り物を購入しました。","C":"メープル通りの会議場です。"},
@@ -139,6 +158,7 @@
     },
     {
       "number": 26, "audio": "178 T2 Pt2 Q26.mp3", "answer": "B",
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"gb","gender":"W"}],
       "question": "Do you have time to participate in a group interview tomorrow?", "questionJa": "明日の集団面接に参加する時間はありますか。",
       "responses": {"A":"I really enjoyed them, thanks.","B":"My calendar is open all week.","C":"I've heard we received another delivery."},
       "responsesJa": {"A":"それらを大いに満喫しました、ありがとう。","B":"私の予定は今週すっと空いています。","C":"私たちはもう一つ配達物を受け取ったと私は聞いています。"},
@@ -146,6 +166,7 @@
     },
     {
       "number": 27, "audio": "179 T2 Pt2 Q27.mp3", "answer": "B",
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"ca","gender":"M"}],
       "question": "We should hire another salesperson.", "questionJa": "当店は販売員をもう1人雇うべきです。",
       "responses": {"A":"Several applications.","B":"The store has had a lot of customers lately.","C":"Yes, I'd like some coffee."},
       "responsesJa": {"A":"複数の応募です。","B":"店には最近、たくさんの客が入っていますね。","C":"はい、コーヒーが飲みたいです。"},
@@ -153,6 +174,7 @@
     },
     {
       "number": 28, "audio": "180 T2 Pt2 Q28.mp3", "answer": "C",
+      "speakers": [{"nat":"au","gender":"M"},{"nat":"gb","gender":"W"}],
       "question": "Will replacing the windows take more than a month or less than a month to do?", "questionJa": "窓を交換するのに1カ月以上かかりますか、それとも1カ月未満ですか。",
       "responses": {"A":"That clock is quite impressive.","B":"A monthly budget.","C":"I'll need to check with the installers."},
       "responsesJa": {"A":"その時計はとても印象的ですね。","B":"月単位の予算です。","C":"取り付け業者に確認する必要があるでしょうね。"},
@@ -160,6 +182,7 @@
     },
     {
       "number": 29, "audio": "181 T2 Pt2 Q29.mp3", "answer": "A",
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"au","gender":"M"}],
       "question": "Can you come and fix the printer?", "questionJa": "プリンターを修理しに来てもらえますか。",
       "responses": {"A":"I'm just about to set up some teleconferencing equipment.","B":"It was only about 30 copies.","C":"It's very bright in here."},
       "responsesJa": {"A":"私はちょうど今、テレビ会議用の機器をセッティングしようとしているところなのです。","B":"それはわずか30部ほどでした。","C":"ここはとても明るいですね。"},
@@ -167,6 +190,7 @@
     },
     {
       "number": 30, "audio": "182 T2 Pt2 Q30.mp3", "answer": "A",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],
       "question": "We spend almost half of the workday in meetings!", "questionJa": "私たちは一日の勤務時間の半分近くを会議に費やしていますね！",
       "responses": {"A":"I wish we had fewer of them.","B":"Sure, I'll send you the file beforehand.","C":"From nine to ten o'clock."},
       "responsesJa": {"A":"それらがもっと少ないといいのですが。","B":"はい、事前にそのファイルをお送りしますね。","C":"9時から10時までです。"},
@@ -174,6 +198,7 @@
     },
     {
       "number": 31, "audio": "183 T2 Pt2 Q31.mp3", "answer": "A",
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"ca","gender":"M"}],
       "question": "Would you like to look at the slides now or later?", "questionJa": "スライドを今見たいですか、それとも後で見たいですか。",
       "responses": {"A":"This is a very busy time of day.","B":"Yes, I'm still looking for a new one.","C":"No, they're in the conference center."},
       "responsesJa": {"A":"今は一日のうちでとても多忙な時間帯なのです。","B":"はい、私は今も新しいものを探しています。","C":"いいえ、それらは会議場にあります。"},
