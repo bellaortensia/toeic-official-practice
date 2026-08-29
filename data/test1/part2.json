@@ -5,175 +5,200 @@
   "note": "質問と3つの応答は本紙に印刷されていないため、question/responses/JaはPart1と同様に別冊解答・解説(p.11-15)から書き起こしたもの。",
   "questions": [
     {
-      "number": 7, "audio": "020 T1 Pt2 Q7.mp3", "answer": "A",
+      "number": 7,
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],  "audio": "020 T1 Pt2 Q7.mp3", "answer": "A",
       "question": "What's your final destination?", "questionJa": "あなたの最終目的地はどこですか。",
       "responses": {"A":"I'm going to Dublin.","B":"No, it's the next one.","C":"From nine to five."},
       "responsesJa": {"A":"私はダブリンに行きます。","B":"いいえ、それは次のものです。","C":"9時から5時までです。"},
       "explanation": "最終目的地がどこかと尋ねているのに対し、「ダブリンに行く」と、行き先の都市名を伝えている(A)が正解。What ~?の疑問文だが場所を尋ねている点に注意。final「最終的な」、destination「目的地」。\n(B) Noで何を否定しているか不明。また、代名詞oneがdestinationを指すとしても、itが何を指すか不明で応答になっていない。\n(C) 時間帯は尋ねられていない。"
     },
     {
-      "number": 8, "audio": "021 T1 Pt2 Q8.mp3", "answer": "C",
+      "number": 8,
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],  "audio": "021 T1 Pt2 Q8.mp3", "answer": "C",
       "question": "Why's the meeting been moved to the third floor?", "questionJa": "会議はなぜ3階に変更されたのですか。",
       "responses": {"A":"About fifteen people.","B":"Turn left at the elevator.","C":"Because our usual room is locked."},
       "responsesJa": {"A":"約15名です。","B":"エレベーターの所で左に曲がってください。","C":"いつもの部屋が施錠されているからです。"},
       "explanation": "Why's~?でWhy hasの短縮形。会議が3階に変更された理由を尋ねている。これに対し、Becauseを用いて「いつもの部屋が施錠されているから」と、本来の場所が利用できないという理由を知らせている(C)が正解。move「~(場所や日時など)を変更する」、floor「階」。usual「いつもの」、lock「~に鍵を掛ける」。\n(A) 人数は尋ねられていない。\n(B) 行き方は尋ねられていない。"
     },
     {
-      "number": 9, "audio": "022 T1 Pt2 Q9.mp3", "answer": "A",
+      "number": 9,
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"us","gender":"W"}],  "audio": "022 T1 Pt2 Q9.mp3", "answer": "A",
       "question": "Who's buying these tires?", "questionJa": "誰がこれらのタイヤを購入する予定ですか。",
       "responses": {"A":"Marcus is.","B":"No, thank you.","C":"The vehicle is registered."},
       "responsesJa": {"A":"Marcusです。","B":"いいえ、結構です。","C":"その車両は登録されています。"},
       "explanation": "Who's買uying~?で、タイヤを購入する予定の人物を尋ねているのに対し、「Marcusだ」と具体的な人物名を挙げている(A)が正解。Who'sはWho isの短縮形。\n(B) 何を断っているのか不明。\n(C) 質問にあるtiresと関連するvehicle「車両」が含まれるが、人物が尋ねられているので、車両の登録状況を伝える発言は応答にならない。register「~を登録する」。"
     },
     {
-      "number": 10, "audio": "023 T1 Pt2 Q10.mp3", "answer": "B",
+      "number": 10,
+      "speakers": [{"nat":"au","gender":"M"},{"nat":"gb","gender":"W"}],  "audio": "023 T1 Pt2 Q10.mp3", "answer": "B",
       "question": "Do you recommend hiring an electrician?", "questionJa": "電気技師の雇用を勧めますか。",
       "responses": {"A":"The marketing department.","B":"Yes, they know all the safety processes.","C":"That's a nice campfire."},
       "responsesJa": {"A":"マーケティング部です。","B":"はい、彼らは全ての安全手順を把握しています。","C":"それはすてきなキャンプファイアですね。"},
       "explanation": "電気技師の雇用を勧めるかと尋ねているのに対し、Yesと答え、「彼らは全ての安全手順を把握している」と勧める理由を述べている(B)が正解。recommend「~を推奨する」、hire「~を雇用する」、electrician「電気技師」、safety「安全(性)」、process「手順、過程」。\n(A) department「部署」は尋ねられていない。\n(C) Thatが何を指すか不明。質問にあるhiringと似た音を含むcampfireに惑わされないよう注意。"
     },
     {
-      "number": 11, "audio": "024 T1 Pt2 Q11.mp3", "answer": "A",
+      "number": 11,
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],  "audio": "024 T1 Pt2 Q11.mp3", "answer": "A",
       "question": "Isn't the lab inspection starting soon?", "questionJa": "実験室の立入検査は間もなく始まるのではないのですか。",
       "responses": {"A":"No, it's on Friday.","B":"About three hours long.","C":"Thanks for your help."},
       "responsesJa": {"A":"いいえ、それは金曜日にあります。","B":"約3時間の長さです。","C":"手伝ってくれてありがとうございます。"},
       "explanation": "否定疑問文で、実験室の立入検査が間もなく始まるのではないのかと尋ねている。これに対し、Noと否定し、「それは金曜日にある」と正しい実施予定日を伝えている(A)が正解。itは質問にあるthe lab inspectionを指す。lab「実験室」、inspection「点検、立入検査」。\n(B) 時間の長さは尋ねられていない。\n(C) 謝意を伝える発言は応答にならない。"
     },
     {
-      "number": 12, "audio": "025 T1 Pt2 Q12.mp3", "answer": "B",
+      "number": 12,
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"ca","gender":"M"}],  "audio": "025 T1 Pt2 Q12.mp3", "answer": "B",
       "question": "When would you like to leave for the factory?", "questionJa": "いつ工場に向けて出発したいですか。",
       "responses": {"A":"Maybe the map is out of date.","B":"In about fifteen minutes.","C":"Usually by taxi."},
       "responsesJa": {"A":"おそらくその地図は古過ぎます。","B":"約15分後です。","C":"普段はタクシーで。"},
       "explanation": "When would you like to do ~?は「いつ~したいですか」と、時について相手の意向を丁寧に尋ねる表現。出発時刻の希望を尋ねているのに対し、「約15分後」と答えている(B)が正解。factory「工場」。\n(A) 地図は話題にされていない。out of date「時代遅れの、廃れた」。\n(C) 移動手段は尋ねられていない。"
     },
     {
-      "number": 13, "audio": "026 T1 Pt2 Q13.mp3", "answer": "A",
+      "number": 13,
+      "speakers": [{"nat":"au","gender":"M"},{"nat":"us","gender":"W"}],  "audio": "026 T1 Pt2 Q13.mp3", "answer": "A",
       "question": "Please arrive at the office by seven o'clock tomorrow.", "questionJa": "明日は7時までにオフィスに到着してください。",
       "responses": {"A":"I'm leaving for a business trip in the morning.","B":"It's on the top floor of this building.","C":"The shipping fee is expensive."},
       "responsesJa": {"A":"私は午前中に出張に出掛けることになっています。","B":"それはこの建物の最上階にあります。","C":"送料は高額です。"},
       "explanation": "明日は7時までにオフィスに到着するよう依頼しているのに対し、「私は午前中は出張に出掛けることになっている」と、午前中はオフィスに行かないことを示唆している(A)が正解。business trip「出張」。\n(B) Itがthe officeを指すとしても、オフィスが位置する階についての発言は応答にならない。\n(C) shipping fee「送料」に関することは言及されていない。expensive「高価な、費用のかかる」。"
     },
     {
-      "number": 14, "audio": "027 T1 Pt2 Q14.mp3", "answer": "C",
+      "number": 14,
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"ca","gender":"M"}],  "audio": "027 T1 Pt2 Q14.mp3", "answer": "C",
       "question": "You're planning to attend the training session, aren't you?", "questionJa": "あなたは研修会に出席する予定ですよね？",
       "responses": {"A":"I took the stairs instead.","B":"They're in the supply closet.","C":"No, I'm too busy."},
       "responsesJa": {"A":"私は代わりに階段を使いました。","B":"それらは物置の中にあります。","C":"いいえ、忙し過ぎて。"},
       "explanation": "肯定文の文末に~, aren't you?を付けて「~ですよね」と、研修会に出席予定であることを確認している。これに対し、Noと答え、自分が忙しいことを付け加えて出席できない理由を伝えている(C)が正解。plan to do「~する予定である」、training session「研修会」。\n(A) 何の代わりにstairs「階段」を使ったのか不明であり、応答になっていない。instead「代わりに」。\n(B) Theyが何を指すか不明。supply closet「物置」。"
     },
     {
-      "number": 15, "audio": "028 T1 Pt2 Q15.mp3", "answer": "A",
+      "number": 15,
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],  "audio": "028 T1 Pt2 Q15.mp3", "answer": "A",
       "question": "Where do I have to go to get my refund?", "questionJa": "返金を受けるにはどこへ行かなければなりませんか。",
       "responses": {"A":"I'll see if the manager is available.","B":"I heard it's very expensive.","C":"Yes, we've been there."},
       "responsesJa": {"A":"店長が対応可能か確認いたします。","B":"それは非常に費用がかかると聞きました。","C":"はい、私たちはそこへ行ったことがあります。"},
       "explanation": "Where ~?で返金を受けるために行くべき場所を尋ねている。これに対し、場所は答えていないが、「店長が対応可能か確認する」と伝えて返金の応対について申し出ている(A)が正解。refund「返金」、manager「管理者、店長」、available「利用可能な、対応できる」。\n(B) itがmy refundを指すとしても、金額は尋ねられておらず、応答にならない。\n(C) 場所を尋ねる質問に対し、Yes/Noでは応答にならない。"
     },
     {
-      "number": 16, "audio": "029 T1 Pt2 Q16.mp3", "answer": "B",
+      "number": 16,
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"au","gender":"M"}],  "audio": "029 T1 Pt2 Q16.mp3", "answer": "B",
       "question": "Why haven't you finished your report yet?", "questionJa": "あなたはなぜ、まだ報告書を仕上げていないのですか。",
       "responses": {"A":"The seaside port.","B":"Because I'm missing some data.","C":"To change the door lock."},
       "responsesJa": {"A":"その海辺の港町です。","B":"データが足りないからです。","C":"ドアの錠を変えるためです。"},
       "explanation": "Why ~?の否定疑問文で、報告書を仕上げていない理由を尋ねている。これに対し、Because ~でデータが足りないという理由を述べている(B)が正解。miss「~を欠いている」。\n(A) 質問にあるreportと似た音のport「港、港湾都市」に惑わされないよう注意。seaside「海辺の」。\n(C) 目的を答えているが、ドアの錠を変えるためという発言は報告書を仕上げていない理由としてかみ合わない。lock「錠、錠前」。"
     },
     {
-      "number": 17, "audio": "030 T1 Pt2 Q17.mp3", "answer": "B",
+      "number": 17,
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"ca","gender":"M"}],  "audio": "030 T1 Pt2 Q17.mp3", "answer": "B",
       "question": "Have you ever had your car fixed at Tom's Repair Shop?", "questionJa": "これまでにTom's修理店で車を修理してもらったことはありますか。",
       "responses": {"A":"I fill the tank every two weeks.","B":"No, but I've heard they do good work.","C":"It's in my parking space."},
       "responsesJa": {"A":"私は2週間ごとにタンクを満杯にしています。","B":"いいえ、でも彼らはいい仕事をすると聞いています。","C":"それは私の駐車スペースにあります。"},
       "explanation": "Have you ever ~?で、Tom's修理店で車を修理してもらった経験があるかと尋ねている。これに対し、Noと答えた後、butを続けて「彼らはいい仕事をすると聞いている」と、その店に関する情報を付け加えている(B)が正解。have ~ done「~を…してもらう」、fix「~を修理する」、repair「修理」。\n(A) 質問にあるcarと関連するtankを含むが、タンクを満たす頻度は尋ねられていない。fill「~を満たす」、every「(数詞と複数名詞を続けて)~ごとに」。\n(C) Itが自分の車を指すとしても、それがある場所を伝える発言は応答にならない。"
     },
     {
-      "number": 18, "audio": "031 T1 Pt2 Q18.mp3", "answer": "A",
+      "number": 18,
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],  "audio": "031 T1 Pt2 Q18.mp3", "answer": "A",
       "question": "I think the theater will be on the left.", "questionJa": "劇場は左手にあると思います。",
       "responses": {"A":"Yes, I see it now.","B":"He's written several plays.","C":"The tickets are under my name."},
       "responsesJa": {"A":"はい、今それが見えます。","B":"彼は数作の戯曲を書きました。","C":"チケットは私の名前で取ってあります。"},
       "explanation": "劇場は左手にあると思うという発言に対し、Yesと応答した後、「今それが見える」と劇場が目視できることを伝えている(A)が正解。itは発言にあるthe theaterを指す。on the left「左側に、左手に」。\n(B) Heが誰を指すか不明。発言にあるtheaterと関連するplay「戯曲、脚本」に惑わされないよう注意。\n(C) 発言にあるtheaterと関連するticketsに惑わされないよう注意。under one's name「~の名前で、~の名義で」。"
     },
     {
-      "number": 19, "audio": "032 T1 Pt2 Q19.mp3", "answer": "C",
+      "number": 19,
+      "speakers": [{"nat":"au","gender":"M"},{"nat":"us","gender":"W"}],  "audio": "032 T1 Pt2 Q19.mp3", "answer": "C",
       "question": "Can I see what's on the supply order?", "questionJa": "用品の注文に何が含まれているか見てもいいですか。",
       "responses": {"A":"It wasn't on the list.","B":"He was supposed to.","C":"It should be ready this afternoon."},
       "responsesJa": {"A":"それはリストに載っていませんでした。","B":"彼がそうすることになっていました。","C":"それは今日の午後に準備が整うはずです。"},
       "explanation": "Can I ~?で、用品の注文内容を確認する許可を求めているのに対し、「それは今日の午後に準備が整うはずだ」と答え、今は注文の準備ができておらず午後にならないと見られないことを示唆している(C)が正解。Itは質問にあるthe supply orderを指す。\n(A) the listがthe supply orderを指すとしても、Itが具体的に何を指すか不明で応答にならない。\n(B) Heが誰を指すか不明であり、許可を求める発言に対する応答になっていない。be supposed to (do)「~することになっている」。"
     },
     {
-      "number": 20, "audio": "033 T1 Pt2 Q20.mp3", "answer": "B",
+      "number": 20,
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"ca","gender":"M"}],  "audio": "033 T1 Pt2 Q20.mp3", "answer": "B",
       "question": "How do I start this coffeemaker?", "questionJa": "このコーヒーメーカーはどのように動かすのですか。",
       "responses": {"A":"Please sign at the bottom.","B":"I only drink tea.","C":"Just half a cup."},
       "responsesJa": {"A":"最下部に署名をお願いします。","B":"私は紅茶しか飲まないのです。","C":"カップの半分だけです。"},
       "explanation": "How ~?でコーヒーメーカーの動かし方を尋ねている。これに対し、「私は紅茶しか飲まない」と伝えて、コーヒーを飲まないためそのコーヒーメーカーの使い方を知らないと示唆している(B)が正解。start「~を始動させる」。\n(A) 署名を求める発言は応答にならない。sign「署名する」、bottom「底、最下部」。\n(C) 量は尋ねられていない。"
     },
     {
-      "number": 21, "audio": "034 T1 Pt2 Q21.mp3", "answer": "A",
+      "number": 21,
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],  "audio": "034 T1 Pt2 Q21.mp3", "answer": "A",
       "question": "Isn't Mr. Santoro going to organize the files by himself?", "questionJa": "Santoroさんは自分一人でそれらのファイルを整理するつもりではないのですか。",
       "responses": {"A":"No, he needs my help.","B":"Can you pick up some snacks?","C":"It's a new filing cabinet."},
       "responsesJa": {"A":"いいえ、彼は私の手伝いを必要としています。","B":"軽食を買ってきてもらえますか。","C":"それは新しい書類整理棚です。"},
       "explanation": "否定疑問文で、Santoroさんが自分一人でそれらのファイルを整理するつもりではないのかと尋ねている。これに対し、Noと否定し、「彼は私の手伝いを必要としている」と答えて、整理作業は彼単独で行う予定ではないことを伝えている(A)が正解。organize「~を整理する」、by oneself「独力で」。\n(B) snack「軽食」を買ってきてほしいという依頼は応答にならない。pick up ~「~を買う、~を手に入れる」。\n(C) 質問に関連しそうなfiling cabinet「書類整理棚」という語句が使われているが、Itが何を指すか不明。"
     },
     {
-      "number": 22, "audio": "035 T1 Pt2 Q22.mp3", "answer": "B",
+      "number": 22,
+      "speakers": [{"nat":"au","gender":"M"},{"nat":"us","gender":"W"}],  "audio": "035 T1 Pt2 Q22.mp3", "answer": "B",
       "question": "This is where our clients want the report sent, right?", "questionJa": "これが、当社の顧客が望む報告書の送り先ですよね？",
       "responses": {"A":"No, I haven't read that book.","B":"Check the contract.","C":"At the bottom of the stairs."},
       "responsesJa": {"A":"いいえ、私はその本を読んでいません。","B":"契約書を確認してください。","C":"階段の下で。"},
       "explanation": "肯定文の文末に~, right?を付けて「~ですよね」と、報告書の送付先が正しいかを確認している。これに対し、Yes/Noでは答えずに、送付先を確かめるために契約書を見るよう促している(B)が正解。client「顧客」、want ~ done「~が…されることを望む」。contract「契約書」。\n(A) Noと答えているが、続く内容が質問と関連しない。\n(C) 場所に関する発言だが、報告書の送付先を尋ねる質問への応答になっていない。"
     },
     {
-      "number": 23, "audio": "036 T1 Pt2 Q23.mp3", "answer": "C",
+      "number": 23,
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],  "audio": "036 T1 Pt2 Q23.mp3", "answer": "C",
       "question": "What's the date on the invitation to the banquet?", "questionJa": "夕食会の招待状にある日付はいつですか。",
       "responses": {"A":"A location in the city center.","B":"On the desk by the printer.","C":"April fourteenth."},
       "responsesJa": {"A":"市の中心部にある場所です。","B":"プリンターのそばのデスクの上に。","C":"4月14日です。"},
       "explanation": "招待状に記載されている夕食会の日付を尋ねているのに対し、「4月14日だ」と特定の日付を答えている(C)が正解。What ~?の疑問文だが時を尋ねている点に注意。date「日付」、invitation「招待(状)」、banquet「宴会、夕食会」。\n(A) 場所を答える発言は応答にならない。location「場所」、center「中心部」。\n(B) 位置を答える発言は応答にならない。"
     },
     {
-      "number": 24, "audio": "037 T1 Pt2 Q24.mp3", "answer": "C",
+      "number": 24,
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"us","gender":"W"}],  "audio": "037 T1 Pt2 Q24.mp3", "answer": "C",
       "question": "You should help us increase our online presence.", "questionJa": "オンライン上での当社の認知度を高める手伝いをしてくださいよ。",
       "responses": {"A":"She's an excellent speaker.","B":"Please put it over on the counter.","C":"I'm not very active on social media."},
       "responsesJa": {"A":"彼女は優秀な話し手です。","B":"それをあちらのカウンターの上に置いてください。","C":"私はあまりソーシャルメディアをやっていません。"},
       "explanation": "オンライン上での認知度を高める手伝いを求める発言に対し、「私はあまりソーシャルメディアをやっていない」と答えることで、求めには応じられないことを暗に伝えている(C)が正解。help ~ do「~が…するのを手伝う」、increase「~を増やす、~を高める」、presence「存在感」。active「活動的な」。\n(A) Sheが誰を指すか不明。excellent「優秀な」。\n(B) itが何を指すか不明。"
     },
     {
-      "number": 25, "audio": "038 T1 Pt2 Q25.mp3", "answer": "C",
+      "number": 25,
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],  "audio": "038 T1 Pt2 Q25.mp3", "answer": "C",
       "question": "When's the building inspector coming to the construction site?", "questionJa": "建物検査官はいつ建設現場に来ますか。",
       "responses": {"A":"Yes, at the main post office.","B":"The revised building plans.","C":"Abdel does the scheduling."},
       "responsesJa": {"A":"はい、郵便局の本局で。","B":"修正済みの建築設計図です。","C":"Abdelがスケジュールを組んでいます。"},
       "explanation": "When ~?で建物検査官が建設現場に来る時を尋ねているのに対し、「Abdelがスケジュールを組んでいる」とスケジューリングの担当者を伝え、尋ねるべき人物を答えている(C)が正解。When'sはWhen isの短縮形。inspector「検査官」、construction site「建設現場」。scheduling「予定・日程を決めること」。\n(A) 時を尋ねる質問に対し、Yes/Noでは応答にならない。また、場所は尋ねられていない。the main post office「郵便局の本局」。\n(B) 質問にあるbuildingを含むが、応答になっていない。revise「~を修正する」。"
     },
     {
-      "number": 26, "audio": "039 T1 Pt2 Q26.mp3", "answer": "B",
+      "number": 26,
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"ca","gender":"M"}],  "audio": "039 T1 Pt2 Q26.mp3", "answer": "B",
       "question": "Will the lawyer provide a paper copy of the agreement or send it by e-mail?", "questionJa": "弁護士は契約書を書面で提供する予定ですか、それともEメールで送る予定ですか。",
       "responses": {"A":"We've had better sales results this quarter.","B":"Do you have a preference?","C":"Yes, I saw that too."},
       "responsesJa": {"A":"当社は今四半期、より良い販売成績を上げました。","B":"ご希望はありますか。","C":"はい、私もそれを見ました。"},
       "explanation": "A or B?の形で、弁護士は契約書を書面かEメール添付のどちらで提供する予定かと尋ねている。これに対し、どちらか一方を答えるのではなく、「希望はあるか」と聞き返している(B)が正解。lawyer「弁護士」、copy「写し、(本や書類の)部・冊」、agreement「契約書」。preference「好み」。\n(A) sales results「販売成績」、quarter「四半期」。\n(C) 二者択一の質問に対し、Yesで何を肯定しているか不明。また、thatがthe agreementを指すとしても、それを見たという発言は応答にならない。"
     },
     {
-      "number": 27, "audio": "040 T1 Pt2 Q27.mp3", "answer": "B",
+      "number": 27,
+      "speakers": [{"nat":"au","gender":"M"},{"nat":"gb","gender":"W"}],  "audio": "040 T1 Pt2 Q27.mp3", "answer": "B",
       "question": "I heard a new restaurant is opening on Fifth Avenue!", "questionJa": "新しいレストランが五番街に開店すると聞きました！",
       "responses": {"A":"This key will open the lock.","B":"I just had lunch there.","C":"No, I prefer Italian food."},
       "responsesJa": {"A":"この鍵でその錠が開きますよ。","B":"ついさっき、そこで昼食を取りましたよ。","C":"いいえ、私はイタリア料理の方が好みです。"},
       "explanation": "新しいレストランが五番街に開店すると聞いたという発言に対し、「ついさっき、そこで昼食を取った」と答え、その新しい店に行ったことを伝えている(B)が正解。thereは発言にあるa new restaurantを指す。avenue「大通り、~街」。\n(A) 発言にあるopeningと関連するopenに惑わされないよう注意。\n(C) 料理の種類は話題にされていない。prefer「~をより好む」。"
     },
     {
-      "number": 28, "audio": "041 T1 Pt2 Q28.mp3", "answer": "C",
+      "number": 28,
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],  "audio": "041 T1 Pt2 Q28.mp3", "answer": "C",
       "question": "How satisfied do you think our clients are with our services?", "questionJa": "顧客は当社のサービスにどれくらい満足していると思いますか。",
       "responses": {"A":"I can reimburse you for the meal.","B":"The plane lands at four o'clock.","C":"Several companies have renewed their contracts."},
       "responsesJa": {"A":"私はあなたに食事代を払い戻しできます。","B":"飛行機は4時に着陸します。","C":"数社が契約を更新しましたよ。"},
       "explanation": "How ~?の疑問文にdo you thinkが挿入された形で、顧客はどれくらい満足していると思うかと尋ねている。これに対し、「数社が契約を更新した」と事実を伝えることで、顧客満足度は高そうであると示している(C)が正解。satisfied「満足した」、renew「~を更新する。」\n(A) 食事や払い戻しは話題にされていない。reimburse ~ for …「~に…(の料金)を払い戻す」。\n(B) 飛行機は話題にされていない。land「着陸する」。"
     },
     {
-      "number": 29, "audio": "042 T1 Pt2 Q29.mp3", "answer": "A",
+      "number": 29,
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"ca","gender":"M"}],  "audio": "042 T1 Pt2 Q29.mp3", "answer": "A",
       "question": "Does the accounting department send out weekly reports?", "questionJa": "経理部は週次報告書を出していますか。",
       "responses": {"A":"No, they do it monthly.","B":"A weeklong vacation.","C":"She's a reporter for The Herald."},
       "responsesJa": {"A":"いいえ、彼らはそれを月次で行っています。","B":"1週間にわたる休暇です。","C":"彼女は『先駆け』誌の記者です。"},
       "explanation": "経理部は週次報告書を出しているかと尋ねているのに対し、Noと否定し、「彼らはそれを月次で行っている」と、正しい頻度を教えている(A)が正解。theyは経理部の人々を、do itは報告書を出すことを表している。accounting「経理」、send out ~「~を送る、~を出す」、weekly「週1回の」、monthly「月に1回」。\n(B) 質問にあるweeklyと関連するweeklong「1週間にわたる」に惑わされないよう注意。\n(C) Sheが誰を指すか不明。質問にあるreportsと関連するreporterに惑わされないよう注意。"
     },
     {
-      "number": 30, "audio": "043 T1 Pt2 Q30.mp3", "answer": "B",
+      "number": 30,
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],  "audio": "043 T1 Pt2 Q30.mp3", "answer": "B",
       "question": "Will you be attending the mandatory training session today or tomorrow?", "questionJa": "あなたは必須の研修会に今日出席しますか、それとも明日出席しますか。",
       "responses": {"A":"He tends to agree with me.","B":"I'm spending today with a client.","C":"Copies of the proposed agenda."},
       "responsesJa": {"A":"彼は私に賛成する傾向があります。","B":"私は今日は顧客と過ごすことになっています。","C":"提案された議事日程表のコピーです。"},
       "explanation": "A or B?の形で、必須の研修会に出席するのは今日か明日かと尋ねている。これに対し、「私は今日は顧客と過ごすことになっている」と今日は別の予定があることを伝え、明日出席する予定であることを示唆している(B)が正解。mandatory「義務的な、必須の」。\n(A) Heが誰を指すか不明。tend to do「~する傾向がある」、agree with ~「~に賛成する」。\n(C) proposed「提案された」、agenda「議事日程(表)、計画表」。"
     },
     {
-      "number": 31, "audio": "044 T1 Pt2 Q31.mp3", "answer": "B",
+      "number": 31,
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"us","gender":"W"}],  "audio": "044 T1 Pt2 Q31.mp3", "answer": "B",
       "question": "Production on our outdoor furniture is behind schedule.", "questionJa": "当社の屋外用家具の生産は予定より遅れています。",
       "responses": {"A":"It's behind the door.","B":"Do you know what the problem is?","C":"On July eleventh."},
       "responsesJa": {"A":"それはドアの後ろにあります。","B":"何が問題なのか知っていますか。","C":"7月11日に。"},

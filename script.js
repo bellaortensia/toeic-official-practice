@@ -1094,6 +1094,37 @@ function attachSeekable(trackEl, getAudio) {
   window.addEventListener('mouseup', () => { dragging = false; });
 }
 
+// 話者の国籍(小さい国旗画像)+性別(M/W)のバッジを作る。speakersは単一の
+// {nat,gender}、または複数(質問者→応答者など)の配列を渡せる。国旗は画像4種類
+// (images/flags/gb,us,ca,au.svg)のみを使い回すので、表示コストはごく小さい。
+function buildSpeakerBadges(speakers) {
+  const list = Array.isArray(speakers) ? speakers : [speakers];
+  const wrap = document.createElement('span');
+  wrap.className = 'speaker-badges';
+  list.forEach((s, i) => {
+    if (!s || !s.nat) return;
+    if (i > 0) {
+      const arrow = document.createElement('span');
+      arrow.className = 'speaker-arrow';
+      arrow.textContent = '→';
+      wrap.appendChild(arrow);
+    }
+    const badge = document.createElement('span');
+    badge.className = 'speaker-badge';
+    const img = document.createElement('img');
+    img.src = `images/flags/${s.nat}.svg`;
+    img.alt = s.nat;
+    img.className = 'speaker-flag';
+    const gender = document.createElement('span');
+    gender.className = 'speaker-gender';
+    gender.textContent = s.gender || '';
+    badge.appendChild(img);
+    badge.appendChild(gender);
+    wrap.appendChild(badge);
+  });
+  return wrap;
+}
+
 // Part1/2/3/4の問題画面用の常設プレーヤー(シャドーイングと同じ▶/❚❚+進捗バー表示)。
 // 「音声を再生」ボタンを押して初めてプレーヤーが現れる、という中間ステップを無くし、
 // 最初からこの表示のままにする。filenamesは複数渡すと連続再生する(Part3/4の会話→設問)。
@@ -2858,6 +2889,8 @@ function renderPart1or2() {
   const title = document.createElement('div');
   title.className = 'q-text';
   title.textContent = `Q${q.number}`;
+  if (isPart1 && q.speaker) title.appendChild(buildSpeakerBadges(q.speaker));
+  else if (!isPart1 && q.speakers) title.appendChild(buildSpeakerBadges(q.speakers));
   wrap.appendChild(title);
 
   if (isPart1 && q.image) {

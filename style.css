@@ -254,6 +254,39 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
   line-height:1.6;
 }
 
+.speaker-badges{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  margin-left:10px;
+  vertical-align:middle;
+}
+.speaker-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:3px;
+  background:#faf7ee;
+  border:1px solid var(--line);
+  border-radius:6px;
+  padding:2px 6px;
+  font-weight:700;
+}
+.speaker-flag{
+  width:16px;
+  height:auto;
+  display:block;
+  border-radius:2px;
+}
+.speaker-gender{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;
+  color:var(--text-soft);
+}
+.speaker-arrow{
+  color:var(--text-soft);
+  font-size:12px;
+}
+
 .choice{
   display:block;
   width:100%;
