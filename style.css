@@ -720,6 +720,10 @@ audio{
    JS側のsanitizeNoteHtmlForDarkPopup(inline colorのみ対象)では拾えない。この暗い
    ポップアップの中でだけ、白寄りの色に上書きする。 */
 .history-note-popup .notes-entry-quote{color:#a9c9c1;}
+/* .ask-ai-answer-entry(AIに質問するの回答文)も同じ理由(var(--text-soft)は明るい
+   背景前提の色でクラス指定のためJS側では拾えない)で、このポップアップの中だけ
+   明るい色に上書きする。 */
+.history-note-popup .ask-ai-answer-entry{color:#c7cfd6;}
 .history-note-popup-link{
   display:block;
   margin-top:16px;
