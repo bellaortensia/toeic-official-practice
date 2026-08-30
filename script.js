@@ -335,10 +335,12 @@ const CLAUSE_EXPLAIN_PROMPT_READING = `あなたはTOEIC満点を何度も取得
 ・TOEICで狙われる熟語・言い回しがあれば、同じ形式でその意味を付けること。
 ・{{}}で囲む対象は1語でも複数語でもよい。1文の中に必要なだけいくつでも使ってよい。重要でない語句は無理に囲まず、そのままの英文で書く。
 
+1行目は必ず ■ に続けて英文全体(上記の{{}}記法を適用したもの)を書くこと。英文そのものは他のどこにも繰り返し書かないこと(この1行目だけに書く)。
+
 文全体を書き終えたら空行を1つ入れ、この文を正しく読むために特に重要なポイントを1〜2行、日本語で補足する。
 
 出力例(入力文: "One reason for lying has to do with minimizing a mistake."):
-One reason {{for lying|←reasonを修飾(同格的な説明)}} {{has to do with|〜と関係がある}} minimizing a mistake.
+■One reason {{for lying|←reasonを修飾(同格的な説明)}} {{has to do with|〜と関係がある}} minimizing a mistake.
 
 「one reason」の直後の語句がreasonを修飾する形(同格的な説明)。has to do withは頻出熟語で「〜と関係がある」という意味。`;
 
@@ -354,15 +356,22 @@ const TERM_EXPLAIN_PROMPT_WORD = `あなたはTOEIC満点を何度も取得し�
 入力される「語句」(単語1つ)と、それが使われている「文脈」の英文について、日本語で解説してください。
 必ず次の構成で、装飾やMarkdown記号(**など)は使わず、プレーンテキストで簡潔に(全体で4〜6行程度)出力してください。
 
-1行目: ■語句 に続けて、この文脈での意味を書く。
-次の行: ▲コアイメージ に続けて、この語が持つ語源的な核となるイメージ・語感を短く説明する。`;
+1行目: ■ に続けて、入力された語句をそのまま書く(他には何も書かない)。
+2行目: 語句：に続けて、この文脈での意味を書く。
+3行目: コアイメージ：に続けて、この語が持つ語源的な核となるイメージ・語感を短く説明する。
+
+出力例(入力語句: "consolidate"):
+■consolidate
+語句：合併する、強化する
+コアイメージ：「固い(solid)ものを一つにする(com-)」が核で、バラバラだった組織や要素をしっかりと一つにまとめ上げて強力にすることを表します。`;
 
 const TERM_EXPLAIN_PROMPT_PHRASE = `あなたはTOEIC満点を何度も取得し、初心者指導歴20年以上の英語講師です。
 入力される「語句」(熟語・イディオム・言い回し)と、それが使われている「文脈」の英文について、日本語で解説してください。
-必ず次の構成で、装飾やMarkdown記号(**など)は使わず、プレーンテキストで簡潔に(全体で3〜5行程度)出力してください。コアイメージの説明は不要(単語1つの場合のみ使う項目のため)。
+必ず次の構成で、装飾やMarkdown記号(**など)は使わず、プレーンテキストで簡潔に(全体で3〜5行程度)出力してください。コアイメージの行は不要(単語1つの場合のみ使う項目のため)。
 
-1行目: ■語句 に続けて、この文脈での意味を書く。
-次の行以降: なぜその単語の組み合わせでその意味になるのか、由来や成り立ちを1〜2行で説明する。`;
+1行目: ■ に続けて、入力された語句をそのまま書く(他には何も書かない)。
+2行目: 語句：に続けて、この文脈での意味を書く。
+3行目以降: なぜその単語の組み合わせでその意味になるのか、由来や成り立ちを1〜2行で説明する。`;
 
 async function getTermExplanation(term, meaning, contextSentence) {
   const input = `語句: ${term}\n簡易な意味: ${meaning || '(不明)'}\n文脈: ${contextSentence || ''}`;
@@ -386,16 +395,23 @@ function formatNoteBody(text) {
   });
 }
 
+// enTextがある場合だけ引用行を作る。「この文を解説」「用語を解説」の出力は、
+// AI自身が1行目に■付きで英文/語句を書く形式になっているため、ここで別途enTextを
+// 引用すると同じ英文が二重に表示されてしまう。そのため、それらの呼び出しでは
+// enTextにnullを渡す(直訳クイック追加のようにAI出力に英文が含まれない場合だけ
+// enTextを渡して引用行を作る)。
 function appendToNotes(notesArea, enText, explanation) {
   const block = document.createElement('div');
   block.className = 'notes-entry';
-  const quote = document.createElement('div');
-  quote.className = 'notes-entry-quote';
-  quote.textContent = enText;
+  if (enText) {
+    const quote = document.createElement('div');
+    quote.className = 'notes-entry-quote';
+    quote.textContent = enText;
+    block.appendChild(quote);
+  }
   const body = document.createElement('div');
   body.className = 'notes-entry-body';
   body.innerHTML = formatNoteBody(explanation);
-  block.appendChild(quote);
   block.appendChild(body);
   notesArea.appendChild(block);
   notesArea.scrollTop = notesArea.scrollHeight;
@@ -617,7 +633,7 @@ function showChunkPopup(seg, anchorEl, notesArea, sentenceText) {
       strongEl.textContent = originalLabel + '(解説中...)';
       try {
         const explanation = await getTermExplanation(t.term, t.meaning, seg.en);
-        appendToNotes(notesArea, t.term, explanation);
+        appendToNotes(notesArea, null, explanation);
         strongEl.textContent = originalLabel;
         termTrigger.classList.add('added');
       } catch (err) {
@@ -633,7 +649,7 @@ function showChunkPopup(seg, anchorEl, notesArea, sentenceText) {
     const fullSentence = sentenceText || seg.en;
     try {
       const explanation = await getClauseExplanation(fullSentence);
-      appendToNotes(notesArea, fullSentence, explanation);
+      appendToNotes(notesArea, null, explanation);
       trigger.querySelector('strong').textContent = 'ノートに追記しました';
     } catch (err) {
       trigger.querySelector('strong').textContent = '解説の生成に失敗しました: ' + err.message;
@@ -1925,6 +1941,7 @@ const COACH_PROMPT = `あなたは、TOEIC800点を目指して勉強を続け�
 以下に、学習者が直近に勉強した日の記録(取り組んだ問題数・正誤・書いたノート・AIへの質問)を渡します。これを踏まえて日本語でメッセージを書いてください。
 
 必ず守ること:
+- このメッセージは、学習者がその日の勉強を「これから始める」タイミングで読む(前回勉強した内容の振り返り)。「今日もお疲れ様でした」のような、その日の勉強が終わったことを労うトーン・締めくくりの表現は使わないこと。これから始める・取り組む学習者を送り出す・後押しするトーンにすること。
 - 冒頭は必ず励ましの言葉から始めること。努力を続けていることを労い、モチベーションを支える一言にすること。
 - その後、渡された記録の内容(語彙・文法・問題の話題など)に具体的に触れながら、学習者が「おそらく身についた・理解できたであろう内容」と「おそらくまだ曖昧・知らなかったであろう内容」をリマインドすること。抽象的な精神論だけで終わらせないこと。
 - 説教くさくならず、専属コーチとして自然に語りかける文体にすること。
@@ -1933,7 +1950,7 @@ const COACH_PROMPT = `あなたは、TOEIC800点を目指して勉強を続け�
 - Markdown記号(**など)や見出し記号、箇条書き記号は使わず、プレーンテキストの文章のみを書くこと。`;
 
 const COACH_PROMPT_NO_DATA = `あなたは、TOEIC800点を目指して勉強を続けている学習者専属のコーチです。現在の自己ベストは700点です。
-今回はまだ学習記録が見当たりません(これから勉強を始める、または記録がリセットされた状態です)。励ましの言葉から始め、今日はどんなことに取り組むと良いか軽く後押しするメッセージを、日本語300字程度で書いてください。
+今回はまだ学習記録が見当たりません(これから勉強を始める、または記録がリセットされた状態です)。このメッセージは学習者がこれから勉強を始めるタイミングで読むので、「今日もお疲れ様でした」のような締めくくりの表現は使わず、励ましの言葉から始め、今日はどんなことに取り組むと良いか軽く後押しするメッセージを、日本語300字程度で書いてください。
 学習者の年齢・性別・勉強を始めてからの年数など、個人属性には一切触れないこと。
 Markdown記号や見出し記号、箇条書き記号は使わず、プレーンテキストの文章のみを書くこと。`;
 
