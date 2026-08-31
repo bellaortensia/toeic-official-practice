@@ -17,8 +17,18 @@ const globalAudio = { current: null };
 // 他の場所でstopAllAudio()が呼ばれた場合(設問画面へ移動する等)も確実に止まるよう、
 // ここでまとめてリセットする。
 let studySequencePlaying = false;
+// 「前回学習した問題」欄の再生ボタン(まとめて再生・各行)のうち、現在「■停止」
+// 表示になっているものの参照。stopAllAudio()が呼ばれたらここもリセットし、
+// 参照先のボタンが今も画面上にあれば表示を元に戻す(activePlayCtrlはこのファイルの
+// 後方で宣言されるが、実際に値が入るのはユーザー操作後なのでここでの参照で問題ない)。
+let activePlayCtrl = null;
 function stopAllAudio() {
   studySequencePlaying = false;
+  if (activePlayCtrl) {
+    activePlayCtrl.btn.textContent = activePlayCtrl.label;
+    activePlayCtrl.btn.classList.remove('is-playing');
+    activePlayCtrl = null;
+  }
   if (globalAudio.current) {
     try { globalAudio.current.pause(); } catch (e) { /* ignore */ }
     globalAudio.current = null;
@@ -2366,14 +2376,16 @@ async function resolvePreviousStudyItems() {
 
 // filenamesを順番に再生する。loop=trueの場合、最後まで再生したら自動で先頭に戻って
 // 繰り返す(手動で止めるか、他のstopAllAudio()呼び出しで止まるまで継続)。
-async function playStudySequence(filenames, loop) {
+// loop=falseで最後まで自然に再生し終えた場合はonEndを呼ぶ(呼び出し元でボタン表示を
+// 元に戻すために使う。手動で停止した場合や他の再生に割り込まれた場合は呼ばない)。
+async function playStudySequence(filenames, loop, onEnd) {
   stopAllAudio();
   studySequencePlaying = true;
   let idx = 0;
   async function next() {
     if (!studySequencePlaying) return;
     if (idx >= filenames.length) {
-      if (!loop) { studySequencePlaying = false; return; }
+      if (!loop) { studySequencePlaying = false; if (onEnd) onEnd(); return; }
       idx = 0;
     }
     const url = await getAudioUrl(filenames[idx]);
@@ -2386,6 +2398,49 @@ async function playStudySequence(filenames, loop) {
   }
   next();
 }
+
+// 「前回学習した問題」欄: まとめて再生ボタン・各行の再生ボタンは、どれか1つを
+// 押すと他は自動で止まり、押したボタン自身は再生中「■停止」表示に変わる仕組みを
+// 共有する(同時に再生されるのは常に1つだけ)。activePlayCtrl本体・リセット処理は
+// stopAllAudio()側(ファイル先頭)にある。
+function togglePlayback(btn, filenames, loop, label, stopLabel) {
+  if (activePlayCtrl && activePlayCtrl.btn === btn) {
+    stopAllAudio();
+    return;
+  }
+  stopAllAudio();
+  playStudySequence(filenames, loop, () => {
+    if (activePlayCtrl && activePlayCtrl.btn === btn) {
+      btn.textContent = label;
+      btn.classList.remove('is-playing');
+      activePlayCtrl = null;
+    }
+  });
+  btn.textContent = stopLabel;
+  btn.classList.add('is-playing');
+  activePlayCtrl = { btn, label };
+}
+
+// 「前回学習した問題」の各行にマウスオーバー(またはクリックで固定)すると出る、
+// 問題文全文のポップアップ。
+const prevStudyPopupEl = document.createElement('div');
+prevStudyPopupEl.className = 'prev-study-popup';
+document.body.appendChild(prevStudyPopupEl);
+let prevStudyPinnedEl = null;
+function hidePrevStudyPopup() {
+  prevStudyPopupEl.classList.remove('show');
+  prevStudyPinnedEl = null;
+}
+function showPrevStudyPopup(anchorEl, text) {
+  prevStudyPopupEl.textContent = text;
+  const rect = anchorEl.getBoundingClientRect();
+  prevStudyPopupEl.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 340)) + 'px';
+  prevStudyPopupEl.style.top = (rect.bottom + window.scrollY + 6) + 'px';
+  prevStudyPopupEl.classList.add('show');
+}
+document.addEventListener('click', e => {
+  if (!prevStudyPopupEl.contains(e.target) && !e.target.closest('.prev-study-text')) hidePrevStudyPopup();
+});
 
 function buildPreviousStudySection() {
   const box = document.createElement('div');
@@ -2421,15 +2476,7 @@ function buildPreviousStudySection() {
     }
     const allFilenames = items.flatMap(it => it.audio);
     allBtn.disabled = false;
-    allBtn.addEventListener('click', () => {
-      if (studySequencePlaying) {
-        stopAllAudio();
-        allBtn.textContent = '▶ まとめて再生';
-      } else {
-        playStudySequence(allFilenames, true);
-        allBtn.textContent = '⏸ 停止';
-      }
-    });
+    allBtn.addEventListener('click', () => togglePlayback(allBtn, allFilenames, true, '▶ まとめて再生', '■ 停止'));
 
     items.forEach(item => {
       const row = document.createElement('div');
@@ -2438,15 +2485,27 @@ function buildPreviousStudySection() {
       playBtn.type = 'button';
       playBtn.className = 'prev-study-play';
       playBtn.textContent = '▶';
-      playBtn.addEventListener('click', () => {
-        playStudySequence(item.audio, false);
-        allBtn.textContent = '▶ まとめて再生';
-      });
+      playBtn.addEventListener('click', () => togglePlayback(playBtn, item.audio, false, '▶', '■'));
+
       const text = document.createElement('span');
       text.className = 'prev-study-text';
       const flat = (item.text || '').replace(/\s+/g, ' ').trim();
-      const truncated = flat.length > 220 ? flat.slice(0, 220) + '...' : flat;
-      text.textContent = `${item.label} ${truncated}`;
+      const fullLine = `${item.label} ${flat}`;
+      text.textContent = fullLine;
+      text.addEventListener('mouseenter', () => {
+        if (prevStudyPinnedEl && prevStudyPinnedEl !== text) return;
+        showPrevStudyPopup(text, fullLine);
+      });
+      text.addEventListener('mouseleave', () => {
+        if (prevStudyPinnedEl !== text) hidePrevStudyPopup();
+      });
+      text.addEventListener('click', e => {
+        e.stopPropagation();
+        if (prevStudyPinnedEl === text) { hidePrevStudyPopup(); return; }
+        prevStudyPinnedEl = text;
+        showPrevStudyPopup(text, fullLine);
+      });
+
       row.appendChild(playBtn);
       row.appendChild(text);
       listEl.appendChild(row);
@@ -3395,6 +3454,7 @@ function renderPart3or4() {
     const t = document.createElement('div');
     t.className = 'q-text';
     t.textContent = `${item.number}. ${item.text}`;
+    if (g.speakers) t.appendChild(buildSpeakerBadges(g.speakers));
     block.appendChild(t);
 
     const choicesDiv = document.createElement('div');
