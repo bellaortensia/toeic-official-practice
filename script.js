@@ -247,15 +247,40 @@ function correctBannerHtml(isCorrect) {
 // Part1/2はAIを呼ばず、あらかじめ用意された正解・和訳データからその場で
 // formatRichExplainHtml用のマークアップ文字列を組み立てて装飾する(選択肢の和訳を▲青字、
 // 見出しを■太字、正解/不正解バナーを別途付与)。
+// buildSpeakerBadges()と同じ見た目をHTML文字列として組み立てる版。
+// formatRichExplainHtml()は渡した文字列を丸ごとescapeHtmlするため、そちらの
+// マークアップに直接<img>を混ぜることはできない。そのため、formatRichExplainHtml
+// の出力(文字列)に対して、変換後の見出しテキストをキーに後から文字列置換で
+// 挿入する(buildP12ExplainHtml内で使用)。
+function speakerBadgesHtml(speakers) {
+  const list = (Array.isArray(speakers) ? speakers : [speakers]).filter(s => s && s.nat);
+  if (!list.length) return '';
+  const parts = list.map(s =>
+    `<span class="speaker-badge"><img src="images/flags/${s.nat}.svg" alt="${escapeHtml(s.nat)}" class="speaker-flag"><span class="speaker-gender">${escapeHtml(s.gender || '')}</span></span>`
+  );
+  return `<span class="speaker-badges">${parts.join('<span class="speaker-arrow">→</span>')}</span>`;
+}
+
 function buildP12ExplainHtml(q, isPart1, choiceTexts, jaTexts, letters, selectedLetter) {
   let markup = '';
+  // Part2は設問=speakers[0](質問者)、選択肢=speakers[1](応答者)が読み上げる。
+  // Part1は選択肢(4つの文)を単一のspeakerが読み上げる。
+  let questionFlagsHtml = '';
+  let choicesFlagsHtml = '';
   if (!isPart1) {
+    if (q.speakers && q.speakers[0]) questionFlagsHtml = speakerBadgesHtml(q.speakers[0]);
+    if (q.speakers && q.speakers[1]) choicesFlagsHtml = speakerBadgesHtml(q.speakers[1]);
     markup += `■設問文\n${q.question}\n（${q.questionJa || ''}）\n\n`;
+  } else if (q.speaker) {
+    choicesFlagsHtml = speakerBadgesHtml(q.speaker);
   }
   markup += '■選択肢\n';
   markup += letters.map(l => `▲(${l}) ${choiceTexts[l] || ''}\n　　${jaTexts[l] || ''}`).join('\n') + '\n\n';
   markup += `■根拠・解説\n正解は(${q.answer})です。\n${q.explanation || ''}`;
-  return correctBannerHtml(selectedLetter === q.answer) + formatRichExplainHtml(markup, []);
+  let html = correctBannerHtml(selectedLetter === q.answer) + formatRichExplainHtml(markup, []);
+  if (questionFlagsHtml) html = html.replace('<strong>設問文</strong>', `<strong>設問文</strong> ${questionFlagsHtml}`);
+  if (choicesFlagsHtml) html = html.replace('<strong>選択肢</strong>', `<strong>選択肢</strong> ${choicesFlagsHtml}`);
+  return html;
 }
 
 // ---------- Part6/7用の簡易チャンク翻訳(decode-toeicの直訳表示のスコープを絞った版) ----------
@@ -411,7 +436,7 @@ function appendToNotes(notesArea, enText, explanation) {
   if (enText) {
     const quote = document.createElement('div');
     quote.className = 'notes-entry-quote';
-    quote.textContent = enText;
+    quote.textContent = `■${enText}`;
     block.appendChild(quote);
   }
   const body = document.createElement('div');
@@ -419,6 +444,8 @@ function appendToNotes(notesArea, enText, explanation) {
   body.innerHTML = formatNoteBody(explanation);
   block.appendChild(body);
   notesArea.appendChild(block);
+  // 転記のたびに水平線で区切る(次にどこから新しい内容か分かりやすくするため)。
+  notesArea.appendChild(document.createElement('hr'));
   notesArea.scrollTop = notesArea.scrollHeight;
 }
 
@@ -610,7 +637,7 @@ document.addEventListener('click', e => {
   }
 });
 
-function showChunkPopup(seg, anchorEl, notesArea, sentenceText) {
+function showChunkPopup(seg, anchorEl, notesArea, sentenceText, clauseText) {
   const terms = seg.keyTerms || [];
   const literalHtml = seg.ja
     ? `<div class="chunk-popup-item chunk-popup-literal" data-action="literal"><strong>${escapeHtml(seg.ja)}</strong></div>`
@@ -618,7 +645,9 @@ function showChunkPopup(seg, anchorEl, notesArea, sentenceText) {
   const termsHtml = terms.map((t, i) =>
     `<div class="chunk-popup-item chunk-popup-term" data-action="term" data-term-idx="${i}"><strong>${escapeHtml(t.term || '')}</strong><div>${escapeHtml(t.meaning || '')}</div></div>`
   ).join('');
-  chunkPopupEl.innerHTML = literalHtml + termsHtml + '<div class="chunk-popup-item chunk-popup-explain" data-action="explain"><strong>この文を解説→ノートへ</strong></div>';
+  chunkPopupEl.innerHTML = literalHtml + termsHtml +
+    '<div class="chunk-popup-item chunk-popup-explain" data-action="explain"><strong>この文を解説→ノートへ</strong></div>' +
+    '<div class="chunk-popup-item chunk-popup-explain" data-action="explain-full"><strong>この文全体を解説→ノートへ</strong></div>';
   chunkPopupEl.onclick = async e => {
     const literalTrigger = e.target.closest('[data-action="literal"]');
     if (literalTrigger) {
@@ -647,13 +676,16 @@ function showChunkPopup(seg, anchorEl, notesArea, sentenceText) {
       }
       return;
     }
-    const trigger = e.target.closest('[data-action="explain"]');
+    // 「この文を解説」: カンマ区切りの節(clauseText)だけを対象に解説する。
+    // 「この文全体を解説」: チャンクが属する一文全体(sentenceText)を対象にする。
+    const trigger = e.target.closest('[data-action="explain"]') || e.target.closest('[data-action="explain-full"]');
     if (!trigger || trigger.dataset.loading === '1') return;
+    const isFull = trigger.dataset.action === 'explain-full';
+    const target = isFull ? (sentenceText || seg.en) : (clauseText || seg.en);
     trigger.dataset.loading = '1';
     trigger.querySelector('strong').textContent = '解説中...';
-    const fullSentence = sentenceText || seg.en;
     try {
-      const explanation = await getClauseExplanation(fullSentence);
+      const explanation = await getClauseExplanation(target);
       appendToNotes(notesArea, null, explanation);
       trigger.querySelector('strong').textContent = 'ノートに追記しました';
     } catch (err) {
@@ -788,9 +820,26 @@ function renderTranslateColumns(container, data, mode, notesArea) {
     if (mode === 'literal') {
       wideWrap.querySelectorAll(`.chunk-seg[data-seg="${curSeg}"]`).forEach(n => n.classList.add('seg-revealed'));
     }
+    const seg = segments[curSeg];
     const sentIdx = segToSentenceIdx[curSeg];
-    const sentenceText = sentIdx != null && sentIdx >= 0 && sentences[sentIdx] ? sentences[sentIdx].en : null;
-    showChunkPopup(segments[curSeg], enSpans[curSeg], notesArea, sentenceText);
+    const sentenceObj = sentIdx != null && sentIdx >= 0 ? sentences[sentIdx] : null;
+    const sentenceText = sentenceObj ? sentenceObj.en : null;
+    // 「この文を解説」用: チャンクが属する一文全体ではなく、直前・直後のカンマで
+    // 区切られた節(カンマが無ければ文の先頭/末尾まで)だけを対象にする。
+    let clauseText = seg.en;
+    if (sentenceObj) {
+      const relStart = seg.start - sentenceObj.start;
+      const relEnd = seg.end - sentenceObj.start;
+      if (relStart >= 0 && relEnd <= sentenceObj.en.length) {
+        let cs = sentenceObj.en.lastIndexOf(',', Math.max(0, relStart - 1));
+        cs = cs === -1 ? 0 : cs + 1;
+        let ce = sentenceObj.en.indexOf(',', relEnd);
+        ce = ce === -1 ? sentenceObj.en.length : ce + 1;
+        const extracted = sentenceObj.en.slice(cs, ce).trim();
+        if (extracted) clauseText = extracted;
+      }
+    }
+    showChunkPopup(seg, enSpans[curSeg], notesArea, sentenceText, clauseText);
     popupOpenSeg = curSeg;
   }
 
@@ -798,6 +847,14 @@ function renderTranslateColumns(container, data, mode, notesArea) {
     e.preventDefault();
     setSeg((curSeg < 0 ? 0 : curSeg) + (e.deltaY > 0 ? 1 : -1));
   }, { passive: false });
+  // ノート欄の上でホイールを回したときも、EN/JA欄の上と同じくハイライトが
+  // 切り替わるようにする(ノートを見ながらでもチャンクを送れるように)。
+  if (notesArea) {
+    notesArea.addEventListener('wheel', e => {
+      e.preventDefault();
+      setSeg((curSeg < 0 ? 0 : curSeg) + (e.deltaY > 0 ? 1 : -1));
+    }, { passive: false });
+  }
   // JA欄・EN欄どちらでクリックしても現在位置のポップアップが開閉する
   // (意訳モードでもJA側クリックで反応させる。ポップアップ自体は常にEN側に表示)。
   enCol.addEventListener('click', revealCurrent);
@@ -1191,6 +1248,42 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
   const totalTimeEl = document.createElement('span');
   totalTimeEl.className = 'player-time';
   totalTimeEl.textContent = '0:00';
+
+  // ---- 再生速度(0.6〜2.0倍、0.1刻み) ----
+  let playbackRate = 1.0;
+  const rateWrap = document.createElement('span');
+  rateWrap.className = 'player-rate';
+  const rateDownBtn = document.createElement('button');
+  rateDownBtn.type = 'button';
+  rateDownBtn.className = 'player-rate-btn';
+  rateDownBtn.textContent = '◀';
+  rateDownBtn.title = '再生速度を下げる';
+  const rateLabel = document.createElement('span');
+  rateLabel.className = 'player-rate-label';
+  const rateUpBtn = document.createElement('button');
+  rateUpBtn.type = 'button';
+  rateUpBtn.className = 'player-rate-btn';
+  rateUpBtn.textContent = '▶';
+  rateUpBtn.title = '再生速度を上げる';
+  function applyRate() {
+    rateLabel.textContent = playbackRate.toFixed(1);
+    if (currentAudio) currentAudio.playbackRate = playbackRate;
+    rateDownBtn.disabled = playbackRate <= 0.6;
+    rateUpBtn.disabled = playbackRate >= 2.0;
+  }
+  rateDownBtn.addEventListener('click', () => {
+    playbackRate = Math.max(0.6, Math.round((playbackRate - 0.1) * 10) / 10);
+    applyRate();
+  });
+  rateUpBtn.addEventListener('click', () => {
+    playbackRate = Math.min(2.0, Math.round((playbackRate + 0.1) * 10) / 10);
+    applyRate();
+  });
+  rateWrap.appendChild(rateDownBtn);
+  rateWrap.appendChild(rateLabel);
+  rateWrap.appendChild(rateUpBtn);
+  applyRate();
+
   player.appendChild(restartBtn);
   player.appendChild(back5Btn);
   player.appendChild(toggleBtn);
@@ -1198,6 +1291,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
   player.appendChild(curTimeEl);
   player.appendChild(trackEl);
   player.appendChild(totalTimeEl);
+  player.appendChild(rateWrap);
   if (!list.length) player.style.display = 'none';
   attachSeekable(trackEl, () => currentAudio);
 
@@ -1222,6 +1316,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
     toggleBtn.disabled = false;
     if (!url) return;
     currentAudio = new Audio(url);
+    currentAudio.playbackRate = playbackRate;
     globalAudio.current = currentAudio;
     attachEvents(currentAudio);
     currentAudio.addEventListener('ended', () => {
@@ -1346,6 +1441,8 @@ let pendingAutoReveal = false;
 const practiceEl = document.getElementById('practice');
 const emptyStateEl = document.getElementById('empty-state');
 const practiceBodyEl = document.getElementById('practice-body');
+const partOverviewEl = document.getElementById('part-overview');
+const partOverviewBodyEl = document.getElementById('partOverviewBody');
 const progressLabelEl = document.getElementById('progress-label');
 const appModeSelectEl = document.getElementById('appModeSelect');
 
@@ -2016,30 +2113,6 @@ async function loadOrGenerateCoachMessage(textareaEl, statusEl) {
   statusEl.textContent = '';
 }
 
-function renderCoachHistoryPanel(panelEl) {
-  const history = getCoachHistory();
-  const dates = Object.keys(history).sort().reverse();
-  panelEl.innerHTML = '';
-  if (!dates.length) {
-    panelEl.innerHTML = '<p class="coach-history-empty">まだ履歴がありません。</p>';
-    return;
-  }
-  dates.forEach(dateKey => {
-    const entry = history[dateKey];
-    const item = document.createElement('div');
-    item.className = 'coach-history-item';
-    const label = document.createElement('div');
-    label.className = 'coach-history-date';
-    label.textContent = dateKey;
-    const body = document.createElement('div');
-    body.className = 'coach-history-text';
-    body.textContent = entry.text;
-    item.appendChild(label);
-    item.appendChild(body);
-    panelEl.appendChild(item);
-  });
-}
-
 function buildCoachBox() {
   const box = document.createElement('div');
   box.className = 'coach-box';
@@ -2061,28 +2134,51 @@ function buildCoachBox() {
   textarea.readOnly = true;
   textarea.rows = 6;
 
-  const historyBtn = document.createElement('button');
-  historyBtn.className = 'reveal-btn coach-history-btn';
-  historyBtn.type = 'button';
-  historyBtn.textContent = '過去のコーチメッセージ';
-
-  const historyPanel = document.createElement('div');
-  historyPanel.className = 'coach-history-panel';
-  historyPanel.style.display = 'none';
-
-  historyBtn.addEventListener('click', () => {
-    const showing = historyPanel.style.display !== 'none';
-    if (showing) { historyPanel.style.display = 'none'; return; }
-    renderCoachHistoryPanel(historyPanel);
-    historyPanel.style.display = 'block';
-  });
+  // ---- 前のメッセージ/次のメッセージで過去のコーチメッセージを閲覧 ----
+  const navRow = document.createElement('div');
+  navRow.className = 'coach-nav';
+  const prevBtn = document.createElement('button');
+  prevBtn.type = 'button';
+  prevBtn.className = 'coach-nav-btn coach-nav-prev';
+  prevBtn.textContent = '← 前のメッセージ';
+  const dateLabel = document.createElement('span');
+  dateLabel.className = 'coach-nav-date';
+  const nextBtn = document.createElement('button');
+  nextBtn.type = 'button';
+  nextBtn.className = 'coach-nav-btn coach-nav-next';
+  nextBtn.textContent = '次のメッセージ →';
+  navRow.appendChild(prevBtn);
+  navRow.appendChild(dateLabel);
+  navRow.appendChild(nextBtn);
 
   box.appendChild(labelRow);
   box.appendChild(textarea);
-  box.appendChild(historyBtn);
-  box.appendChild(historyPanel);
+  box.appendChild(navRow);
 
-  loadOrGenerateCoachMessage(textarea, status);
+  const todayKey = localDateKey();
+  const dates = Object.keys(getCoachHistory()).sort(); // 昇順(古い→新しい)
+  if (!dates.includes(todayKey)) dates.push(todayKey);
+  let viewIdx = dates.length - 1; // 初期表示は最新(今日)
+
+  function showAt(idx) {
+    viewIdx = idx;
+    const dateKey = dates[viewIdx];
+    dateLabel.textContent = dateKey;
+    prevBtn.disabled = viewIdx <= 0;
+    nextBtn.disabled = viewIdx >= dates.length - 1;
+    if (dateKey === todayKey) {
+      loadOrGenerateCoachMessage(textarea, status);
+      return;
+    }
+    const entry = getCoachHistory()[dateKey];
+    textarea.value = entry ? entry.text : '';
+    status.textContent = '';
+  }
+
+  prevBtn.addEventListener('click', () => { if (viewIdx > 0) showAt(viewIdx - 1); });
+  nextBtn.addEventListener('click', () => { if (viewIdx < dates.length - 1) showAt(viewIdx + 1); });
+
+  showAt(viewIdx);
 
   return box;
 }
@@ -2132,10 +2228,25 @@ function renderStatsDashboard(weekOffset = 0) {
   const ringLegend = document.createElement('div');
   ringLegend.className = 'week-ring-legend';
   ringLegend.innerHTML = `<span class="legend-dot"></span>${isCurrentWeek ? '今週' : weekRangeLabel}の学習時間 <span class="legend-goal">(目標: ${escapeHtml(formatStudyTime(goalSeconds))})</span>`;
+  const goalBtn = document.createElement('button');
+  goalBtn.type = 'button';
+  goalBtn.className = 'reveal-btn ring-goal-btn';
+  goalBtn.textContent = '⚙ 目標設定';
+  goalBtn.addEventListener('click', () => {
+    const cur = getStudyGoalMinutes();
+    const input = window.prompt(`今週の学習目標を分単位で入力してください(現在: ${formatStudyTime(cur * 60)})`, String(cur));
+    if (input === null) return;
+    const mins = parseInt(input, 10);
+    if (!isNaN(mins) && mins > 0) {
+      setStudyGoalMinutes(mins);
+      renderStatsDashboard(statsWeekOffset);
+    }
+  });
   const ringBox = document.createElement('div');
   ringBox.className = 'week-ring-box';
   ringBox.appendChild(ringWrap);
   ringBox.appendChild(ringLegend);
+  ringBox.appendChild(goalBtn);
   top.appendChild(ringBox);
 
   // ---- 統計カード2x2 ----
@@ -2160,16 +2271,11 @@ function renderStatsDashboard(weekOffset = 0) {
       <div class="week-bar-track"><div class="week-bar-fill" style="height:${Math.round((sec / maxDaySec) * 100)}%"></div></div>
       <div class="week-day-label${i === todayDow ? ' today' : ''}">${dayLabels[i]}</div>
     </div>`).join('');
-  grid.appendChild(makeCard('📊', isCurrentWeek ? '今週の学習状況' : `${weekRangeLabel}の学習状況`,
-    `<div class="week-chart">${weekBarsHtml}</div><div class="stat-card-best">自己ベスト ${escapeHtml(formatStudyTime(bestDaySeconds))}</div>`));
-
-  grid.appendChild(makeCard('🔥', '連続学習日数',
-    `<div class="stat-card-value">${streak}日</div><div class="stat-card-best">自己ベスト ${bestStreak}日</div>`));
-
-  top.appendChild(grid);
-  container.appendChild(top);
-
-  // ---- 週送りナビ(左下:前週 / 右下:次週) ----
+  const weekCard = document.createElement('div');
+  weekCard.className = 'stat-card';
+  weekCard.innerHTML = `<div class="stat-card-title">📊 ${escapeHtml(isCurrentWeek ? '今週の学習状況' : `${weekRangeLabel}の学習状況`)}</div>` +
+    `<div class="week-chart">${weekBarsHtml}</div><div class="stat-card-best">自己ベスト ${escapeHtml(formatStudyTime(bestDaySeconds))}</div>`;
+  // ---- 週送りナビ(左:前週 / 右:次週) ----
   const weekNav = document.createElement('div');
   weekNav.className = 'week-nav';
   const prevBtn = document.createElement('button');
@@ -2189,28 +2295,17 @@ function renderStatsDashboard(weekOffset = 0) {
   weekNav.appendChild(prevBtn);
   weekNav.appendChild(rangeLabel);
   weekNav.appendChild(nextBtn);
-  container.appendChild(weekNav);
+  weekCard.appendChild(weekNav);
+  grid.appendChild(weekCard);
+
+  grid.appendChild(makeCard('🔥', '連続学習日数',
+    `<div class="stat-card-value">${streak}日</div><div class="stat-card-best">自己ベスト ${bestStreak}日</div>`));
+
+  top.appendChild(grid);
+  container.appendChild(top);
 
   container.appendChild(buildCoachBox());
   container.appendChild(buildPreviousStudySection());
-
-  const actions = document.createElement('div');
-  actions.className = 'dashboard-actions';
-  const goalBtn = document.createElement('button');
-  goalBtn.className = 'reveal-btn';
-  goalBtn.textContent = '⚙ 目標設定';
-  goalBtn.addEventListener('click', () => {
-    const cur = getStudyGoalMinutes();
-    const input = window.prompt(`今週の学習目標を分単位で入力してください(現在: ${formatStudyTime(cur * 60)})`, String(cur));
-    if (input === null) return;
-    const mins = parseInt(input, 10);
-    if (!isNaN(mins) && mins > 0) {
-      setStudyGoalMinutes(mins);
-      renderStatsDashboard(statsWeekOffset);
-    }
-  });
-  actions.appendChild(goalBtn);
-  container.appendChild(actions);
 }
 
 // ---------- 「前回学習した問題」欄(専属コーチメッセージの下) ----------
@@ -2296,10 +2391,22 @@ function buildPreviousStudySection() {
   const box = document.createElement('div');
   box.className = 'prev-study-box';
 
+  // ---- ヘッダー行: 左にラベル、中央に「まとめて再生」ボタン ----
+  const header = document.createElement('div');
+  header.className = 'prev-study-header';
   const label = document.createElement('div');
   label.className = 'prev-study-label';
   label.textContent = '📖 前回学習した問題';
-  box.appendChild(label);
+  const allBtn = document.createElement('button');
+  allBtn.type = 'button';
+  allBtn.className = 'prev-study-playall';
+  allBtn.textContent = '▶ まとめて再生';
+  allBtn.disabled = true;
+  const headerSpacer = document.createElement('div');
+  header.appendChild(label);
+  header.appendChild(allBtn);
+  header.appendChild(headerSpacer);
+  box.appendChild(header);
 
   const listEl = document.createElement('div');
   listEl.className = 'prev-study-list';
@@ -2312,21 +2419,17 @@ function buildPreviousStudySection() {
       listEl.innerHTML = '<p class="prev-study-empty">前回学習分の音声データがありません。</p>';
       return;
     }
-    const allBtn = document.createElement('button');
-    allBtn.type = 'button';
-    allBtn.className = 'prev-study-playall';
-    allBtn.textContent = '▶ 前回学習分をまとめて再生';
     const allFilenames = items.flatMap(it => it.audio);
+    allBtn.disabled = false;
     allBtn.addEventListener('click', () => {
       if (studySequencePlaying) {
         stopAllAudio();
-        allBtn.textContent = '▶ 前回学習分をまとめて再生';
+        allBtn.textContent = '▶ まとめて再生';
       } else {
         playStudySequence(allFilenames, true);
         allBtn.textContent = '⏸ 停止';
       }
     });
-    listEl.appendChild(allBtn);
 
     items.forEach(item => {
       const row = document.createElement('div');
@@ -2337,12 +2440,12 @@ function buildPreviousStudySection() {
       playBtn.textContent = '▶';
       playBtn.addEventListener('click', () => {
         playStudySequence(item.audio, false);
-        allBtn.textContent = '▶ 前回学習分をまとめて再生';
+        allBtn.textContent = '▶ まとめて再生';
       });
       const text = document.createElement('span');
       text.className = 'prev-study-text';
       const flat = (item.text || '').replace(/\s+/g, ' ').trim();
-      const truncated = flat.length > 70 ? flat.slice(0, 70) + '...' : flat;
+      const truncated = flat.length > 220 ? flat.slice(0, 220) + '...' : flat;
       text.textContent = `${item.label} ${truncated}`;
       row.appendChild(playBtn);
       row.appendChild(text);
@@ -2402,6 +2505,7 @@ async function jumpToUnit(test, part, unitIndex) {
   p34 = null;
   p67 = null;
   emptyStateEl.style.display = 'none';
+  partOverviewEl.style.display = 'none';
   practiceEl.style.display = 'block';
   practiceBodyEl.innerHTML = '読み込み中...';
   document.getElementById('setupDetails').removeAttribute('open');
@@ -2433,6 +2537,7 @@ async function jumpToQuestionNumber(test, part, number, autoReveal) {
   p34 = null;
   p67 = null;
   emptyStateEl.style.display = 'none';
+  partOverviewEl.style.display = 'none';
   practiceEl.style.display = 'block';
   practiceBodyEl.innerHTML = '読み込み中...';
   document.getElementById('setupDetails').removeAttribute('open');
@@ -2596,6 +2701,45 @@ function buildGroupedUnitRow(container, u, onJump) {
   container.appendChild(group);
 }
 
+// ドロップダウンでPartを切り替えたときに表示する「節の問題一覧」画面。
+// いきなり1問目を始めず、buildLandingNavと同じ挑戦回数メーター付きの一覧を
+// 表示し、そこから個別の問題/セットをクリックしてはじめて実際の練習画面へ進む。
+async function showPartOverview(test, part) {
+  saveAllVisibleNotes();
+  stopAllAudio();
+  emptyStateEl.style.display = 'none';
+  practiceEl.style.display = 'none';
+  partOverviewEl.style.display = 'block';
+  partJumpSelectEl.value = `${test}-${part}`;
+  partOverviewJumpSelectEl.value = `${test}-${part}`;
+  partOverviewStartBtn.onclick = () => jumpToUnit(test, part, 0);
+  partOverviewBodyEl.innerHTML = '<div class="loading">読み込み中...</div>';
+  const data = await loadPartData(test, part);
+  const units = buildUnitList(test, part, data);
+  partOverviewBodyEl.innerHTML = '';
+  const grouped = part === 3 || part === 4 || part === 5 || part === 6 || part === 7;
+  const colLeft = document.createElement('div');
+  colLeft.className = 'landing-col';
+  const colRight = document.createElement('div');
+  colRight.className = 'landing-col';
+  partOverviewBodyEl.appendChild(colLeft);
+  partOverviewBodyEl.appendChild(colRight);
+  const half = Math.ceil(units.length / 2);
+  units.forEach((u, i) => {
+    const col = i < half ? colLeft : colRight;
+    if (grouped) buildGroupedUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex));
+    else buildUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex));
+  });
+}
+
+const partOverviewJumpSelectEl = document.getElementById('partOverviewJumpSelect');
+populatePartSelect(partOverviewJumpSelectEl);
+partOverviewJumpSelectEl.addEventListener('change', () => {
+  const [test, partStr] = partOverviewJumpSelectEl.value.split('-');
+  showPartOverview(test, Number(partStr));
+});
+const partOverviewStartBtn = document.getElementById('partOverviewStartBtn');
+
 function buildLandingNav() {
   const container = document.getElementById('landingNav');
   if (!container) return;
@@ -2734,19 +2878,24 @@ footerPrevBtn.addEventListener('click', () => goToAdjacentUnit(-1));
 footerNextBtn.addEventListener('click', () => goToAdjacentUnit(1));
 
 // 画面上部のPart切り替えドロップダウン: test1 part1〜test2 part7を全て列挙し、
-// 選ぶとその1問目にジャンプする。
+// 選ぶといきなり1問目を始めるのではなく、その節の問題一覧(挑戦回数付き)を
+// 表示するpart-overview画面へ移動する。
+function populatePartSelect(selectEl) {
+  ['T1', 'T2'].forEach(test => {
+    for (let part = 1; part <= 7; part++) {
+      const opt = document.createElement('option');
+      opt.value = `${test}-${part}`;
+      opt.textContent = `${test === 'T1' ? 'test1' : 'test2'} part${part}`;
+      selectEl.appendChild(opt);
+    }
+  });
+}
+
 const partJumpSelectEl = document.getElementById('partJumpSelect');
-['T1', 'T2'].forEach(test => {
-  for (let part = 1; part <= 7; part++) {
-    const opt = document.createElement('option');
-    opt.value = `${test}-${part}`;
-    opt.textContent = `${test === 'T1' ? 'test1' : 'test2'} part${part}`;
-    partJumpSelectEl.appendChild(opt);
-  }
-});
+populatePartSelect(partJumpSelectEl);
 partJumpSelectEl.addEventListener('change', () => {
   const [test, partStr] = partJumpSelectEl.value.split('-');
-  jumpToUnit(test, Number(partStr), 0);
+  showPartOverview(test, Number(partStr));
 });
 
 // renderPart1or2/3or4/6/7は途中のフェーズ遷移(次の問題へ、シャドーイングへ、など)で
@@ -3763,3 +3912,24 @@ if (saveNotesBtn) {
     setTimeout(() => setNotesSaveStatus(''), 3000);
   });
 }
+
+// ---------- ノートの自動保存 ----------
+// 次の問題/前の問題・Part切り替えドロップダウンは、renderPractice()の先頭で
+// saveAllVisibleNotes()を呼んでいるため既に自動保存される。残る抜け穴は、
+// ヘッダーのタイトルリンク(トップへ戻る=実質ページの再読み込み)をクリックした
+// ときで、これは画面遷移そのものなのでJS側で先回りして保存してから遷移させる。
+const headerTitleLink = document.querySelector('.app-header h1 a');
+if (headerTitleLink) {
+  headerTitleLink.addEventListener('click', e => {
+    e.preventDefault();
+    const dest = headerTitleLink.href;
+    saveAllVisibleNotes().finally(() => { location.href = dest; });
+  });
+}
+// タブを閉じる/リロードするなど、上記のフックを経由しない離脱への保険として、
+// 非同期のスプレッドシート同期を待てない代わりにlocalStorageへの同期保存だけ行う。
+window.addEventListener('beforeunload', () => {
+  document.querySelectorAll('.notes-area[data-notes-key]').forEach(area => {
+    try { localStorage.setItem(NOTES_LS_PREFIX + area.dataset.notesKey, area.innerHTML); } catch (e) { /* ignore */ }
+  });
+});

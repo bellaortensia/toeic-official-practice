@@ -378,7 +378,7 @@ audio{
 }
 @media (max-width:640px){.translate-wide{grid-template-columns:1fr;}}
 .translate-col{
-  font-size:14px;
+  font-size:17px;
   line-height:1.9;
 }
 .translate-col-en{border-right:1px dashed var(--line);padding-right:14px;}
@@ -439,7 +439,7 @@ audio{
 .mode-toggle-btn:hover{background:var(--accent-2-soft);filter:none;}
 .mode-toggle-btn:disabled{opacity:.4;filter:none;}
 .translate-box.wide-mode .translate-wide{grid-template-columns:1fr;}
-.translate-box.tall-mode .translate-col{font-size:16px;line-height:2.3;}
+.translate-box.tall-mode .translate-col{font-size:19px;line-height:2.3;}
 
 .notes-wrap{margin-top:4px;}
 .notes-label{
@@ -520,6 +520,18 @@ audio{
   cursor:pointer;position:relative;
 }
 .player-fill{height:100%;width:0%;background:var(--accent-2);transition:width .1s linear;pointer-events:none;}
+.player-rate{
+  display:flex;align-items:center;gap:2px;flex:0 0 auto;
+}
+.player-rate-btn{
+  background:none;border:none;font-size:11px;line-height:1;cursor:pointer;padding:0 2px;
+  color:var(--text-soft);
+}
+.player-rate-btn:hover:not(:disabled){color:var(--accent-2);}
+.player-rate-btn:disabled{opacity:.35;cursor:default;}
+.player-rate-label{
+  font-family:'JetBrains Mono',monospace;font-size:11.5px;color:var(--text-soft);min-width:26px;text-align:center;
+}
 
 .question-photo{
   display:block;
@@ -592,6 +604,13 @@ audio{
 }
 
 .landing-nav{margin-top:16px;}
+
+.part-overview-header{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  margin-bottom:14px;
+}
 
 .empty-state-layout{display:flex;gap:20px;align-items:flex-start;}
 .empty-state-main{flex:1 1 auto;min-width:0;}
@@ -919,6 +938,7 @@ audio{
   background:var(--accent-2);margin-right:6px;
 }
 .legend-goal{display:block;font-size:12.5px;margin-top:4px;}
+.ring-goal-btn{margin-top:14px;}
 
 .stats-grid{
   flex:1 1 auto;
@@ -1054,35 +1074,27 @@ audio{
   border-radius:8px;
   padding:12px 14px;
 }
-.coach-history-btn{
-  display:block;
-  margin:12px auto 0;
+.coach-nav{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-top:10px;
 }
-.coach-history-panel{
-  margin-top:12px;
-  border-top:1px solid var(--line);
-  padding-top:12px;
-}
-.coach-history-item{
-  padding:8px 0;
-  border-bottom:1px dashed var(--line);
-}
-.coach-history-item:last-child{border-bottom:none;}
-.coach-history-date{
-  font-family:'JetBrains Mono',monospace;
-  font-size:12.5px;
-  color:var(--accent-2);
-  margin-bottom:4px;
-}
-.coach-history-text{
-  font-size:13.5px;
-  line-height:1.6;
-  color:var(--text-soft);
-  white-space:pre-wrap;
-}
-.coach-history-empty{
+.coach-nav-btn{
+  border:1px solid var(--line);
+  background:#fff;
+  color:var(--text);
+  border-radius:6px;
+  padding:5px 12px;
   font-size:13px;
+  cursor:pointer;
+}
+.coach-nav-btn:hover:not(:disabled){background:var(--accent-2-soft);}
+.coach-nav-btn:disabled{opacity:.4;cursor:default;}
+.coach-nav-date{
+  font-size:12.5px;
   color:var(--text-soft);
+  font-family:'JetBrains Mono',monospace;
 }
 
 .prev-study-box{
@@ -1094,11 +1106,17 @@ audio{
   border-radius:var(--radius);
   padding:16px 18px;
 }
+.prev-study-header{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  margin-bottom:10px;
+}
 .prev-study-label{
   font-size:14px;
   font-weight:700;
   color:var(--text);
-  margin-bottom:10px;
+  justify-self:start;
 }
 .prev-study-list{
   display:flex;
@@ -1111,18 +1129,18 @@ audio{
   margin:0;
 }
 .prev-study-playall{
-  align-self:flex-start;
+  justify-self:center;
   border:1px solid var(--accent-2);
   background:var(--accent-2-soft);
   color:var(--text);
   border-radius:6px;
-  padding:7px 14px;
-  font-size:13.5px;
+  padding:4px 10px;
+  font-size:12px;
   font-weight:700;
   cursor:pointer;
-  margin-bottom:4px;
 }
-.prev-study-playall:hover{filter:brightness(0.97);}
+.prev-study-playall:hover:not(:disabled){filter:brightness(0.97);}
+.prev-study-playall:disabled{opacity:.5;cursor:default;}
 .prev-study-row{
   display:flex;
   align-items:flex-start;
@@ -1145,6 +1163,8 @@ audio{
 }
 .prev-study-play:hover{background:var(--accent-2-soft);}
 .prev-study-text{
+  flex:1 1 auto;
+  min-width:0;
   font-size:13.5px;
   color:var(--text-soft);
   line-height:1.5;
