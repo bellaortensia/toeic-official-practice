@@ -13,7 +13,12 @@ const resultEl = document.getElementById('result');
 // DOMから消えても再生し続けてしまう(closure内で参照が残るため)ので、
 // updateHeaderNav()から毎回stopAllAudio()を呼んで確実に止める。
 const globalAudio = { current: null };
+// トップ画面「前回学習した問題」欄のまとめて再生(連続・自動繰り返し)が実行中かどうか。
+// 他の場所でstopAllAudio()が呼ばれた場合(設問画面へ移動する等)も確実に止まるよう、
+// ここでまとめてリセットする。
+let studySequencePlaying = false;
 function stopAllAudio() {
+  studySequencePlaying = false;
   if (globalAudio.current) {
     try { globalAudio.current.pause(); } catch (e) { /* ignore */ }
     globalAudio.current = null;
@@ -2082,20 +2087,30 @@ function buildCoachBox() {
   return box;
 }
 
-function renderStatsDashboard() {
+// トップ画面「学習状況」の週送り状態。0=今週、-1=先週…。ページ再読み込みで0に戻る。
+let statsWeekOffset = 0;
+
+function renderStatsDashboard(weekOffset = 0) {
   const container = document.getElementById('statsDashboard');
   if (!container) return;
+  statsWeekOffset = weekOffset;
   const log = getStudyLog();
   const totalCount = Object.values(log.dayCounts).reduce((sum, c) => sum + c, 0);
   const streak = computeStreakDays(log);
   const bestStreak = computeBestStreak(log);
-  const { dates: weekDates, dow } = getWeekDates();
+  const weekReference = new Date();
+  weekReference.setDate(weekReference.getDate() + weekOffset * 7);
+  const { dates: weekDates, dow } = getWeekDates(weekReference);
+  const isCurrentWeek = weekOffset === 0;
+  const todayDow = isCurrentWeek ? dow : -1;
   const daySecondsThisWeek = weekDates.map(d => log.daySeconds[localDateKey(d)] || 0);
   const weekSeconds = daySecondsThisWeek.reduce((a, b) => a + b, 0);
   const bestDaySeconds = Math.max(0, ...Object.values(log.daySeconds));
   const goalMinutes = getStudyGoalMinutes();
   const goalSeconds = goalMinutes * 60;
   const progress = Math.min(1, weekSeconds / goalSeconds);
+  const fmtMD = d => `${d.getMonth() + 1}/${d.getDate()}`;
+  const weekRangeLabel = `${fmtMD(weekDates[0])}〜${fmtMD(weekDates[6])}`;
 
   container.innerHTML = '';
   const top = document.createElement('div');
@@ -2116,7 +2131,7 @@ function renderStatsDashboard() {
     </div>`;
   const ringLegend = document.createElement('div');
   ringLegend.className = 'week-ring-legend';
-  ringLegend.innerHTML = `<span class="legend-dot"></span>今週の学習時間 <span class="legend-goal">(目標: ${escapeHtml(formatStudyTime(goalSeconds))})</span>`;
+  ringLegend.innerHTML = `<span class="legend-dot"></span>${isCurrentWeek ? '今週' : weekRangeLabel}の学習時間 <span class="legend-goal">(目標: ${escapeHtml(formatStudyTime(goalSeconds))})</span>`;
   const ringBox = document.createElement('div');
   ringBox.className = 'week-ring-box';
   ringBox.appendChild(ringWrap);
@@ -2143,9 +2158,9 @@ function renderStatsDashboard() {
     <div class="week-day">
       <div class="week-bar-count">${escapeHtml(formatClock(sec))}</div>
       <div class="week-bar-track"><div class="week-bar-fill" style="height:${Math.round((sec / maxDaySec) * 100)}%"></div></div>
-      <div class="week-day-label${i === dow ? ' today' : ''}">${dayLabels[i]}</div>
+      <div class="week-day-label${i === todayDow ? ' today' : ''}">${dayLabels[i]}</div>
     </div>`).join('');
-  grid.appendChild(makeCard('📊', '今週の学習状況',
+  grid.appendChild(makeCard('📊', isCurrentWeek ? '今週の学習状況' : `${weekRangeLabel}の学習状況`,
     `<div class="week-chart">${weekBarsHtml}</div><div class="stat-card-best">自己ベスト ${escapeHtml(formatStudyTime(bestDaySeconds))}</div>`));
 
   grid.appendChild(makeCard('🔥', '連続学習日数',
@@ -2154,7 +2169,30 @@ function renderStatsDashboard() {
   top.appendChild(grid);
   container.appendChild(top);
 
+  // ---- 週送りナビ(左下:前週 / 右下:次週) ----
+  const weekNav = document.createElement('div');
+  weekNav.className = 'week-nav';
+  const prevBtn = document.createElement('button');
+  prevBtn.type = 'button';
+  prevBtn.className = 'week-nav-btn week-nav-prev';
+  prevBtn.textContent = '← 前週';
+  prevBtn.addEventListener('click', () => renderStatsDashboard(weekOffset - 1));
+  const rangeLabel = document.createElement('span');
+  rangeLabel.className = 'week-nav-label';
+  rangeLabel.textContent = weekRangeLabel;
+  const nextBtn = document.createElement('button');
+  nextBtn.type = 'button';
+  nextBtn.className = 'week-nav-btn week-nav-next';
+  nextBtn.textContent = '次週 →';
+  nextBtn.disabled = isCurrentWeek;
+  nextBtn.addEventListener('click', () => { if (weekOffset < 0) renderStatsDashboard(weekOffset + 1); });
+  weekNav.appendChild(prevBtn);
+  weekNav.appendChild(rangeLabel);
+  weekNav.appendChild(nextBtn);
+  container.appendChild(weekNav);
+
   container.appendChild(buildCoachBox());
+  container.appendChild(buildPreviousStudySection());
 
   const actions = document.createElement('div');
   actions.className = 'dashboard-actions';
@@ -2168,11 +2206,151 @@ function renderStatsDashboard() {
     const mins = parseInt(input, 10);
     if (!isNaN(mins) && mins > 0) {
       setStudyGoalMinutes(mins);
-      renderStatsDashboard();
+      renderStatsDashboard(statsWeekOffset);
     }
   });
   actions.appendChild(goalBtn);
   container.appendChild(actions);
+}
+
+// ---------- 「前回学習した問題」欄(専属コーチメッセージの下) ----------
+// 前回学習日(今日より前で一番新しい記録日)に取り組んだ設問を、パッセージ/会話単位で
+// 重複排除しつつ一覧にする。Part3/4/6/7は個々の設問ではなく会話・トーク・パッセージ
+// 単位で音声が1本にまとまっているため、そのグループの先頭設問番号を代表として使う。
+async function resolvePreviousStudyItems() {
+  const studyDateKey = getMostRecentStudyDateKey();
+  if (!studyDateKey) return [];
+  const log = getDailyQuestionsLog();
+  const dayLog = log[studyDateKey] || {};
+  const keys = Object.keys(dayLog);
+  const seen = new Set();
+  const items = [];
+  for (const key of keys) {
+    const parsed = parseAttemptKey(key);
+    if (!parsed) continue;
+    const { test, part, number } = parsed;
+    let data;
+    try { data = await loadPartData(test, part); } catch (e) { continue; }
+    if (part === 1 || part === 2) {
+      const q = (data.questions || []).find(x => x.number === number);
+      if (!q || !q.audio) continue;
+      const dedupeKey = `${test}-${part}-${number}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+      const text = part === 2 ? (q.question || '') : Object.values(q.statements || {}).join(' / ');
+      items.push({ label: `${test} P${part} Q${number}`, text, audio: [q.audio] });
+    } else if (part === 5) {
+      const q = (data.questions || []).find(x => x.number === number);
+      if (!q || !q.audio) continue;
+      const dedupeKey = `${test}-5-${number}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+      items.push({ label: `${test} P5 Q${number}`, text: q.sentence || '', audio: [q.audio] });
+    } else if (part === 3 || part === 4) {
+      const g = (data.groups || []).find(x => x.questions.includes(number));
+      if (!g) continue;
+      const audio = g.audioConversation || g.audioTalk;
+      if (!audio) continue;
+      const dedupeKey = `${test}-${part}-${g.questions[0]}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+      const text = g.conversationText || g.talkText || '';
+      items.push({ label: `${test} P${part} Q${g.questions[0]}`, text, audio: [audio] });
+    } else if (part === 6 || part === 7) {
+      const p = (data.passages || []).find(x => x.questions.includes(number));
+      if (!p || !p.audio) continue;
+      const dedupeKey = `${test}-${part}-${p.questions[0]}`;
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+      const text = p.text || (p.documents ? p.documents.map(d => d.text).join(' ') : '');
+      items.push({ label: `${test} P${part} Q${p.questions[0]}`, text, audio: Array.isArray(p.audio) ? p.audio : [p.audio] });
+    }
+  }
+  return items;
+}
+
+// filenamesを順番に再生する。loop=trueの場合、最後まで再生したら自動で先頭に戻って
+// 繰り返す(手動で止めるか、他のstopAllAudio()呼び出しで止まるまで継続)。
+async function playStudySequence(filenames, loop) {
+  stopAllAudio();
+  studySequencePlaying = true;
+  let idx = 0;
+  async function next() {
+    if (!studySequencePlaying) return;
+    if (idx >= filenames.length) {
+      if (!loop) { studySequencePlaying = false; return; }
+      idx = 0;
+    }
+    const url = await getAudioUrl(filenames[idx]);
+    if (!studySequencePlaying) return;
+    if (!url) { idx++; next(); return; }
+    const audio = new Audio(url);
+    globalAudio.current = audio;
+    audio.addEventListener('ended', () => { idx++; next(); });
+    audio.play().catch(() => {});
+  }
+  next();
+}
+
+function buildPreviousStudySection() {
+  const box = document.createElement('div');
+  box.className = 'prev-study-box';
+
+  const label = document.createElement('div');
+  label.className = 'prev-study-label';
+  label.textContent = '📖 前回学習した問題';
+  box.appendChild(label);
+
+  const listEl = document.createElement('div');
+  listEl.className = 'prev-study-list';
+  listEl.innerHTML = '<p class="prev-study-empty">読み込み中...</p>';
+  box.appendChild(listEl);
+
+  resolvePreviousStudyItems().then(items => {
+    listEl.innerHTML = '';
+    if (!items.length) {
+      listEl.innerHTML = '<p class="prev-study-empty">前回学習分の音声データがありません。</p>';
+      return;
+    }
+    const allBtn = document.createElement('button');
+    allBtn.type = 'button';
+    allBtn.className = 'prev-study-playall';
+    allBtn.textContent = '▶ 前回学習分をまとめて再生';
+    const allFilenames = items.flatMap(it => it.audio);
+    allBtn.addEventListener('click', () => {
+      if (studySequencePlaying) {
+        stopAllAudio();
+        allBtn.textContent = '▶ 前回学習分をまとめて再生';
+      } else {
+        playStudySequence(allFilenames, true);
+        allBtn.textContent = '⏸ 停止';
+      }
+    });
+    listEl.appendChild(allBtn);
+
+    items.forEach(item => {
+      const row = document.createElement('div');
+      row.className = 'prev-study-row';
+      const playBtn = document.createElement('button');
+      playBtn.type = 'button';
+      playBtn.className = 'prev-study-play';
+      playBtn.textContent = '▶';
+      playBtn.addEventListener('click', () => {
+        playStudySequence(item.audio, false);
+        allBtn.textContent = '▶ 前回学習分をまとめて再生';
+      });
+      const text = document.createElement('span');
+      text.className = 'prev-study-text';
+      const flat = (item.text || '').replace(/\s+/g, ' ').trim();
+      const truncated = flat.length > 70 ? flat.slice(0, 70) + '...' : flat;
+      text.textContent = `${item.label} ${truncated}`;
+      row.appendChild(playBtn);
+      row.appendChild(text);
+      listEl.appendChild(row);
+    });
+  });
+
+  return box;
 }
 
 // ---------- ランディングナビ(TEST → Part → 問題単位、挑戦回数バッジ付き) ----------
