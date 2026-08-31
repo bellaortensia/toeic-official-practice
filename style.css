@@ -1178,18 +1178,25 @@ audio{
 .prev-study-text:hover{color:var(--text);}
 .prev-study-popup{
   position:absolute;
-  z-index:80;
+  z-index:90;
   display:none;
-  max-width:340px;
+  max-width:850px;
+  min-width:550px;
+  max-height:min(800px, 80vh);
+  overflow-y:auto;
   background:var(--ink-2);
   color:var(--paper);
   border-radius:8px;
-  padding:10px 12px;
-  font-size:13px;
-  line-height:1.6;
+  padding:24px 28px;
+  font-size:15.5px;
+  line-height:1.8;
+  white-space:pre-wrap;
   box-shadow:0 12px 32px rgba(0,0,0,.5);
 }
 .prev-study-popup.show{display:block;}
+@media (max-width:900px){
+  .prev-study-popup{min-width:0;max-width:calc(100vw - 32px);}
+}
 
 @media (max-width:520px){
   .wrap{padding:20px 12px 60px;}

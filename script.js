@@ -2434,7 +2434,7 @@ function hidePrevStudyPopup() {
 function showPrevStudyPopup(anchorEl, text) {
   prevStudyPopupEl.textContent = text;
   const rect = anchorEl.getBoundingClientRect();
-  prevStudyPopupEl.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 340)) + 'px';
+  prevStudyPopupEl.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 570)) + 'px';
   prevStudyPopupEl.style.top = (rect.bottom + window.scrollY + 6) + 'px';
   prevStudyPopupEl.classList.add('show');
 }
@@ -2489,12 +2489,17 @@ function buildPreviousStudySection() {
 
       const text = document.createElement('span');
       text.className = 'prev-study-text';
+      // 行の1行表示用(CSSでさらに省略される)には改行を含む空白を全て1つのスペースに
+      // 畳んだものを使い、ポップアップ用には元の改行はそのまま保った上で各行の
+      // 前後の余分な空白だけを整えたものを使う(会話文のM:/W:等の改行を保つため)。
       const flat = (item.text || '').replace(/\s+/g, ' ').trim();
       const fullLine = `${item.label} ${flat}`;
+      const multiline = (item.text || '').split('\n').map(l => l.trim()).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+      const popupText = `${item.label}\n\n${multiline}`;
       text.textContent = fullLine;
       text.addEventListener('mouseenter', () => {
         if (prevStudyPinnedEl && prevStudyPinnedEl !== text) return;
-        showPrevStudyPopup(text, fullLine);
+        showPrevStudyPopup(text, popupText);
       });
       text.addEventListener('mouseleave', () => {
         if (prevStudyPinnedEl !== text) hidePrevStudyPopup();
@@ -2503,7 +2508,7 @@ function buildPreviousStudySection() {
         e.stopPropagation();
         if (prevStudyPinnedEl === text) { hidePrevStudyPopup(); return; }
         prevStudyPinnedEl = text;
-        showPrevStudyPopup(text, fullLine);
+        showPrevStudyPopup(text, popupText);
       });
 
       row.appendChild(playBtn);
