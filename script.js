@@ -479,7 +479,12 @@ const NOTES_LS_PREFIX = 'toeicOfficialPractice.notes.';
 
 // スプレッドシートへの接続状況('unknown'|'no-url'|'ok'|'error')。URL未設定なのか
 // 接続自体に失敗しているのかを画面に表示するため(updateSheetConnectionBanner参照)。
+// sheetConnectionErrorには、失敗時の具体的な理由(HTTPステータスや応答の中身の
+// 先頭部分)を入れる。「JSONでない応答」の場合はApps Scriptの公開設定(アクセス権
+// 「全員」になっているか等)が原因のことが多いので、そのまま画面に出して原因
+// 切り分けに使えるようにする。
 let sheetConnectionStatus = 'unknown';
+let sheetConnectionError = '';
 let sheetNotesCachePromise = null;
 function getSheetNotesCache() {
   if (!sheetNotesCachePromise) {
@@ -489,9 +494,14 @@ function getSheetNotesCache() {
       sheetNotesCachePromise = Promise.resolve({});
     } else {
       sheetNotesCachePromise = fetch(`${url}?action=getNotes`)
-        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-        .then(d => { sheetConnectionStatus = 'ok'; return d.notes || {}; })
-        .catch(() => { sheetConnectionStatus = 'error'; return {}; });
+        .then(async r => {
+          const bodyText = await r.text();
+          if (!r.ok) throw new Error(`HTTP ${r.status}: ${bodyText.slice(0, 200)}`);
+          try { return JSON.parse(bodyText); }
+          catch (e) { throw new Error(`JSON以外の応答が返ってきました: ${bodyText.slice(0, 200)}`); }
+        })
+        .then(d => { sheetConnectionStatus = 'ok'; sheetConnectionError = ''; return d.notes || {}; })
+        .catch(e => { sheetConnectionStatus = 'error'; sheetConnectionError = e.message; return {}; });
     }
   }
   return sheetNotesCachePromise;
@@ -508,7 +518,7 @@ async function updateSheetConnectionBanner() {
     el.textContent = '⚠ ノート保存用スプレッドシートが未設定です(この端末では「Initial Setup」→「③ ノート保存用スプレッドシート」にURLが入力されていません)。ノートはこの端末のブラウザ内にのみ保存されます。';
     el.style.display = 'block';
   } else if (sheetConnectionStatus === 'error') {
-    el.textContent = '⚠ ノート保存用スプレッドシートへの接続に失敗しました。ネットワーク環境(会社のファイアウォール等)をご確認ください。ノートはこの端末のブラウザ内にのみ保存されます。';
+    el.textContent = `⚠ ノート保存用スプレッドシートへの接続に失敗しました。ノートはこの端末のブラウザ内にのみ保存されます。(詳細: ${sheetConnectionError || '不明なエラー'})`;
     el.style.display = 'block';
   } else {
     el.style.display = 'none';
