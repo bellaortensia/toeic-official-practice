@@ -60,6 +60,7 @@
           <li>右上「デプロイ」→「新しいデプロイ」→種類「ウェブアプリ」。実行ユーザー「自分」、アクセスできるユーザー「全員」に設定してデプロイ。</li>
           <li>発行されたURL(.../execで終わるもの)をコピーし、上の「APPS SCRIPT WEB APP URL」欄に貼り付ける。</li>
           <li>これでヘッダーの「💾 保存」ボタンを押すと、今開いているノートがこのスプレッドシートに保存され、次回同じ問題/パッセージを開いたときに自動で復元されます(URL未設定の場合はこの端末のブラウザ内にのみ保存されます)。</li>
+          <li><strong>既にURLを設定済みで、コードだけ更新したい場合</strong>: Apps Scriptのコードを下の最新版に貼り替えて保存した後、右上「デプロイ」→「デプロイを管理」→鉛筆アイコン→「バージョン」で「新しいバージョン」を選び「デプロイ」。これでURLは変わらないまま新しいコードが反映されます。</li>
         </ol>
         <button id="copyGasBtn">コードをコピー</button>
         <div class="gas-code" id="gasCode">function _getNotesSheet() {
@@ -100,13 +101,23 @@ function _setNoteValue(sheet, key, html) {
 
 function doGet(e) {
   var action = e.parameter.action;
+  var callback = e.parameter.callback;
+  var result;
   if (action === 'getNotes') {
     var sheet = _getNotesSheet();
-    return ContentService.createTextOutput(JSON.stringify({ notes: _getAllNotes(sheet) }))
-      .setMimeType(ContentService.MimeType.JSON);
+    result = { notes: _getAllNotes(sheet) };
+  } else {
+    result = { error: 'unknown action' };
   }
-  return ContentService.createTextOutput(JSON.stringify({ error: 'unknown action' }))
-    .setMimeType(ContentService.MimeType.JSON);
+  var json = JSON.stringify(result);
+  // callbackパラメータが付いている場合はJSONPとして返す(ブラウザからfetch()で
+  // 直接GETすると、Apps ScriptのレスポンスにCORSヘッダーが付かずブロックされる
+  // ことがあるため、scriptタグ経由で読み込むJSONP方式で回避する)。
+  if (callback) {
+    return ContentService.createTextOutput(callback + '(' + json + ');')
+      .setMimeType(ContentService.MimeType.JAVASCRIPT);
+  }
+  return ContentService.createTextOutput(json).setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
@@ -181,6 +192,6 @@ function doPost(e) {
   </main>
 </div>
 
-  <script src="script.js?v=64"></script>
+  <script src="script.js?v=65"></script>
 </body>
 </html>

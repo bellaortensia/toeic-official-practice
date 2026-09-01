@@ -71,6 +71,43 @@ function getSheetUrl() {
   return localStorage.getItem(SHEET_URL_LS) || sheetUrlInput.value.trim();
 }
 
+// Google Apps ScriptのWeb App URLへ通常のfetch()でGETすると、レスポンスに
+// Access-Control-Allow-Originが付かずCORSでブロックされ「Failed to fetch」に
+// なることがある(URLをブラウザで直接開くと正常に見えるのに、fetch()経由だけ
+// 失敗するのはこれが原因)。<script>タグでの読み込みはCORSの対象外なので、
+// callbackパラメータでJSONPとして読み込むことでこれを回避する(doGet側の対応も必要。
+// 「Initial Setup」→「③ノート保存用スプレッドシート」に貼るコードで対応済み)。
+function jsonpFetch(url, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'toeicJsonp_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
+    const script = document.createElement('script');
+    let done = false;
+    function cleanup() {
+      delete window[cbName];
+      script.remove();
+    }
+    window[cbName] = data => {
+      done = true;
+      cleanup();
+      resolve(data);
+    };
+    script.onerror = () => {
+      if (done) return;
+      done = true;
+      cleanup();
+      reject(new Error('スプレッドシートへの通信でエラーが発生しました(URLが正しいか、デプロイが「全員」アクセス可能になっているかご確認ください)'));
+    };
+    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
+    document.body.appendChild(script);
+    setTimeout(() => {
+      if (done) return;
+      done = true;
+      cleanup();
+      reject(new Error('スプレッドシートへの通信がタイムアウトしました'));
+    }, timeoutMs || 15000);
+  });
+}
+
 const copyGasBtn = document.getElementById('copyGasBtn');
 if (copyGasBtn) {
   copyGasBtn.addEventListener('click', () => {
@@ -493,14 +530,12 @@ function getSheetNotesCache() {
       sheetConnectionStatus = 'no-url';
       sheetNotesCachePromise = Promise.resolve({});
     } else {
-      sheetNotesCachePromise = fetch(`${url}?action=getNotes`)
-        .then(async r => {
-          const bodyText = await r.text();
-          if (!r.ok) throw new Error(`HTTP ${r.status}: ${bodyText.slice(0, 200)}`);
-          try { return JSON.parse(bodyText); }
-          catch (e) { throw new Error(`JSON以外の応答が返ってきました: ${bodyText.slice(0, 200)}`); }
-        })
-        .then(d => { sheetConnectionStatus = 'ok'; sheetConnectionError = ''; return d.notes || {}; })
+      // 通常のfetch()だとApps ScriptのCORS制限で失敗することがあるため、JSONP
+      // (<script>タグ経由)で読み込む。doGet側もcallbackパラメータに対応させてある
+      // (「③ノート保存用スプレッドシート」に貼るコード参照。古いコードのままだと
+      // JSONPに対応しておらず失敗するので、コードの貼り替え+再デプロイが必要)。
+      sheetNotesCachePromise = jsonpFetch(`${url}?action=getNotes`)
+        .then(d => { sheetConnectionStatus = 'ok'; sheetConnectionError = ''; return (d && d.notes) || {}; })
         .catch(e => { sheetConnectionStatus = 'error'; sheetConnectionError = e.message; return {}; });
     }
   }
@@ -518,7 +553,7 @@ async function updateSheetConnectionBanner() {
     el.textContent = '⚠ ノート保存用スプレッドシートが未設定です(この端末では「Initial Setup」→「③ ノート保存用スプレッドシート」にURLが入力されていません)。ノートはこの端末のブラウザ内にのみ保存されます。';
     el.style.display = 'block';
   } else if (sheetConnectionStatus === 'error') {
-    el.textContent = `⚠ ノート保存用スプレッドシートへの接続に失敗しました。ノートはこの端末のブラウザ内にのみ保存されます。(詳細: ${sheetConnectionError || '不明なエラー'})`;
+    el.textContent = `⚠ ノート保存用スプレッドシートへの接続に失敗しました。「Initial Setup」→「③ノート保存用スプレッドシート」のコードが最新版か確認し、古い場合は貼り替えて再デプロイしてください。ノートはこの端末のブラウザ内にのみ保存されます。(詳細: ${sheetConnectionError || '不明なエラー'})`;
     el.style.display = 'block';
   } else {
     el.style.display = 'none';
@@ -548,8 +583,13 @@ async function saveAllVisibleNotes() {
   const url = getSheetUrl();
   if (url && count > 0) {
     try {
+      // mode:'no-cors'で送る: Apps ScriptのレスポンスはCORSヘッダーが無く読み取れない
+      // ことがあるが、no-corsなら読み取れなくてもリクエスト自体は送信され、Apps Script
+      // 側では正常に保存処理が実行される(応答の中身を見る必要が無い保存処理なので
+      // これで問題ない)。
       await fetch(url, {
         method: 'POST',
+        mode: 'no-cors',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ action: 'saveNotes', notes: notesMap })
       });
