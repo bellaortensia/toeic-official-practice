@@ -367,22 +367,33 @@ function getCachedNaturalJa(cacheKey) {
 // {{語句|注記}} という専用記法を使い、formatNoteBody()側でこれを下線+右下の小さな
 // 注記(何を修飾しているか、接続詞の意味・用法、熟語の意味など)に変換して表示する。
 const CLAUSE_EXPLAIN_PROMPT_READING = `あなたはTOEIC満点を何度も取得し、初心者指導歴20年以上の英語講師です。
-入力される英文(一文全体)について、文構造がひと目で分かる解説を作成してください。
-文自体は省略せず全文を書くこと。次の記法だけを使って構造・意味を書き込み、それ以外の記号・Markdown(**など)は一切使わないこと。
+入力される英文(一文または一節)を、必ず次の形式・見出しどおりに日本語で解説してください。この形式以外の前置き・後書き・装飾やMarkdown記号(**など)は一切使わないこと。
 
-・修飾語句(前置詞句・不定詞句・関係詞節・分詞句など、直前の名詞や文全体を修飾する語句)は、必ず {{その語句|←かかる語を修飾}} の形で囲むこと。「かかる語」の部分は実際に修飾している語に置き換えること。
-・while, since, that, because, when, whichなど、意味・用法を取り違えやすい接続詞・関係詞・従属接続詞は、必ず {{その語|意味・用法の短い説明}} の形で囲むこと。
-・TOEICで狙われる熟語・言い回しがあれば、同じ形式でその意味を付けること。
-・{{}}で囲む対象は1語でも複数語でもよい。1文の中に必要なだけいくつでも使ってよい。重要でない語句は無理に囲まず、そのままの英文で書く。
+■文の解説
+＜全体文＞
+(入力された英文を、省略・言い換えせず一字一句そのまま、意味のまとまり(3〜8語程度のチャンク)ごとに改行して書く。)
 
-1行目は必ず ■ に続けて英文全体(上記の{{}}記法を適用したもの)を書くこと。英文そのものは他のどこにも繰り返し書かないこと(この1行目だけに書く)。
+(1行空けてから、直前のチャンクと同じ順番・同じ行数になるよう、各チャンクを英語の語順のまま前から訳した「直訳調」の日本語訳を1行ずつ書く。自然な日本語の語順に並べ替えたり、行をまとめたりしないこと。)
 
-文全体を書き終えたら空行を1つ入れ、この文を正しく読むために特に重要なポイントを1〜2行、日本語で補足する。
+＜重要単語・熟語・言い回し＞
+(その文中にあるTOEIC頻出の単語・熟語・言い回しを「用語 意味」の形で並べ、／で区切る。2〜3行に折り返してよい。該当が無ければこの見出しごと省略する。)
 
-出力例(入力文: "One reason for lying has to do with minimizing a mistake."):
-■One reason {{for lying|←reasonを修飾(同格的な説明)}} {{has to do with|〜と関係がある}} minimizing a mistake.
+出力例(入力文: "Since enrolling in our comprehensive motor vehicle insurance four years ago, you have saved an average of $510 per year compared to the cost of policies from leading competitors."):
+■文の解説
+＜全体文＞
+Since enrolling in our comprehensive motor vehicle insurance four years ago,
+you have saved an average of $510 per year
+compared to the cost of policies
+from leading competitors.
 
-「one reason」の直後の語句がreasonを修飾する形(同格的な説明)。has to do withは頻出熟語で「〜と関係がある」という意味。`;
+4年前に当社の総合自動車保険に加入して以来、
+あなたは年間平均510ドルを節約してきました
+保険契約の費用と比べて。
+大手競合他社の
+
+＜重要単語・熟語・言い回し＞
+Since ～ing ～して以来 ／enrolling in～ ～に加入すること ／comprehensive 総合的な、補償範囲の広い
+／average of ～ ～の平均 ／compared to ～ ～と比較して`;
 
 async function getClauseExplanation(clauseText) {
   return await callGemini(CLAUSE_EXPLAIN_PROMPT_READING, clauseText, { maxOutputTokens: 800 });
@@ -420,10 +431,10 @@ async function getTermExplanation(term, meaning, contextSentence) {
   return await callGemini(prompt, input, { maxOutputTokens: 600 });
 }
 
-// CLAUSE_EXPLAIN_PROMPT_READINGが使う {{語句|注記}} 記法を、下線+右下の小さな注記
-// (Part5解説のS[...]/V[...]等と同じ、下線+subラベルの見た目)に変換する。まず
-// escapeHtmlでエスケープしてから変換するので、{{}}を使わない普通の解説文(単語の
-// 意味など)をそのまま渡しても安全にそのまま表示される(該当する記法が無ければ
+// {{語句|注記}} 記法(現在はどのプロンプトも出力しないが、下位互換のため残す)を、
+// 下線+右下の小さな注記(Part5解説のS[...]/V[...]等と同じ、下線+subラベルの見た目)
+// に変換する。まずescapeHtmlでエスケープしてから変換するので、{{}}を使わない
+// 普通の解説文をそのまま渡しても安全にそのまま表示される(該当する記法が無ければ
 // 何も変換されない)。
 function formatNoteBody(text) {
   const escaped = escapeHtml(text);
@@ -454,8 +465,8 @@ function appendToNotes(notesArea, enText, explanation) {
   body.innerHTML = formatNoteBody(explanation);
   block.appendChild(body);
   notesArea.appendChild(block);
-  // 転記のたびに水平線で区切る(次にどこから新しい内容か分かりやすくするため)。
-  notesArea.appendChild(document.createElement('hr'));
+  // 区切り線は.notes-entryのborder-bottom(実線、CSS側)だけで表現する。ここで
+  // 別途<hr>(点線、CSS側)も足すと実線+点線の二重線になってしまうため追加しない。
   notesArea.scrollTop = notesArea.scrollHeight;
 }
 
@@ -717,7 +728,7 @@ function showChunkPopup(seg, anchorEl, notesArea, sentenceText, clauseText) {
 // ・意訳: 文単位、常時表示。チャンク単位で正確に対応する箇所をハイライトするのは
 //   難しいため背景ハイライトはしないが、今EN側でハイライトされているチャンクが
 //   含まれる文だけに下線を引き、ホイール操作と連動させる(常時全文下線にはしない)。
-function renderTranslateColumns(container, data, mode, notesArea) {
+function renderTranslateColumns(container, data, mode, notesArea, slash) {
   container.innerHTML = '';
   const segments = data.segments || [];
   let curSeg = -1;
@@ -735,9 +746,9 @@ function renderTranslateColumns(container, data, mode, notesArea) {
     const enSpan = document.createElement('span');
     enSpan.className = 'chunk-seg';
     enSpan.dataset.seg = i;
-    // チャンクの区切りが視覚的に必ず分かるよう、改行の直前を除いて毎回「/」を
-    // 明示的に挟む(スラッシュリーディング表示を確実にするため)。
-    enSpan.textContent = seg.en + (seg.lineBreak ? ' ' : ' / ');
+    // スラッシュモードがONのときだけ、改行の直前を除いて毎回「/」を明示的に挟む
+    // (スラッシュリーディング表示用)。OFFのときはスペース区切りのみにする。
+    enSpan.textContent = seg.en + (seg.lineBreak ? ' ' : (slash ? ' / ' : ' '));
     enCol.appendChild(enSpan);
     enSpans.push(enSpan);
     if (mode === 'literal') {
@@ -910,6 +921,11 @@ function buildTranslatableBlock(text, cacheKey) {
   modeBtn.disabled = true;
   controls.appendChild(modeBtn);
 
+  const slashBtn = document.createElement('button');
+  slashBtn.className = 'mode-toggle-btn';
+  slashBtn.disabled = true;
+  controls.appendChild(slashBtn);
+
   wrap.appendChild(controls);
 
   const box = document.createElement('div');
@@ -921,16 +937,18 @@ function buildTranslatableBlock(text, cacheKey) {
   let mode = 'natural'; // 'literal' | 'natural'(デフォルトは意訳)
   let wide = true; // デフォルトでワイドモード
   let tall = false; // デフォルトではトールモードは解除された状態
+  let slash = false; // デフォルトではスラッシュ非表示(押して初めてチャンク間に/が入る)
 
   function refreshModeUI() {
     wideBtn.textContent = wide ? '⛶ ワイド解除' : '⛶ ワイドモード';
     tallBtn.textContent = tall ? '⬍ トール解除' : '⬍ トールモード';
     modeBtn.textContent = mode === 'literal' ? '意訳に変更' : '直訳に変更';
+    slashBtn.textContent = slash ? 'スラッシュ解除' : 'スラッシュモード';
   }
   refreshModeUI();
 
   function setControlsEnabled(enabled) {
-    [refetchBtn, wideBtn, tallBtn, modeBtn].forEach(b => b.disabled = !enabled);
+    [refetchBtn, wideBtn, tallBtn, modeBtn, slashBtn].forEach(b => b.disabled = !enabled);
   }
 
   function renderChunkView() {
@@ -961,12 +979,13 @@ function buildTranslatableBlock(text, cacheKey) {
     restoreNotesIfSaved(notesArea, cacheKey + '-translate-notes');
 
     function renderCurrentMode() {
-      renderTranslateColumns(contentContainer, data, mode, notesArea);
+      renderTranslateColumns(contentContainer, data, mode, notesArea, slash);
     }
 
     modeBtn.onclick = () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); renderCurrentMode(); };
     wideBtn.onclick = () => { wide = !wide; box.classList.toggle('wide-mode', wide); refreshModeUI(); };
     tallBtn.onclick = () => { tall = !tall; box.classList.toggle('tall-mode', tall); refreshModeUI(); };
+    slashBtn.onclick = () => { slash = !slash; refreshModeUI(); renderCurrentMode(); };
 
     renderCurrentMode();
   }
