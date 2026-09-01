@@ -477,15 +477,42 @@ function appendToNotes(notesArea, enText, explanation) {
 // 開いたときは、まずスプレッドシート側のキャッシュ→無ければlocalStorageの順に復元する。
 const NOTES_LS_PREFIX = 'toeicOfficialPractice.notes.';
 
+// スプレッドシートへの接続状況('unknown'|'no-url'|'ok'|'error')。URL未設定なのか
+// 接続自体に失敗しているのかを画面に表示するため(updateSheetConnectionBanner参照)。
+let sheetConnectionStatus = 'unknown';
 let sheetNotesCachePromise = null;
 function getSheetNotesCache() {
   if (!sheetNotesCachePromise) {
     const url = getSheetUrl();
-    sheetNotesCachePromise = !url
-      ? Promise.resolve({})
-      : fetch(`${url}?action=getNotes`).then(r => r.json()).then(d => d.notes || {}).catch(() => ({}));
+    if (!url) {
+      sheetConnectionStatus = 'no-url';
+      sheetNotesCachePromise = Promise.resolve({});
+    } else {
+      sheetNotesCachePromise = fetch(`${url}?action=getNotes`)
+        .then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+        .then(d => { sheetConnectionStatus = 'ok'; return d.notes || {}; })
+        .catch(() => { sheetConnectionStatus = 'error'; return {}; });
+    }
   }
   return sheetNotesCachePromise;
+}
+
+// ページ表示時に一度だけスプレッドシートへの接続を試み、結果に応じて画面上部に
+// 分かりやすいメッセージを出す(URL未設定なのか、接続自体に失敗しているのかで
+// 会社PC等での原因切り分けができるように)。
+async function updateSheetConnectionBanner() {
+  const el = document.getElementById('sheetConnectionStatus');
+  if (!el) return;
+  await getSheetNotesCache();
+  if (sheetConnectionStatus === 'no-url') {
+    el.textContent = '⚠ ノート保存用スプレッドシートが未設定です(この端末では「Initial Setup」→「③ ノート保存用スプレッドシート」にURLが入力されていません)。ノートはこの端末のブラウザ内にのみ保存されます。';
+    el.style.display = 'block';
+  } else if (sheetConnectionStatus === 'error') {
+    el.textContent = '⚠ ノート保存用スプレッドシートへの接続に失敗しました。ネットワーク環境(会社のファイアウォール等)をご確認ください。ノートはこの端末のブラウザ内にのみ保存されます。';
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
 }
 
 async function restoreNotesIfSaved(notesArea, cacheKey) {
@@ -1168,21 +1195,34 @@ async function getAudioIndex() {
   return map;
 }
 
+// 直近のgetAudioUrl()失敗理由(画面にエラーメッセージを出すために呼び出し元が
+// nullを受け取った直後に読む)。会社のネットワークでBoxからのファイルダウンロード
+// だけがブロックされている、といったケースを利用者自身が気づけるようにするため。
+let lastAudioError = '';
 const audioUrlCache = {};
 async function getAudioUrl(filename) {
+  lastAudioError = '';
   if (audioUrlCache[filename]) return audioUrlCache[filename];
-  const index = await getAudioIndex();
-  const id = index[filename];
-  if (!id) return null;
-  const token = await getValidAccessToken();
-  const res = await fetch(`https://api.box.com/2.0/files/${id}/content`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  if (!res.ok) return null;
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  audioUrlCache[filename] = url;
-  return url;
+  try {
+    const index = await getAudioIndex();
+    const id = index[filename];
+    if (!id) { lastAudioError = `音声ファイルが見つかりませんでした(${filename})。`; return null; }
+    const token = await getValidAccessToken();
+    const res = await fetch(`https://api.box.com/2.0/files/${id}/content`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) {
+      lastAudioError = `音声のダウンロードに失敗しました(HTTP ${res.status})。会社のネットワークがBoxからのファイルダウンロードをブロックしている可能性があります。`;
+      return null;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    audioUrlCache[filename] = url;
+    return url;
+  } catch (e) {
+    lastAudioError = `音声の取得中にエラーが発生しました(${e.message})。ネットワーク環境をご確認ください。`;
+    return null;
+  }
 }
 
 // トラックのクリック/ドラッグでシーク移動できるようにする。getAudio()は現在の
@@ -1321,6 +1361,16 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
   player.appendChild(trackEl);
   player.appendChild(totalTimeEl);
   player.appendChild(rateWrap);
+
+  // 再生に失敗した場合、無言で止まる代わりに理由を表示する(会社のネットワークで
+  // ダウンロードだけブロックされている、といった状況に利用者自身が気づけるように)。
+  const errorEl = document.createElement('div');
+  errorEl.className = 'audio-player-error';
+  errorEl.style.display = 'none';
+  const outerWrap = document.createElement('div');
+  outerWrap.appendChild(player);
+  outerWrap.appendChild(errorEl);
+
   if (!list.length) player.style.display = 'none';
   attachSeekable(trackEl, () => currentAudio);
 
@@ -1341,9 +1391,15 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
   async function playIndex(i) {
     if (i >= list.length) { currentAudio = null; resetUI(); return; }
     toggleBtn.disabled = true;
+    errorEl.style.display = 'none';
     const url = await getAudioUrl(list[i]);
     toggleBtn.disabled = false;
-    if (!url) return;
+    if (!url) {
+      errorEl.textContent = '⚠ ' + (lastAudioError || '音声の読み込みに失敗しました。');
+      errorEl.style.display = 'block';
+      resetUI();
+      return;
+    }
     currentAudio = new Audio(url);
     currentAudio.playbackRate = playbackRate;
     globalAudio.current = currentAudio;
@@ -1377,7 +1433,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
 
   if (autoplay && list.length) playFromStart();
 
-  return player;
+  return outerWrap;
 }
 
 // ---------- データ読み込み ----------
@@ -2397,7 +2453,9 @@ async function resolvePreviousStudyItems() {
 // 繰り返す(手動で止めるか、他のstopAllAudio()呼び出しで止まるまで継続)。
 // loop=falseで最後まで自然に再生し終えた場合はonEndを呼ぶ(呼び出し元でボタン表示を
 // 元に戻すために使う。手動で停止した場合や他の再生に割り込まれた場合は呼ばない)。
-async function playStudySequence(filenames, loop, onEnd) {
+// onErrorは1トラックでも取得に失敗した場合に理由付きで呼ばれる(無言で次へスキップ
+// せず、利用者が気づけるようにするため)。
+async function playStudySequence(filenames, loop, onEnd, onError) {
   stopAllAudio();
   studySequencePlaying = true;
   let idx = 0;
@@ -2409,7 +2467,10 @@ async function playStudySequence(filenames, loop, onEnd) {
     }
     const url = await getAudioUrl(filenames[idx]);
     if (!studySequencePlaying) return;
-    if (!url) { idx++; next(); return; }
+    if (!url) {
+      if (onError) onError(lastAudioError || '音声の読み込みに失敗しました。');
+      idx++; next(); return;
+    }
     const audio = new Audio(url);
     globalAudio.current = audio;
     audio.addEventListener('ended', () => { idx++; next(); });
@@ -2422,7 +2483,7 @@ async function playStudySequence(filenames, loop, onEnd) {
 // 押すと他は自動で止まり、押したボタン自身は再生中「■停止」表示に変わる仕組みを
 // 共有する(同時に再生されるのは常に1つだけ)。activePlayCtrl本体・リセット処理は
 // stopAllAudio()側(ファイル先頭)にある。
-function togglePlayback(btn, filenames, loop, label, stopLabel) {
+function togglePlayback(btn, filenames, loop, label, stopLabel, onError) {
   if (activePlayCtrl && activePlayCtrl.btn === btn) {
     stopAllAudio();
     return;
@@ -2434,7 +2495,7 @@ function togglePlayback(btn, filenames, loop, label, stopLabel) {
       btn.classList.remove('is-playing');
       activePlayCtrl = null;
     }
-  });
+  }, onError);
   btn.textContent = stopLabel;
   btn.classList.add('is-playing');
   activePlayCtrl = { btn, label };
@@ -2487,6 +2548,15 @@ function buildPreviousStudySection() {
   listEl.innerHTML = '<p class="prev-study-empty">読み込み中...</p>';
   box.appendChild(listEl);
 
+  const errorEl = document.createElement('div');
+  errorEl.className = 'prev-study-error';
+  errorEl.style.display = 'none';
+  box.appendChild(errorEl);
+  function showPlaybackError(msg) {
+    errorEl.textContent = '⚠ ' + msg;
+    errorEl.style.display = 'block';
+  }
+
   resolvePreviousStudyItems().then(items => {
     listEl.innerHTML = '';
     if (!items.length) {
@@ -2495,7 +2565,10 @@ function buildPreviousStudySection() {
     }
     const allFilenames = items.flatMap(it => it.audio);
     allBtn.disabled = false;
-    allBtn.addEventListener('click', () => togglePlayback(allBtn, allFilenames, true, '▶ まとめて再生', '■ 停止'));
+    allBtn.addEventListener('click', () => {
+      errorEl.style.display = 'none';
+      togglePlayback(allBtn, allFilenames, true, '▶ まとめて再生', '■ 停止', showPlaybackError);
+    });
 
     items.forEach(item => {
       const row = document.createElement('div');
@@ -2504,7 +2577,10 @@ function buildPreviousStudySection() {
       playBtn.type = 'button';
       playBtn.className = 'prev-study-play';
       playBtn.textContent = '▶';
-      playBtn.addEventListener('click', () => togglePlayback(playBtn, item.audio, false, '▶', '■'));
+      playBtn.addEventListener('click', () => {
+        errorEl.style.display = 'none';
+        togglePlayback(playBtn, item.audio, false, '▶', '■', showPlaybackError);
+      });
 
       const text = document.createElement('span');
       text.className = 'prev-study-text';
@@ -2887,6 +2963,7 @@ function buildLandingNav() {
 buildLandingNav();
 renderStatsDashboard();
 renderHistorySidebar();
+updateSheetConnectionBanner();
 
 function chunk(arr, size) {
   const out = [];

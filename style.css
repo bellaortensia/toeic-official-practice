@@ -22,6 +22,16 @@ body{
   min-height:100vh;
 }
 .wrap{max-width:1180px;margin:0 auto;padding:28px 20px 80px;}
+.sheet-status-banner{
+  margin-bottom:16px;
+  padding:10px 16px;
+  background:#3a2a26;
+  border:1px solid var(--danger);
+  border-radius:8px;
+  color:#f3c9be;
+  font-size:13px;
+  line-height:1.6;
+}
 .sticky-top{
   position:sticky;top:0;z-index:40;background:var(--ink);
   margin:-28px -20px 0;padding:28px 20px 14px;
@@ -536,6 +546,16 @@ audio{
 .player-rate-btn:disabled{opacity:.35;cursor:default;}
 .player-rate-label{
   font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-soft);min-width:39px;text-align:center;
+}
+.audio-player-error{
+  margin:4px 4px 4px 0;
+  padding:8px 14px;
+  background:#fbeae6;
+  border:1px solid var(--danger, #c1503f);
+  border-radius:8px;
+  color:var(--danger, #c1503f);
+  font-size:13px;
+  line-height:1.6;
 }
 
 .question-photo{
@@ -1199,6 +1219,16 @@ audio{
   box-shadow:0 12px 32px rgba(0,0,0,.5);
 }
 .prev-study-popup.show{display:block;}
+.prev-study-error{
+  margin-top:10px;
+  padding:8px 14px;
+  background:#fbeae6;
+  border:1px solid var(--danger, #c1503f);
+  border-radius:8px;
+  color:var(--danger, #c1503f);
+  font-size:13px;
+  line-height:1.6;
+}
 @media (max-width:900px){
   .prev-study-popup{min-width:0;max-width:calc(100vw - 32px);}
 }
