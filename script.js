@@ -574,6 +574,37 @@ async function updateSheetConnectionBanner() {
   renderHistorySidebar();
 }
 
+// この端末に今まで個別に保存されてきたノート(まだ一度もスプレッドシートへ
+// アップロードされていない可能性があるもの)を、まとめてアップロードする。
+// 安全のため、スプレッドシート側に既に何か値が入っているキーは上書きしない
+// (他の端末で書かれた内容を誤って消してしまわないようにするため)。
+// ページ表示のたびに呼んでも、2回目以降はアップロード済みのキーが除外されて
+// 対象が無くなるだけなので害はない。
+async function migrateLocalNotesToSheet() {
+  const url = getSheetUrl();
+  if (!url) return;
+  const remoteNotes = await getSheetNotesCache();
+  const toUpload = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const lsKey = localStorage.key(i);
+    if (!lsKey || lsKey.indexOf(NOTES_LS_PREFIX) !== 0) continue;
+    const noteKey = lsKey.slice(NOTES_LS_PREFIX.length);
+    if (remoteNotes[noteKey]) continue;
+    const html = localStorage.getItem(lsKey);
+    if (html && html.trim()) toUpload[noteKey] = html;
+  }
+  if (!Object.keys(toUpload).length) return;
+  try {
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'saveNotes', notes: toUpload })
+    });
+    Object.assign(remoteNotes, toUpload);
+  } catch (e) { /* オフライン等は無視 */ }
+}
+
 async function restoreNotesIfSaved(notesArea, cacheKey) {
   notesArea.dataset.notesKey = cacheKey;
   try {
@@ -3128,6 +3159,7 @@ renderStatsDashboard();
 renderHistorySidebar();
 updateSheetConnectionBanner();
 syncProgressFromSheet();
+migrateLocalNotesToSheet();
 
 function chunk(arr, size) {
   const out = [];
