@@ -46,7 +46,8 @@
       </details>
 
       <details class="help sub-details">
-        <summary>③ ノート保存用スプレッドシート(任意)</summary>
+        <summary>③ 端末間同期用スプレッドシート(任意)</summary>
+        <p class="hint">ノートだけでなく、回答履歴・学習時間・連続学習日数・コーチメッセージ履歴も、このスプレッドシートを通じて端末間で同期されます(自宅PC・会社PC・スマホ等、どの端末からアクセスしても同じ進捗が見られるようにするためのものです)。</p>
         <div class="setup-fields">
           <div class="field">
             <label for="sheetUrl">APPS SCRIPT WEB APP URL</label>
@@ -54,26 +55,31 @@
           </div>
         </div>
         <ol>
-          <li>Googleスプレッドシートを新規作成する(1枚のシートでOK。「Notes」タブは自動作成されます)。</li>
+          <li>Googleスプレッドシートを新規作成する(1枚のシートでOK。「Notes」「Progress」タブは自動作成されます)。</li>
           <li>メニュー「拡張機能」→「Apps Script」を開く。</li>
           <li>デフォルトのコードを全て削除し、下のコードを貼り付けて保存。</li>
           <li>右上「デプロイ」→「新しいデプロイ」→種類「ウェブアプリ」。実行ユーザー「自分」、アクセスできるユーザー「全員」に設定してデプロイ。</li>
-          <li>発行されたURL(.../execで終わるもの)をコピーし、上の「APPS SCRIPT WEB APP URL」欄に貼り付ける。</li>
-          <li>これでヘッダーの「💾 保存」ボタンを押すと、今開いているノートがこのスプレッドシートに保存され、次回同じ問題/パッセージを開いたときに自動で復元されます(URL未設定の場合はこの端末のブラウザ内にのみ保存されます)。</li>
+          <li>発行されたURL(.../execで終わるもの)をコピーし、上の「APPS SCRIPT WEB APP URL」欄に貼り付ける。これを使う全ての端末で同じURLを登録してください。</li>
+          <li>これでヘッダーの「💾 保存」ボタンを押すと、今開いているノート・回答履歴・学習時間などがこのスプレッドシートに保存され、次回別の端末で開いたときに自動で読み込まれ、その端末のデータとマージ(合算)されます(URL未設定の場合はこの端末のブラウザ内にのみ保存されます)。</li>
           <li><strong>既にURLを設定済みで、コードだけ更新したい場合</strong>: Apps Scriptのコードを下の最新版に貼り替えて保存した後、右上「デプロイ」→「デプロイを管理」→鉛筆アイコン→「バージョン」で「新しいバージョン」を選び「デプロイ」。これでURLは変わらないまま新しいコードが反映されます。</li>
         </ol>
         <button id="copyGasBtn">コードをコピー</button>
-        <div class="gas-code" id="gasCode">function _getNotesSheet() {
+        <div class="gas-code" id="gasCode">function _getSheet(name, headerRow) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName('Notes');
+  var sheet = ss.getSheetByName(name);
   if (!sheet) {
-    sheet = ss.insertSheet('Notes');
-    sheet.appendRow(['key', 'html', 'updatedAt']);
+    sheet = ss.insertSheet(name);
+    sheet.appendRow(headerRow);
   }
   return sheet;
 }
+function _getNotesSheet() { return _getSheet('Notes', ['key', 'html', 'updatedAt']); }
+// Progressタブ: 回答履歴・学習時間・連続日数・コーチメッセージ履歴など、ノート以外の
+// 進捗データをまとめて保存する(key列は 'attempts'|'dailyQuestions'|'studyLog'|
+// 'coachHistory' の固定4種、json列にその中身をJSON文字列で1つだけ格納する)。
+function _getProgressSheet() { return _getSheet('Progress', ['key', 'json', 'updatedAt']); }
 
-function _getAllNotes(sheet) {
+function _getAllRows(sheet) {
   var last = sheet.getLastRow();
   var result = {};
   if (last >= 2) {
@@ -85,18 +91,18 @@ function _getAllNotes(sheet) {
   return result;
 }
 
-function _setNoteValue(sheet, key, html) {
+function _setRowValue(sheet, key, value) {
   var last = sheet.getLastRow();
   if (last >= 2) {
     var data = sheet.getRange(2, 1, last - 1, 1).getValues();
     for (var i = 0; i < data.length; i++) {
       if (data[i][0] === key) {
-        sheet.getRange(i + 2, 2, 1, 2).setValues([[html, new Date()]]);
+        sheet.getRange(i + 2, 2, 1, 2).setValues([[value, new Date()]]);
         return;
       }
     }
   }
-  sheet.appendRow([key, html, new Date()]);
+  sheet.appendRow([key, value, new Date()]);
 }
 
 function doGet(e) {
@@ -104,8 +110,14 @@ function doGet(e) {
   var callback = e.parameter.callback;
   var result;
   if (action === 'getNotes') {
-    var sheet = _getNotesSheet();
-    result = { notes: _getAllNotes(sheet) };
+    result = { notes: _getAllRows(_getNotesSheet()) };
+  } else if (action === 'getProgress') {
+    var rows = _getAllRows(_getProgressSheet());
+    var progress = {};
+    for (var key in rows) {
+      try { progress[key] = JSON.parse(rows[key]); } catch (err) { /* 壊れた値は無視 */ }
+    }
+    result = { progress: progress };
   } else {
     result = { error: 'unknown action' };
   }
@@ -123,12 +135,21 @@ function doGet(e) {
 function doPost(e) {
   var body = JSON.parse(e.postData.contents);
   if (body.action === 'saveNotes') {
-    var sheet = _getNotesSheet();
+    var notesSheet = _getNotesSheet();
     var notes = body.notes || {};
     for (var key in notes) {
-      _setNoteValue(sheet, key, notes[key]);
+      _setRowValue(notesSheet, key, notes[key]);
     }
     return ContentService.createTextOutput(JSON.stringify({ status: 'ok', count: Object.keys(notes).length }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  if (body.action === 'saveProgress') {
+    var progressSheet = _getProgressSheet();
+    var progress = body.progress || {};
+    for (var pkey in progress) {
+      _setRowValue(progressSheet, pkey, JSON.stringify(progress[pkey]));
+    }
+    return ContentService.createTextOutput(JSON.stringify({ status: 'ok' }))
       .setMimeType(ContentService.MimeType.JSON);
   }
   return ContentService.createTextOutput(JSON.stringify({ error: 'unknown action' }))
@@ -192,6 +213,6 @@ function doPost(e) {
   </main>
 </div>
 
-  <script src="script.js?v=65"></script>
+  <script src="script.js?v=66"></script>
 </body>
 </html>

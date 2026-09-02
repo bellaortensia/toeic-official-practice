@@ -596,6 +596,9 @@ async function saveAllVisibleNotes() {
       const cache = await getSheetNotesCache();
       Object.assign(cache, notesMap);
     } catch (e) { /* オフライン等は無視。localStorageには保存済み */ }
+    // ノートと同じタイミングで、回答履歴・学習時間などの進捗データも一緒に
+    // スプレッドシートへ書き出す(画面遷移を待たせないよう結果は待たない)。
+    saveProgressToSheet();
   }
   return count;
 }
@@ -2174,6 +2177,102 @@ function saveCoachHistoryEntry(generatedDateKey, entry) {
   try { localStorage.setItem(COACH_HISTORY_LS, JSON.stringify(history)); } catch (e) { /* 保存容量オーバー等は無視 */ }
 }
 
+// ---------- 進捗データ(回答履歴・学習時間・連続日数・コーチ履歴)の端末間同期 ----------
+// ノート同様、Apps Script経由でスプレッドシートの「Progress」タブに保存し、他の
+// 端末を開いたときにそこから読み込んでマージする。複数端末で同時に更新される
+// 可能性があるため、単純な上書きではなく「より新しい/より大きい方を残す」形で
+// マージする(同期のたびに数値が二重に増えていく事故を避けるため、学習時間・
+// 学習回数は加算ではなく日付ごとの最大値を採用する)。
+
+function collectLocalProgress() {
+  return {
+    attempts: getAttemptsStore(),
+    dailyQuestions: getDailyQuestionsLog(),
+    studyLog: getStudyLog(),
+    coachHistory: getCoachHistory()
+  };
+}
+
+// key(設問/パッセージ単位)ごとにlastAtがより新しい方を残す。
+function mergeAttempts(remote) {
+  const local = getAttemptsStore();
+  const merged = { ...local };
+  Object.keys(remote || {}).forEach(key => {
+    const r = normalizeAttemptRaw(remote[key]);
+    const l = local[key] ? normalizeAttemptRaw(local[key]) : null;
+    if (!l || r.lastAt > l.lastAt) merged[key] = remote[key];
+  });
+  try { localStorage.setItem(ATTEMPTS_LS, JSON.stringify(merged)); } catch (e) { /* ignore */ }
+}
+
+// 日付ごとに、その日取り組んだ設問キーの集合を和集合にする(値が食い違う場合は
+// ローカル側を優先する。今の端末で今まさに書いた記録の方を信頼する)。
+function mergeDailyQuestions(remote) {
+  const local = getDailyQuestionsLog();
+  const merged = {};
+  const dates = new Set([...Object.keys(remote || {}), ...Object.keys(local)]);
+  dates.forEach(d => { merged[d] = { ...(remote || {})[d], ...local[d] }; });
+  try { localStorage.setItem(DAILY_QUESTIONS_LS, JSON.stringify(merged)); } catch (e) { /* ignore */ }
+}
+
+// daySeconds/dayCountsは日付ごとに大きい方(加算ではない。同期のたびに膨らむ事故を
+// 避けるため)。totalSecondsはマージ後のdaySecondsから再計算する。
+function mergeStudyLog(remote) {
+  const local = getStudyLog();
+  const r = remote || {};
+  const daySeconds = {};
+  new Set([...Object.keys(r.daySeconds || {}), ...Object.keys(local.daySeconds)]).forEach(d => {
+    daySeconds[d] = Math.max((r.daySeconds || {})[d] || 0, local.daySeconds[d] || 0);
+  });
+  const dayCounts = {};
+  new Set([...Object.keys(r.dayCounts || {}), ...Object.keys(local.dayCounts)]).forEach(d => {
+    dayCounts[d] = Math.max((r.dayCounts || {})[d] || 0, local.dayCounts[d] || 0);
+  });
+  const totalSeconds = Object.values(daySeconds).reduce((a, b) => a + b, 0);
+  const lastActivity = Math.max(r.lastActivity || 0, local.lastActivity || 0);
+  try { localStorage.setItem(STUDY_LOG_LS, JSON.stringify({ daySeconds, dayCounts, totalSeconds, lastActivity })); } catch (e) { /* ignore */ }
+}
+
+// 日付ごとのコーチメッセージは、無ければ補完する程度で良い(ローカル優先)。
+function mergeCoachHistory(remote) {
+  const local = getCoachHistory();
+  const merged = { ...(remote || {}), ...local };
+  try { localStorage.setItem(COACH_HISTORY_LS, JSON.stringify(merged)); } catch (e) { /* ignore */ }
+}
+
+async function saveProgressToSheet() {
+  const url = getSheetUrl();
+  if (!url) return;
+  try {
+    await fetch(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'saveProgress', progress: collectLocalProgress() })
+    });
+  } catch (e) { /* オフライン等は無視。ローカルには保存済み */ }
+}
+
+// ページ表示時に一度だけ、スプレッドシート上の進捗データを取得してローカルへ
+// マージする(この端末だけの記録で終わらせず、他の端末の記録も取り込むため)。
+// マージ後はローカルの状態をそのままスプレッドシートへ書き戻し、他の端末が
+// 古いままにならないようにする。
+async function syncProgressFromSheet() {
+  const url = getSheetUrl();
+  if (!url) return;
+  try {
+    const data = await jsonpFetch(`${url}?action=getProgress`);
+    const remote = (data && data.progress) || {};
+    mergeAttempts(remote.attempts);
+    mergeDailyQuestions(remote.dailyQuestions);
+    mergeStudyLog(remote.studyLog);
+    mergeCoachHistory(remote.coachHistory);
+    renderStatsDashboard(statsWeekOffset);
+    renderHistorySidebar();
+    await saveProgressToSheet();
+  } catch (e) { /* ignore, ローカルのみで継続 */ }
+}
+
 const COACH_PROMPT = `あなたは、TOEIC800点を目指して勉強を続けている学習者専属のコーチです。現在の自己ベストは700点です。
 以下に、学習者が直近に勉強した日の記録(取り組んだ問題数・正誤・書いたノート・AIへの質問)を渡します。これを踏まえて日本語でメッセージを書いてください。
 
@@ -3014,6 +3113,7 @@ buildLandingNav();
 renderStatsDashboard();
 renderHistorySidebar();
 updateSheetConnectionBanner();
+syncProgressFromSheet();
 
 function chunk(arr, size) {
   const out = [];
