@@ -1318,7 +1318,7 @@ async function getAudioUrl(filename) {
   try {
     const index = await getAudioIndex();
     const id = index[filename];
-    if (!id) { lastAudioError = `音声ファイルが見つかりませんでした(${filename})。`; return null; }
+    if (!id) { lastAudioError = `音声ファイルが見つかりませんでした(${filename})。(一覧の総数: ${Object.keys(index).length}件)`; return null; }
     const token = await getValidAccessToken();
     const res = await fetch(`https://api.box.com/2.0/files/${id}/content`, {
       headers: { Authorization: `Bearer ${token}` }
