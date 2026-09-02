@@ -1486,7 +1486,14 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
     });
   }
 
-  async function playIndex(i) {
+  // iOS(iPad/iPhone。Chromeで開いても中身はSafariと同じエンジン)は、タップ操作から
+  // 間に通信(await)を挟んでからplay()を呼ぶと「ユーザー操作に紐付いていない」と
+  // みなして再生をブロックすることがある。この音声プレーヤーは再生前に毎回Box側へ
+  // 音声取得の通信を挟むため、この制限に引っかかりやすい。対策として、タップした
+  // その場でまず空のAudio要素に対してplay()を一度呼んでおき(primedAudio)、通信完了後は
+  // 新しいAudio要素を作らずこの同じ要素にsrcを設定してplay()し直す(iOSはタップ済みの
+  // 同じ要素であれば、後から遅れてのplay()も許可する)。
+  async function playIndex(i, primedAudio) {
     if (i >= list.length) { currentAudio = null; resetUI(); return; }
     toggleBtn.disabled = true;
     errorEl.style.display = 'none';
@@ -1498,7 +1505,8 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
       resetUI();
       return;
     }
-    currentAudio = new Audio(url);
+    currentAudio = primedAudio || new Audio();
+    currentAudio.src = url;
     currentAudio.playbackRate = playbackRate;
     globalAudio.current = currentAudio;
     attachEvents(currentAudio);
@@ -1506,14 +1514,21 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
       if (i === 0 && loopFirst) playIndex(0);
       else playIndex(i + 1);
     });
-    currentAudio.play();
-    toggleBtn.textContent = '❚❚';
+    currentAudio.play().then(() => {
+      toggleBtn.textContent = '❚❚';
+    }).catch(() => {
+      errorEl.textContent = '⚠ 音声の再生がブロックされました。もう一度▶ボタンを押してください。';
+      errorEl.style.display = 'block';
+      resetUI();
+    });
   }
 
   function playFromStart() {
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
     resetUI();
-    playIndex(0);
+    const primed = new Audio();
+    primed.play().catch(() => {});
+    playIndex(0, primed);
   }
 
   toggleBtn.addEventListener('click', () => {
@@ -1521,8 +1536,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
       currentAudio.pause();
       toggleBtn.textContent = '▶';
     } else if (currentAudio) {
-      currentAudio.play();
-      toggleBtn.textContent = '❚❚';
+      currentAudio.play().then(() => { toggleBtn.textContent = '❚❚'; }).catch(() => {});
     } else {
       playFromStart();
     }
