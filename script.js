@@ -535,7 +535,18 @@ function getSheetNotesCache() {
       // (「③ノート保存用スプレッドシート」に貼るコード参照。古いコードのままだと
       // JSONPに対応しておらず失敗するので、コードの貼り替え+再デプロイが必要)。
       sheetNotesCachePromise = jsonpFetch(`${url}?action=getNotes`)
-        .then(d => { sheetConnectionStatus = 'ok'; sheetConnectionError = ''; return (d && d.notes) || {}; })
+        .then(d => {
+          sheetConnectionStatus = 'ok'; sheetConnectionError = '';
+          const notes = (d && d.notes) || {};
+          // 個別の設問を開かなくても回答履歴のポップアップ等でノートの有無が
+          // すぐ分かるよう、取得したノートを一括でこの端末のlocalStorageにも
+          // 書き込んでおく(以前は個別に開いたノートしかlocalStorageに残らず、
+          // 一度も開いたことのない端末では「解説を見る」リンクが出なかった)。
+          Object.keys(notes).forEach(k => {
+            try { localStorage.setItem(NOTES_LS_PREFIX + k, notes[k]); } catch (e) { /* 保存容量オーバー等は無視 */ }
+          });
+          return notes;
+        })
         .catch(e => { sheetConnectionStatus = 'error'; sheetConnectionError = e.message; return {}; });
     }
   }
@@ -558,6 +569,9 @@ async function updateSheetConnectionBanner() {
   } else {
     el.style.display = 'none';
   }
+  // ノートが一括でlocalStorageに書き込まれた後なので、回答履歴欄の
+  // 「解説を見る」リンクの表示可否(ノートの有無判定)を最新化する。
+  renderHistorySidebar();
 }
 
 async function restoreNotesIfSaved(notesArea, cacheKey) {
