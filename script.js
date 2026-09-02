@@ -1289,7 +1289,7 @@ async function getAudioIndex() {
     );
     if (!res.ok) {
       const bodyText = await res.text().catch(() => '');
-      throw new Error(`音声ファイル一覧の取得に失敗しました(HTTP ${res.status}) ${bodyText.slice(0, 150)}`);
+      throw new Error(`音声ファイル一覧の取得に失敗しました(フォルダID:${AUDIO_FOLDER_ID} / HTTP ${res.status}) ${bodyText.slice(0, 500)}`);
     }
     const data = await res.json();
     if (!data.entries || data.entries.length === 0) break;
