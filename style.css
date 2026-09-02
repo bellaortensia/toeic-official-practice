@@ -764,6 +764,10 @@ audio{
    JS側のsanitizeNoteHtmlForDarkPopup(inline colorのみ対象)では拾えない。この暗い
    ポップアップの中でだけ、白寄りの色に上書きする。 */
 .history-note-popup .notes-entry-quote{color:#a9c9c1;}
+/* .notes-entry-body(ノート本文)は#000(黒)をクラス指定しているため、暗い背景の
+   このポップアップの中では黒文字に黒背景で読めなくなる。同じ理由でここだけ
+   明るい色に上書きする。 */
+.history-note-popup .notes-entry-body{color:#e8e8e8;}
 /* .ask-ai-answer-entry(AIに質問するの回答文)も同じ理由(var(--text-soft)は明るい
    背景前提の色でクラス指定のためJS側では拾えない)で、このポップアップの中だけ
    明るい色に上書きする。 */
