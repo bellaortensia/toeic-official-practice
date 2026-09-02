@@ -1278,16 +1278,30 @@ async function getAudioIndex() {
   const token = await getValidAccessToken();
   const map = {};
   let offset = 0;
+  let guard = 0;
   for (;;) {
+    guard++;
+    // 何らかの理由でtotal_countが正しく取得できずループが終わらない場合の保険。
+    if (guard > 50) throw new Error('音声ファイル一覧の取得回数が上限を超えました');
     const res = await fetch(
       `https://api.box.com/2.0/folders/${AUDIO_FOLDER_ID}/items?fields=name&limit=200&offset=${offset}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
+    if (!res.ok) {
+      const bodyText = await res.text().catch(() => '');
+      throw new Error(`音声ファイル一覧の取得に失敗しました(HTTP ${res.status}) ${bodyText.slice(0, 150)}`);
+    }
     const data = await res.json();
     if (!data.entries || data.entries.length === 0) break;
     data.entries.forEach(e => { map[e.name] = e.id; });
     offset += data.entries.length;
     if (offset >= data.total_count) break;
+  }
+  // 一覧が0件のまま終わった場合、個々のファイルを「見つかりません」と曖昧に
+  // 表示するより、この時点でまとめてエラーにした方が原因が分かりやすい
+  // (Boxフォルダへのアクセス権が無い、フォルダIDが違う等の可能性が高いため)。
+  if (Object.keys(map).length === 0) {
+    throw new Error('音声ファイル一覧が0件でした(Box側のフォルダへのアクセス権をご確認ください)');
   }
   audioIndexCache = map;
   return map;
