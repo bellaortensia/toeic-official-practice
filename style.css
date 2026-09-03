@@ -530,6 +530,10 @@ audio{
 .player-time{
   font-family:'JetBrains Mono',monospace;font-size:17px;color:var(--text-soft);min-width:48px;
 }
+.player-track-row{
+  display:flex;align-items:center;gap:15px;
+  flex:1 1 auto;min-width:0;
+}
 .player-track{
   flex:1 1 auto;height:9px;background:var(--line);border-radius:4px;overflow:hidden;
   cursor:pointer;position:relative;
@@ -1292,7 +1296,11 @@ audio{
      幅の狭い画面に収まらずはみ出すため、折り返し、再生速度ボタンは2行目に
      単独で回す。 */
   .audio-player{flex-wrap:wrap;row-gap:8px;}
-  .player-rate{flex:1 1 100%;justify-content:center;}
+  /* シークバー(再生位置)は、ボタン一式と横並びだと押しつぶされて細くなり
+     操作しづらいため、単独で1行まるごと使い、太さも少し確保する。 */
+  .player-track-row{flex:1 1 100%;order:1;}
+  .player-track{height:14px;}
+  .player-rate{flex:1 1 100%;justify-content:center;order:2;}
   /* 「今週の学習状況」カード(週間ナビ付き)などが2列だと窮屈になるため、
      幅の狭い画面では統計カードを1列に積む。 */
   .stats-grid{grid-template-columns:1fr;}
@@ -1300,4 +1308,15 @@ audio{
      幅の狭い画面ではラベルが折り返してボタンと詰まって見えるため、縦積みにする。 */
   .prev-study-header{grid-template-columns:1fr;justify-items:start;row-gap:8px;}
   .prev-study-playall{justify-self:start;}
+  /* Part6/7の本文テキスト表示は、周りの余白に関係なく画面の横幅いっぱいまで
+     広げる(いわゆるfull-bleed)。角丸・左右paddingはそのまま、画面端までは
+     はみ出させる。 */
+  .passage-text-view{
+    width:100vw;
+    max-width:100vw;
+    margin-left:calc(-50vw + 50%);
+    border-radius:0;
+    border-left:none;
+    border-right:none;
+  }
 }

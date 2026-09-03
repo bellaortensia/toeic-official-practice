@@ -1486,13 +1486,19 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
   rateWrap.appendChild(rateUpBtn);
   applyRate();
 
+  // 現在時刻+シークバー+合計時間をまとめておく(スマホ幅では.player-track-rowごと
+  // 折り返して1行まるごと使い、シークバーを操作しやすい太さで表示するため)。
+  const trackRow = document.createElement('div');
+  trackRow.className = 'player-track-row';
+  trackRow.appendChild(curTimeEl);
+  trackRow.appendChild(trackEl);
+  trackRow.appendChild(totalTimeEl);
+
   player.appendChild(restartBtn);
   player.appendChild(back5Btn);
   player.appendChild(toggleBtn);
   player.appendChild(loopBtn);
-  player.appendChild(curTimeEl);
-  player.appendChild(trackEl);
-  player.appendChild(totalTimeEl);
+  player.appendChild(trackRow);
   player.appendChild(rateWrap);
 
   // 再生に失敗した場合、無言で止まる代わりに理由を表示する(会社のネットワークで
