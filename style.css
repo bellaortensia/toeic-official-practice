@@ -972,7 +972,10 @@ audio{
 .stats-grid{
   flex:1 1 auto;
   display:grid;
-  grid-template-columns:1fr 1fr;
+  /* bareの1frは中身のmin-content分は縮められないため、幅の狭い画面で
+     カード内の週間ナビ等が原因で片方の列だけ極端に狭くなることがあった。
+     minmax(0,1fr)にして、必要なら中身が折り返す形で確実に半分ずつ分ける。 */
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
   gap:14px;
 }
 .stat-card{
@@ -1038,8 +1041,10 @@ audio{
 
 .week-nav{
   display:flex;
+  flex-wrap:wrap;
   align-items:center;
   justify-content:space-between;
+  gap:6px;
   margin-top:10px;
 }
 .week-nav-btn{
@@ -1243,4 +1248,7 @@ audio{
   header.app-header .header-save{top:0;right:0;}
   .stopwatch{position:static;transform:none;justify-content:center;margin-top:8px;}
   .practice-header{flex-wrap:wrap;}
+  /* 「今週の学習状況」カード(週間ナビ付き)などが2列だと窮屈になるため、
+     幅の狭い画面では統計カードを1列に積む。 */
+  .stats-grid{grid-template-columns:1fr;}
 }
