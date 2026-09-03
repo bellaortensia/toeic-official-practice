@@ -1054,6 +1054,7 @@ audio{
   border-radius:6px;
   padding:5px 12px;
   font-size:13px;
+  white-space:nowrap;
   cursor:pointer;
 }
 .week-nav-btn:hover:not(:disabled){background:var(--accent-2-soft);}
@@ -1110,8 +1111,10 @@ audio{
 }
 .coach-nav{
   display:flex;
+  flex-wrap:wrap;
   align-items:center;
   justify-content:space-between;
+  gap:6px;
   margin-top:10px;
 }
 .coach-nav-btn{
@@ -1121,6 +1124,7 @@ audio{
   border-radius:6px;
   padding:5px 12px;
   font-size:13px;
+  white-space:nowrap;
   cursor:pointer;
 }
 .coach-nav-btn:hover:not(:disabled){background:var(--accent-2-soft);}
