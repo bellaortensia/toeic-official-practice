@@ -974,8 +974,20 @@ function renderTranslateColumns(container, data, mode, notesArea, slash) {
   }
   // JA欄・EN欄どちらでクリックしても現在位置のポップアップが開閉する
   // (意訳モードでもJA側クリックで反応させる。ポップアップ自体は常にEN側に表示)。
-  enCol.addEventListener('click', revealCurrent);
-  jaCol.addEventListener('click', revealCurrent);
+  // スマホ等のタッチ端末はマウスホイールが発生せずチャンク送りができないため、
+  // タップされたチャンクへ直接ハイライトを移動させてから開閉する(タップした
+  // その場のチャンクをそのまま選べるようにする)。意訳モードのJA側(.natural-seg、
+  // 文単位で別の対応表を使う)は対象外で、今まで通りEN側の現在位置のまま開閉する。
+  function handleColClick(e) {
+    const segEl = e.target.closest('.chunk-seg');
+    if (segEl && segEl.dataset.seg != null) {
+      const idx = Number(segEl.dataset.seg);
+      if (!Number.isNaN(idx)) setSeg(idx);
+    }
+    revealCurrent();
+  }
+  enCol.addEventListener('click', handleColClick);
+  jaCol.addEventListener('click', handleColClick);
 
   wideWrap.appendChild(enCol);
   wideWrap.appendChild(jaCol);
@@ -4104,6 +4116,46 @@ async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, 
   nextBtn.textContent = '次へ';
 }
 
+// Part6/7の本文は基本的に公式PDFのページ画像で表示しているが、スマホ等の
+// 狭い画面だと文字が小さすぎて読めない。画像をタップすると、同じデータが
+// 持つテキスト版を画面幅いっぱいのテキストとして表示できるようにする
+// (もう一度タップすると画像表示に戻る)。
+function buildPassageImageWithTextToggle(src, alt, text) {
+  const wrap = document.createElement('div');
+  wrap.className = 'passage-photo-wrap';
+
+  const img = document.createElement('img');
+  img.src = src;
+  img.alt = alt || '本文';
+  img.className = 'passage-photo';
+  img.title = 'タップするとテキスト表示に切り替わります';
+
+  const textBox = document.createElement('div');
+  textBox.className = 'passage-text-view';
+  textBox.style.display = 'none';
+  textBox.textContent = text || '(テキストデータがありません)';
+  textBox.title = 'タップすると画像表示に戻ります';
+
+  const hint = document.createElement('div');
+  hint.className = 'passage-photo-hint';
+  hint.textContent = '👆 タップでテキスト表示に切り替え';
+
+  let showingText = false;
+  function toggle() {
+    showingText = !showingText;
+    img.style.display = showingText ? 'none' : 'block';
+    textBox.style.display = showingText ? 'block' : 'none';
+    hint.textContent = showingText ? '👆 タップで画像表示に戻る' : '👆 タップでテキスト表示に切り替え';
+  }
+  img.addEventListener('click', toggle);
+  textBox.addEventListener('click', toggle);
+
+  wrap.appendChild(img);
+  wrap.appendChild(textBox);
+  wrap.appendChild(hint);
+  return wrap;
+}
+
 function renderPart6() {
   saveAllVisibleNotes();
   initP67IfNeeded();
@@ -4126,11 +4178,7 @@ function renderPart6() {
   doc.className = 'doc-box';
   if (p.textImage) {
     doc.classList.add('has-photo');
-    const img = document.createElement('img');
-    img.src = p.textImage;
-    img.alt = p.topic || '本文';
-    img.className = 'passage-photo';
-    doc.appendChild(img);
+    doc.appendChild(buildPassageImageWithTextToggle(p.textImage, p.topic || '本文', p.text));
   } else {
     doc.textContent = p.text;
   }
@@ -4218,11 +4266,7 @@ function renderPart7() {
     docDiv.appendChild(lbl);
     if (doc.image) {
       docDiv.classList.add('has-photo');
-      const img = document.createElement('img');
-      img.src = doc.image;
-      img.alt = doc.label || '文書';
-      img.className = 'passage-photo';
-      docDiv.appendChild(img);
+      docDiv.appendChild(buildPassageImageWithTextToggle(doc.image, doc.label || '文書', doc.text));
     } else {
       const txt = document.createElement('div');
       txt.textContent = doc.text;

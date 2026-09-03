@@ -567,14 +567,34 @@ audio{
   background:var(--paper-2);
 }
 
+.passage-photo-wrap{width:100%;}
 .passage-photo{
   display:block;
   max-width:100%;
   margin:0 auto;
   border-radius:4px;
   background:var(--paper-2);
+  cursor:pointer;
 }
 .doc-box.has-photo{background:var(--paper-2);}
+.passage-text-view{
+  width:100%;
+  box-sizing:border-box;
+  background:var(--paper-2);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:16px 18px;
+  font-size:15.5px;
+  line-height:1.9;
+  white-space:pre-wrap;
+  cursor:pointer;
+}
+.passage-photo-hint{
+  text-align:center;
+  font-size:12px;
+  color:var(--text-soft);
+  margin-top:6px;
+}
 
 .training-wrap{padding:4px 0;}
 .training-title{
@@ -931,7 +951,13 @@ audio{
   gap:20px;
   align-items:stretch;
 }
-@media (max-width:720px){.dashboard-top{flex-direction:column;}}
+@media (max-width:720px){
+  .dashboard-top{flex-direction:column;}
+  /* 縦積みになると230pxはflex-basisとして高さ側に効いてしまい、中身(リング+
+     文字+ボタン)がその230pxに収まらない場合に表示が崩れることがあるため、
+     縦積み時は高さを内容に合わせて自動にする。 */
+  .week-ring-box{flex-basis:auto;}
+}
 
 .week-ring-box{
   flex:0 0 230px;
