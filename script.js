@@ -72,43 +72,6 @@ function getSheetUrl() {
   return localStorage.getItem(SHEET_URL_LS) || sheetUrlInput.value.trim();
 }
 
-// Google Apps ScriptのWeb App URLへ通常のfetch()でGETすると、レスポンスに
-// Access-Control-Allow-Originが付かずCORSでブロックされ「Failed to fetch」に
-// なることがある(URLをブラウザで直接開くと正常に見えるのに、fetch()経由だけ
-// 失敗するのはこれが原因)。<script>タグでの読み込みはCORSの対象外なので、
-// callbackパラメータでJSONPとして読み込むことでこれを回避する(doGet側の対応も必要。
-// 「Initial Setup」→「③ノート保存用スプレッドシート」に貼るコードで対応済み)。
-function jsonpFetch(url, timeoutMs) {
-  return new Promise((resolve, reject) => {
-    const cbName = 'toeicJsonp_' + Date.now() + '_' + Math.floor(Math.random() * 1e6);
-    const script = document.createElement('script');
-    let done = false;
-    function cleanup() {
-      delete window[cbName];
-      script.remove();
-    }
-    window[cbName] = data => {
-      done = true;
-      cleanup();
-      resolve(data);
-    };
-    script.onerror = () => {
-      if (done) return;
-      done = true;
-      cleanup();
-      reject(new Error('スプレッドシートへの通信でエラーが発生しました(URLが正しいか、デプロイが「全員」アクセス可能になっているかご確認ください)'));
-    };
-    script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cbName;
-    document.body.appendChild(script);
-    setTimeout(() => {
-      if (done) return;
-      done = true;
-      cleanup();
-      reject(new Error('スプレッドシートへの通信がタイムアウトしました'));
-    }, timeoutMs || 30000);
-  });
-}
-
 const copyGasBtn = document.getElementById('copyGasBtn');
 if (copyGasBtn) {
   copyGasBtn.addEventListener('click', () => {
@@ -531,11 +494,18 @@ function getSheetNotesCache() {
       sheetConnectionStatus = 'no-url';
       sheetNotesCachePromise = Promise.resolve({});
     } else {
-      // 通常のfetch()だとApps ScriptのCORS制限で失敗することがあるため、JSONP
-      // (<script>タグ経由)で読み込む。doGet側もcallbackパラメータに対応させてある
-      // (「③ノート保存用スプレッドシート」に貼るコード参照。古いコードのままだと
-      // JSONPに対応しておらず失敗するので、コードの貼り替え+再デプロイが必要)。
-      sheetNotesCachePromise = jsonpFetch(`${url}?action=getNotes`)
+      // 以前はCORS対策として<script>タグ経由のJSONPを使っていたが、これが逆に
+      // 一部の環境のセキュリティソフトに「外部コードの読み込み・実行」として
+      // 警戒され、ブロックされる原因になっていた(姉妹アプリdecode-toeicは同じ
+      // Apps Script方式でも素のfetch()を使っており、そちらは問題なく通ることが
+      // 確認できたため、fetch()に統一した)。
+      sheetNotesCachePromise = fetch(`${url}?action=getNotes`)
+        .then(async r => {
+          const bodyText = await r.text();
+          if (!r.ok) throw new Error(`HTTP ${r.status}: ${bodyText.slice(0, 300)}`);
+          try { return JSON.parse(bodyText); }
+          catch (e) { throw new Error(`JSON以外の応答が返ってきました: ${bodyText.slice(0, 300)}`); }
+        })
         .then(d => {
           sheetConnectionStatus = 'ok'; sheetConnectionError = '';
           const notes = (d && d.notes) || {};
@@ -2373,7 +2343,8 @@ async function syncProgressFromSheet() {
   const url = getSheetUrl();
   if (!url) return;
   try {
-    const data = await jsonpFetch(`${url}?action=getProgress`);
+    const res = await fetch(`${url}?action=getProgress`);
+    const data = await res.json();
     const remote = (data && data.progress) || {};
     mergeAttempts(remote.attempts);
     mergeDailyQuestions(remote.dailyQuestions);
