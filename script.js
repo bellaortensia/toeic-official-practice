@@ -4,6 +4,7 @@ const REDIRECT_URI = 'https://bellaortensia.github.io/toeic-official-practice/';
 const AUDIO_FOLDER_ID = '409318407954';
 
 const loginBtn = document.getElementById('login-btn');
+const logoutBtn = document.getElementById('logout-btn');
 const statusEl = document.getElementById('status');
 const resultEl = document.getElementById('result');
 
@@ -104,7 +105,7 @@ function jsonpFetch(url, timeoutMs) {
       done = true;
       cleanup();
       reject(new Error('スプレッドシートへの通信がタイムアウトしました'));
-    }, timeoutMs || 15000);
+    }, timeoutMs || 30000);
   });
 }
 
@@ -1239,6 +1240,21 @@ async function getValidAccessToken() {
 
 function updateButtons() {
   loginBtn.style.display = isLoggedIn() ? 'none' : 'inline-block';
+  if (logoutBtn) logoutBtn.style.display = isLoggedIn() ? 'inline-block' : 'none';
+}
+
+// この端末に保存されているBoxのトークンだけを消す(box.com側のブラウザセッションは
+// 別物なので、こちらは消えない)。複数のBoxアカウントを使い分けている場合に、
+// 別アカウントでログインし直すために使う。
+if (logoutBtn) {
+  logoutBtn.addEventListener('click', () => {
+    localStorage.removeItem('box_access_token');
+    localStorage.removeItem('box_refresh_token');
+    localStorage.removeItem('box_token_expires_at');
+    audioIndexCache = null;
+    statusEl.textContent = 'ログアウトしました。「Boxにログイン」から別のアカウントでログインし直せます(box.com側に前のアカウントのログインが残っている場合、そちらも別タブでログアウトしてからだと確実です)。';
+    updateButtons();
+  });
 }
 
 // 「ログイン済み」の判定はアプリが保存しているトークンの有無で行っているため、
