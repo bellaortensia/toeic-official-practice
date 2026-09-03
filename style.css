@@ -1247,7 +1247,16 @@ audio{
   header.app-header{gap:10px;padding-top:40px;}
   header.app-header .header-save{top:0;right:0;}
   .stopwatch{position:static;transform:none;justify-content:center;margin-top:8px;}
+  /* part-jump-selectも本来はデスクトップ幅を前提に左端へ絶対配置しているため、
+     画面が狭いと中央寄せのnav-clusterと重なってしまう。stopwatchと同様、
+     通常のフローに戻して縦積みにする。 */
+  .part-jump-select{position:static;transform:none;max-width:100%;margin-bottom:8px;}
   .practice-header{flex-wrap:wrap;}
+  /* 1.5倍サイズにした音声プレーヤーは、ボタン一式+再生速度ボタンが横一列だと
+     幅の狭い画面に収まらずはみ出すため、折り返し、再生速度ボタンは2行目に
+     単独で回す。 */
+  .audio-player{flex-wrap:wrap;row-gap:8px;}
+  .player-rate{flex:1 1 100%;justify-content:center;}
   /* 「今週の学習状況」カード(週間ナビ付き)などが2列だと窮屈になるため、
      幅の狭い画面では統計カードを1列に積む。 */
   .stats-grid{grid-template-columns:1fr;}
