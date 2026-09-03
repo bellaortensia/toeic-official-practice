@@ -1264,4 +1264,8 @@ audio{
   /* 「今週の学習状況」カード(週間ナビ付き)などが2列だと窮屈になるため、
      幅の狭い画面では統計カードを1列に積む。 */
   .stats-grid{grid-template-columns:1fr;}
+  /* 「前回学習した問題」の見出し行(ラベル|まとめて再生ボタン|余白の3列)も、
+     幅の狭い画面ではラベルが折り返してボタンと詰まって見えるため、縦積みにする。 */
+  .prev-study-header{grid-template-columns:1fr;justify-items:start;row-gap:8px;}
+  .prev-study-playall{justify-self:start;}
 }
