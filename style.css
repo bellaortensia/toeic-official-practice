@@ -806,6 +806,10 @@ audio{
 
 @media (max-width:720px){
   .empty-state-layout{flex-direction:column;}
+  /* .empty-state-layoutはalign-items:flex-start(内容に応じた幅)のため、
+     縦積みになるこの幅では.empty-state-mainも中身(長い英文等)の幅に
+     引きずられて広がってしまう。明示的に幅いっぱいに固定する。 */
+  .empty-state-main{width:100%;}
   .history-sidebar{
     max-width:100%;
     width:100%;
@@ -1186,6 +1190,7 @@ audio{
   display:flex;
   flex-direction:column;
   gap:8px;
+  min-width:0;
 }
 .prev-study-empty{
   font-size:13px;
@@ -1210,6 +1215,7 @@ audio{
   display:flex;
   align-items:center;
   gap:10px;
+  min-width:0;
 }
 .prev-study-play{
   flex:0 0 auto;
