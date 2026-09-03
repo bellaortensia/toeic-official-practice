@@ -1241,9 +1241,32 @@ function updateButtons() {
   loginBtn.style.display = isLoggedIn() ? 'none' : 'inline-block';
 }
 
-function updateStatus() {
-  statusEl.textContent = isLoggedIn() ? 'Boxにログイン済みです。' : '未ログインです。';
+// 「ログイン済み」の判定はアプリが保存しているトークンの有無で行っているため、
+// ブラウザのbox.com側のログイン状態(Cookie)とは無関係。複数のBoxアカウントを
+// 使い分けている場合に「実際どのアカウントに繋がっているか」が分かるよう、
+// ログイン中は/users/meで現在のアカウントのメールアドレスも取得して表示する。
+async function updateStatus() {
+  if (!isLoggedIn()) {
+    statusEl.textContent = '未ログインです。';
+    updateButtons();
+    return;
+  }
+  statusEl.textContent = 'Boxにログイン済みです。(アカウント確認中...)';
   updateButtons();
+  try {
+    const token = await getValidAccessToken();
+    const res = await fetch('https://api.box.com/2.0/users/me?fields=name,login', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (res.ok) {
+      const me = await res.json();
+      statusEl.textContent = `Boxにログイン済みです。(アカウント: ${me.login || me.name || '不明'})`;
+    } else {
+      statusEl.textContent = 'Boxにログイン済みです。(アカウント情報の取得に失敗しました)';
+    }
+  } catch (e) {
+    statusEl.textContent = 'Boxにログイン済みです。(アカウント情報の取得に失敗しました)';
+  }
 }
 
 async function handleRedirect() {
