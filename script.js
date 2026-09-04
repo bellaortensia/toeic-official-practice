@@ -86,18 +86,29 @@ if (copyGasBtn) {
 
 const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 
+function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+
 // 無料キーでリクエストし、利用上限(429)に達した場合のみ有料キーへ自動フォールバック
 // する(decode-toeicと同じ方式)。両方試して全て失敗した場合は最後のレスポンスを返す。
+// また、Gemini APIは「モデルが混雑中です」という503を返すことがあり、Google自身の
+// エラーメッセージも「しばらくしてから再試行してください」と案内している。多くの
+// 場合は数秒待って再試行すれば成功するため、503のときだけ同じ鍵のまま短い間隔を
+// 空けて最大3回まで自動リトライする(503のリトライを使い切ってもまだ失敗する場合は、
+// そのままエラーとして返す)。
 async function fetchGeminiWithFailover(url, body) {
   const keys = [getGeminiKey(), getGeminiPaidKey()].filter(Boolean);
   if (!keys.length) throw new Error('Gemini APIキーが設定されていません');
   let res = null;
   for (let i = 0; i < keys.length; i++) {
-    res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': keys[i] },
-      body: JSON.stringify(body)
-    });
+    for (let attempt = 0; attempt < 3; attempt++) {
+      res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-goog-api-key': keys[i] },
+        body: JSON.stringify(body)
+      });
+      if (res.ok || res.status !== 503) break;
+      if (attempt < 2) await sleep(1200 * (attempt + 1));
+    }
     if (res.ok || res.status !== 429 || i === keys.length - 1) return res;
   }
   return res;
@@ -3642,11 +3653,11 @@ function renderPart1or2() {
   const wrap = document.createElement('div');
   wrap.className = 'q-block';
 
+  // 話者の国旗バッジは、設問文の段階ではまだ出さず、解説が表示された時点で
+  // 初めて出す(buildP12ExplainHtml側で■設問文/■選択肢の見出し横に付与している)。
   const title = document.createElement('div');
   title.className = 'q-text';
   title.textContent = `Q${q.number}`;
-  if (isPart1 && q.speaker) title.appendChild(buildSpeakerBadges(q.speaker));
-  else if (!isPart1 && q.speakers) title.appendChild(buildSpeakerBadges(q.speakers));
   wrap.appendChild(title);
 
   if (isPart1 && q.image) {
@@ -3657,7 +3668,7 @@ function renderPart1or2() {
     wrap.appendChild(img);
   }
 
-  wrap.appendChild(createAudioPlayerWidget(q.audio, { autoplay: true, sticky: !isPart1 }));
+  wrap.appendChild(createAudioPlayerWidget(q.audio, { autoplay: true, sticky: true }));
 
   const choiceTexts = isPart1 ? q.statements : q.responses;
   const letters = Object.keys(choiceTexts);
@@ -3775,11 +3786,12 @@ function renderPart3or4() {
     return;
   }
 
+  // 話者の国旗バッジは設問文の段階ではまだ出さず、解説が表示された時点で
+  // 初めて各設問の見出し(t)横に付与する(下の採点処理内を参照)。
   const wrap = document.createElement('div');
   const audioLabel = document.createElement('div');
   audioLabel.className = 'audio-label';
   audioLabel.textContent = `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`;
-  if (g.speakers) audioLabel.appendChild(buildSpeakerBadges(g.speakers));
   wrap.appendChild(audioLabel);
   wrap.appendChild(createAudioPlayerWidget([g.audioConversation || g.audioTalk, g.audioQuestions], { autoplay: true, sticky: true }));
   if (g.graphicImage) {
@@ -3807,7 +3819,6 @@ function renderPart3or4() {
     const t = document.createElement('div');
     t.className = 'q-text';
     t.textContent = `${item.number}. ${item.text}`;
-    if (g.speakers) t.appendChild(buildSpeakerBadges(g.speakers));
     block.appendChild(t);
 
     const choicesDiv = document.createElement('div');
@@ -3836,7 +3847,7 @@ function renderPart3or4() {
     const pdfSlot = document.createElement('div');
     block.appendChild(pdfSlot);
 
-    blocks[item.number] = { choicesDiv, explainDiv, letters, askAiSlot, pdfSlot };
+    blocks[item.number] = { t, choicesDiv, explainDiv, letters, askAiSlot, pdfSlot };
     blocksContainer.appendChild(block);
   });
   wrap.appendChild(wrapWithGroupHistorySidebar(blocksContainer, state.test, g.questions));
@@ -3852,7 +3863,7 @@ function renderPart3or4() {
       nextBtn.disabled = true;
       nextBtn.textContent = '採点中...';
       g.items.forEach(item => {
-        const { choicesDiv, explainDiv, letters } = blocks[item.number];
+        const { t, choicesDiv, explainDiv, letters } = blocks[item.number];
         const isCorrect = p34.selections[item.number] === item.answer;
         const buttons = choicesDiv.querySelectorAll('.choice');
         buttons.forEach((b, i) => {
@@ -3860,6 +3871,8 @@ function renderPart3or4() {
           if (letters[i] === item.answer) b.classList.add('correct');
           else if (letters[i] === p34.selections[item.number]) b.classList.add('wrong');
         });
+        // 話者の国旗バッジは、解説が表示されるこのタイミングで初めて付与する。
+        if (g.speakers) t.appendChild(buildSpeakerBadges(g.speakers));
         explainDiv.style.display = 'block';
         explainDiv.textContent = (isCorrect ? '正解です!\n\n' : '不正解です。\n\n') + '解説を生成中...';
       });
@@ -4211,7 +4224,7 @@ function renderPart6() {
       );
       if (p.audio) {
         audioSlot.style.display = 'block';
-        audioSlot.appendChild(createAudioPlayerWidget(p.audio, {}));
+        audioSlot.appendChild(createAudioPlayerWidget(p.audio, { sticky: true }));
       }
       translateSlot.style.display = 'block';
       translateSlot.appendChild(buildTranslatableBlock(p.text, `${state.test}-6-${p.questions[0]}`));
@@ -4307,7 +4320,7 @@ function renderPart7() {
       );
       if (p.audio) {
         audioSlot.style.display = 'block';
-        audioSlot.appendChild(createAudioPlayerWidget(p.audio, {}));
+        audioSlot.appendChild(createAudioPlayerWidget(p.audio, { sticky: true }));
       }
       translateSlots.forEach(({ slot, doc, di }) => {
         slot.style.display = 'block';

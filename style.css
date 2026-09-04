@@ -264,37 +264,38 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
   line-height:1.6;
 }
 
+/* 1.75倍サイズ(旧: flag幅16px / gender 11px / arrow 12px)。 */
 .speaker-badges{
   display:inline-flex;
   align-items:center;
-  gap:6px;
-  margin-left:10px;
+  gap:10px;
+  margin-left:14px;
   vertical-align:middle;
 }
 .speaker-badge{
   display:inline-flex;
   align-items:center;
-  gap:3px;
+  gap:5px;
   background:#faf7ee;
   border:1px solid var(--line);
-  border-radius:6px;
-  padding:2px 6px;
+  border-radius:8px;
+  padding:4px 10px;
   font-weight:700;
 }
 .speaker-flag{
-  width:16px;
+  width:28px;
   height:auto;
   display:block;
-  border-radius:2px;
+  border-radius:3px;
 }
 .speaker-gender{
   font-family:'JetBrains Mono',monospace;
-  font-size:11px;
+  font-size:19px;
   color:var(--text-soft);
 }
 .speaker-arrow{
   color:var(--text-soft);
-  font-size:12px;
+  font-size:21px;
 }
 
 .choice{
