@@ -60,6 +60,21 @@ function getGeminiPaidKey() {
   return localStorage.getItem(GEMINI_PAID_KEY_LS) || geminiPaidKeyInput.value.trim();
 }
 
+// 使用するAIモデル(「Initial Setup」→「②Gemini APIキー」のドロップダウンで選択)。
+// このアプリ専用の設定として保存する(decode-toeicとは共有しない)。未選択時は
+// gemini-3.5-flash-lite(高速・低コスト)をデフォルトとする。
+const GEMINI_MODEL_LS = 'toeicOfficialPractice.geminiModel';
+const DEFAULT_GEMINI_MODEL = 'gemini-3.5-flash-lite';
+const geminiModelSelect = document.getElementById('geminiModelSelect');
+const savedGeminiModel = localStorage.getItem(GEMINI_MODEL_LS);
+if (geminiModelSelect && savedGeminiModel) geminiModelSelect.value = savedGeminiModel;
+if (geminiModelSelect) {
+  geminiModelSelect.addEventListener('change', () => localStorage.setItem(GEMINI_MODEL_LS, geminiModelSelect.value));
+}
+function getGeminiModel() {
+  return localStorage.getItem(GEMINI_MODEL_LS) || (geminiModelSelect && geminiModelSelect.value) || DEFAULT_GEMINI_MODEL;
+}
+
 // ---------- ノート保存用スプレッドシート(decode-toeicと同じApps Script Web Appブリッジ方式) ----------
 
 const SHEET_URL_LS = 'toeicOfficialPractice.sheetUrl';
@@ -83,8 +98,6 @@ if (copyGasBtn) {
     });
   });
 }
-
-const GEMINI_MODEL = 'gemini-3.5-flash-lite';
 
 function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
@@ -115,7 +128,7 @@ async function fetchGeminiWithFailover(url, body) {
 }
 
 async function callGemini(systemPrompt, userText, options = {}) {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${getGeminiModel()}:generateContent`;
   const body = {
     systemInstruction: { parts: [{ text: systemPrompt }] },
     contents: [{ role: 'user', parts: [{ text: userText }] }],
@@ -203,6 +216,32 @@ async function getRichExplanation(cacheKey, questionText, promptOverride, versio
   const html = formatRichExplainHtml(parsed.explainText || outText, parsed.keyPhraseQuotes || []);
   try { localStorage.setItem(lsKey, html); } catch (e) { /* 保存容量オーバー等は無視 */ }
   return html;
+}
+
+// AI解説の取得に失敗した場合、無言でエラー文を出したまま終わらせるのではなく
+// 「🔄 再取得」ボタンを添えて再試行できるようにする(Part3/4/5/6/7で共通利用)。
+// prefixHtmlは正解/不正解バナーなど、解説の前に常に表示する部分のHTML。
+// fetchExplanation()は解説HTML文字列を返す関数(失敗時は例外を投げる)。
+async function renderExplanationWithRetry(explainDiv, prefixHtml, fetchExplanation) {
+  try {
+    const explanation = await fetchExplanation();
+    explainDiv.innerHTML = prefixHtml + explanation;
+  } catch (e) {
+    explainDiv.innerHTML = prefixHtml;
+    const errDiv = document.createElement('div');
+    errDiv.className = 'explain-error';
+    errDiv.textContent = `解説の取得に失敗しました: ${e.message}`;
+    const retryBtn = document.createElement('button');
+    retryBtn.type = 'button';
+    retryBtn.className = 'reveal-btn explain-retry-btn';
+    retryBtn.textContent = '🔄 再取得';
+    retryBtn.addEventListener('click', () => {
+      explainDiv.textContent = '解説を生成中...';
+      renderExplanationWithRetry(explainDiv, prefixHtml, fetchExplanation);
+    });
+    explainDiv.appendChild(errDiv);
+    explainDiv.appendChild(retryBtn);
+  }
 }
 
 // ■=太字、★=赤字太字、▲=青字(選択肢全訳)、①②③...直後の「引用」=赤字+下線、
@@ -705,8 +744,16 @@ function buildAskAiWidget(questionContext, noteKey) {
   const btn = document.createElement('button');
   btn.className = 'mode-toggle-btn';
   btn.textContent = '質問する';
+  // 直前の質問が失敗したときだけ、質問するボタンの右横に再取得ボタンを出す
+  // (同じ質問をもう一度入力し直さなくても再試行できるように)。
+  const retryBtn = document.createElement('button');
+  retryBtn.type = 'button';
+  retryBtn.className = 'mode-toggle-btn ask-ai-retry-btn';
+  retryBtn.textContent = '🔄 再取得';
+  retryBtn.style.display = 'none';
   row.appendChild(input);
   row.appendChild(btn);
+  row.appendChild(retryBtn);
   wrap.appendChild(row);
 
   const answerArea = document.createElement('div');
@@ -734,24 +781,44 @@ function buildAskAiWidget(questionContext, noteKey) {
     return aDiv;
   }
 
-  async function ask() {
-    const q = input.value.trim();
-    if (!q) return;
-    input.value = '';
+  let lastFailedQuestion = null;
+  let lastFailedDiv = null;
+
+  async function runQuestion(q, aDiv) {
     btn.disabled = true;
     btn.textContent = '質問中...';
     answerArea.style.display = 'block';
-    const aDiv = appendEntry(q, '回答を生成中...');
     try {
       aDiv.textContent = await askAiAboutQuestion(questionContext, q);
+      lastFailedQuestion = null;
+      lastFailedDiv = null;
+      retryBtn.style.display = 'none';
     } catch (e) {
       aDiv.textContent = '回答の取得に失敗しました: ' + e.message;
+      lastFailedQuestion = q;
+      lastFailedDiv = aDiv;
+      retryBtn.style.display = 'inline-block';
     }
     btn.disabled = false;
     btn.textContent = '質問する';
   }
+
+  async function ask() {
+    const q = input.value.trim();
+    if (!q) return;
+    input.value = '';
+    retryBtn.style.display = 'none';
+    await runQuestion(q, appendEntry(q, '回答を生成中...'));
+  }
   btn.addEventListener('click', ask);
   input.addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+  retryBtn.addEventListener('click', () => {
+    if (!lastFailedQuestion || !lastFailedDiv) return;
+    const q = lastFailedQuestion, aDiv = lastFailedDiv;
+    aDiv.textContent = '回答を生成中...';
+    retryBtn.style.display = 'none';
+    runQuestion(q, aDiv);
+  });
 
   return wrap;
 }
@@ -975,14 +1042,6 @@ function renderTranslateColumns(container, data, mode, notesArea, slash) {
     e.preventDefault();
     setSeg((curSeg < 0 ? 0 : curSeg) + (e.deltaY > 0 ? 1 : -1));
   }, { passive: false });
-  // ノート欄の上でホイールを回したときも、EN/JA欄の上と同じくハイライトが
-  // 切り替わるようにする(ノートを見ながらでもチャンクを送れるように)。
-  if (notesArea) {
-    notesArea.addEventListener('wheel', e => {
-      e.preventDefault();
-      setSeg((curSeg < 0 ? 0 : curSeg) + (e.deltaY > 0 ? 1 : -1));
-    }, { passive: false });
-  }
   // JA欄・EN欄どちらでクリックしても現在位置のポップアップが開閉する
   // (意訳モードでもJA側クリックで反応させる。ポップアップ自体は常にEN側に表示)。
   // スマホ等のタッチ端末はマウスホイールが発生せずチャンク送りができないため、
@@ -3882,13 +3941,8 @@ function renderPart3or4() {
         const isCorrect = p34.selections[item.number] === item.answer;
         const prefixHtml = correctBannerHtml(isCorrect);
         const questionText = `${transcriptText ? `会話・トークの原文:\n${transcriptText}\n\n` : ''}${item.number}. ${item.text}\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}\nあなたの回答: (${p34.selections[item.number]}) ${item.choices[p34.selections[item.number]]}`;
-        let html;
-        try {
-          html = prefixHtml + await getRichExplanation(`${state.test}-${state.part}-${item.number}-${p34.selections[item.number]}`, questionText);
-        } catch (e) {
-          html = prefixHtml + `<div>解説の取得に失敗しました: ${escapeHtml(e.message)}</div>`;
-        }
-        explainDiv.innerHTML = html;
+        await renderExplanationWithRetry(explainDiv, prefixHtml, () =>
+          getRichExplanation(`${state.test}-${state.part}-${item.number}-${p34.selections[item.number]}`, questionText));
         askAiSlot.appendChild(buildAskAiWidget(questionText, `${state.test}-${state.part}-${item.number}`));
         pdfSlot.appendChild(buildPdfExplainWidget(state.test, item.number));
       }
@@ -4000,11 +4054,8 @@ function renderPart5() {
       const isCorrect = selections[q.number] === q.answer;
       const prefixHtml = correctBannerHtml(isCorrect);
       const questionText = `${q.number}. ${q.sentence}\n選択肢: ${Object.entries(q.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${q.answer}) ${q.choices[q.answer]}\nあなたの回答: (${selections[q.number]}) ${q.choices[selections[q.number]]}`;
-      try {
-        explainDiv.innerHTML = prefixHtml + await getRichExplanation(`${state.test}-5-${q.number}-${selections[q.number]}`, questionText, EXPLAIN_PROMPT_PART5, EXPLAIN_PROMPT_PART5_VERSION);
-      } catch (e) {
-        explainDiv.innerHTML = prefixHtml + `<div>解説の取得に失敗しました: ${escapeHtml(e.message)}</div>`;
-      }
+      await renderExplanationWithRetry(explainDiv, prefixHtml, () =>
+        getRichExplanation(`${state.test}-5-${q.number}-${selections[q.number]}`, questionText, EXPLAIN_PROMPT_PART5, EXPLAIN_PROMPT_PART5_VERSION));
       askAiSlot.appendChild(buildAskAiWidget(questionText, `${state.test}-5-${q.number}`));
       pdfSlot.appendChild(buildPdfExplainWidget(state.test, q.number));
     }
@@ -4116,13 +4167,8 @@ async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, 
     const { explainDiv, askAiSlot, pdfSlot } = blocks[item.number];
     const isCorrect = p67.selections[item.number] === item.answer;
     const prefixHtml = correctBannerHtml(isCorrect);
-    let html;
-    try {
-      html = prefixHtml + await getRichExplanation(cacheKeyBuilder(item), questionTextBuilder(item));
-    } catch (e) {
-      html = prefixHtml + `<div>解説の取得に失敗しました: ${escapeHtml(e.message)}</div>`;
-    }
-    explainDiv.innerHTML = html;
+    await renderExplanationWithRetry(explainDiv, prefixHtml, () =>
+      getRichExplanation(cacheKeyBuilder(item), questionTextBuilder(item)));
     askAiSlot.appendChild(buildAskAiWidget(questionTextBuilder(item), `${state.test}-${state.part}-${item.number}`));
     pdfSlot.appendChild(buildPdfExplainWidget(state.test, item.number));
   }

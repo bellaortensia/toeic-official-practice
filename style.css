@@ -85,11 +85,11 @@ details.help .sub-details summary{font-size:13px;}
 .setup-fields{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0 16px;}
 .setup-fields .field{flex:1 1 200px;min-width:0;}
 .setup-fields label{font-size:11px;color:#9aa6b0;font-family:'JetBrains Mono',monospace;}
-.setup-fields input{
+.setup-fields input,.setup-fields select{
   background:#10151b;border:1px solid #333f4b;color:var(--paper);border-radius:6px;
   padding:8px 10px;font-size:13px;font-family:'JetBrains Mono',monospace;width:100%;
 }
-.setup-fields input:focus{outline:2px solid var(--accent);border-color:transparent;}
+.setup-fields input:focus,.setup-fields select:focus{outline:2px solid var(--accent);border-color:transparent;}
 details.help .hint{font-size:11.5px;color:#9aa6b0;line-height:1.6;}
 details.help .hint a{color:var(--accent);}
 details.help ol, details.help ul{padding-left:18px;line-height:1.9;font-size:13px;color:#c7cfd6;}
@@ -338,6 +338,8 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
   background:none;color:var(--accent-2);border:1px solid var(--accent-2);
   font-size:12.5px;padding:6px 14px;font-weight:700;
 }
+.explain-error{color:var(--danger, #c1503f);margin-bottom:8px;}
+.explain-retry-btn{display:block;}
 .reveal-btn:hover{background:var(--accent-2-soft);filter:none;}
 
 header.app-header .header-save{position:absolute;top:0;right:0;}
@@ -389,12 +391,17 @@ audio{
 }
 @media (max-width:640px){.translate-wide{grid-template-columns:1fr;}}
 .translate-col{
-  font-size:17px;
+  font-size:18px;
   line-height:1.9;
 }
+/* ワイドモード(EN/JAを縦積みにして全幅表示)のときだけ、開始・終了に1行分の
+   余白を設ける。この余白部分にマウスを乗せてホイールを回してもハイライトが
+   切り替わる(wideWrapのwheelイベントは子要素の余白部分でも発火するため、
+   JS側の追加対応なしにこのCSSの余白だけで実現できる)。 */
+.translate-box.wide-mode .translate-col{padding-top:1.9em;padding-bottom:1.9em;}
 .translate-col-en{border-right:1px dashed var(--line);padding-right:14px;}
 @media (max-width:640px){.translate-col-en{border-right:none;border-bottom:1px dashed var(--line);padding-right:0;padding-bottom:10px;margin-bottom:6px;}}
-.translate-box.wide-mode .translate-col-en{border-right:none;border-bottom:1px dashed var(--line);padding-right:0;padding-bottom:10px;margin-bottom:6px;}
+.translate-box.wide-mode .translate-col-en{border-right:none;border-bottom:1px dashed var(--line);padding-right:0;padding-bottom:1.9em;margin-bottom:6px;}
 .chunk-seg{
   cursor:pointer;
   border-radius:3px;
@@ -438,7 +445,8 @@ audio{
 .translate-error{color:var(--danger);font-size:13px;}
 
 .translate-block{margin:10px 0;}
-.translate-box{position:relative;}
+/* .doc-boxの標準背景(#faf7ee、ベージュ寄り)より白っぽくする。 */
+.translate-box{position:relative;background:#fdfcf7;}
 .translate-controls{
   display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px;
 }
@@ -450,7 +458,7 @@ audio{
 .mode-toggle-btn:hover{background:var(--accent-2-soft);filter:none;}
 .mode-toggle-btn:disabled{opacity:.4;filter:none;}
 .translate-box.wide-mode .translate-wide{grid-template-columns:1fr;}
-.translate-box.tall-mode .translate-col{font-size:19px;line-height:2.3;}
+.translate-box.tall-mode .translate-col{font-size:20px;line-height:2.3;}
 
 .notes-wrap{margin-top:4px;}
 .notes-label{
