@@ -742,6 +742,20 @@ audio{
 }
 .history-item:hover .history-item-delete{opacity:1;}
 .history-item-delete:hover{color:var(--danger);filter:none;}
+.history-next-page-btn{
+  display:block;
+  width:100%;
+  margin-top:8px;
+  padding:8px;
+  background:none;
+  border:1px dashed var(--line);
+  border-radius:6px;
+  color:var(--accent-2);
+  font-size:12px;
+  font-weight:700;
+  cursor:pointer;
+}
+.history-next-page-btn:hover{background:var(--accent-2-soft);filter:none;}
 
 .history-delete-confirm{
   position:absolute;

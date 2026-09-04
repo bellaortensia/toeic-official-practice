@@ -2096,19 +2096,11 @@ function deleteAttemptEntry(key) {
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
 }
 
-function renderHistorySidebar() {
-  const listEl = document.getElementById('historySidebarList');
-  if (!listEl) return;
-  const items = buildAnswerHistoryList();
-  listEl.innerHTML = '';
-  historyPopupPinnedRow = null;
-  hideHistoryNotePopup();
-  hideDeleteConfirm();
-  if (!items.length) {
-    listEl.innerHTML = '<p class="history-sidebar-empty">まだ解いた問題がありません。</p>';
-    return;
-  }
-  items.forEach(item => {
+// 1週間より前の履歴を、何件ずつ「次ページ」ボタンで読み込むか。
+const HISTORY_PAGE_SIZE = 30;
+
+// 履歴1件ぶんの行DOMを組み立てる(トップ画面の回答履歴欄用)。
+function buildHistoryRow(item) {
     const row = document.createElement('div');
     row.className = 'history-item';
     const label = document.createElement('span');
@@ -2174,8 +2166,51 @@ function renderHistorySidebar() {
         }
       });
     }
-    listEl.appendChild(row);
+    return row;
+}
+
+// トップ画面の回答履歴欄。直近1週間分はまとめて表示し、それより前の記録は
+// 「次ページ」ボタンを押すまでDOMに作らない(件数が積み重なってもリストが
+// 重くならないよう、古い履歴は明示的に読み込むまで生成しない)。
+function renderHistorySidebar() {
+  const listEl = document.getElementById('historySidebarList');
+  if (!listEl) return;
+  const items = buildAnswerHistoryList();
+  listEl.innerHTML = '';
+  historyPopupPinnedRow = null;
+  hideHistoryNotePopup();
+  hideDeleteConfirm();
+  if (!items.length) {
+    listEl.innerHTML = '<p class="history-sidebar-empty">まだ解いた問題がありません。</p>';
+    return;
+  }
+  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const recentItems = items.filter(it => it.lastAt >= oneWeekAgo);
+  const olderItems = items.filter(it => it.lastAt < oneWeekAgo);
+
+  recentItems.forEach(item => listEl.appendChild(buildHistoryRow(item)));
+
+  if (!olderItems.length) return;
+  let olderShownCount = 0;
+  const nextPageBtn = document.createElement('button');
+  nextPageBtn.type = 'button';
+  nextPageBtn.className = 'history-next-page-btn';
+  function updateNextPageBtnLabel() {
+    const remaining = olderItems.length - olderShownCount;
+    nextPageBtn.textContent = `次ページ(1週間より前の履歴、残り${remaining}件)`;
+  }
+  updateNextPageBtnLabel();
+  nextPageBtn.addEventListener('click', () => {
+    nextPageBtn.remove();
+    const pageItems = olderItems.slice(olderShownCount, olderShownCount + HISTORY_PAGE_SIZE);
+    pageItems.forEach(item => listEl.appendChild(buildHistoryRow(item)));
+    olderShownCount += pageItems.length;
+    if (olderShownCount < olderItems.length) {
+      updateNextPageBtnLabel();
+      listEl.appendChild(nextPageBtn);
+    }
   });
+  listEl.appendChild(nextPageBtn);
 }
 
 // ---------- 学習ログ(総学習時間・今週の学習状況・総学習回数・連続学習日数) ----------
@@ -2444,22 +2479,51 @@ async function syncProgressFromSheet() {
   } catch (e) { /* ignore, ローカルのみで継続 */ }
 }
 
-const COACH_PROMPT = `あなたは、TOEIC800点を目指して勉強を続けている学習者専属のコーチです。現在の自己ベストは700点です。
-以下に、学習者が直近に勉強した日の記録(取り組んだ問題数・正誤・書いたノート・AIへの質問)を渡します。これを踏まえて日本語でメッセージを書いてください。
+const COACH_PROMPT = `あなたは、TOEICの得点アップを目指して勉強を続けている学習者専属のコーチです。
+以下に、学習者が直近に勉強した日の記録(取り組んだ問題数・正誤・その問題を解くために必要だった文法や語彙や表現・書いたノート・AIへの質問)を渡します。これを踏まえて日本語でメッセージを書いてください。
 
 必ず守ること:
 - このメッセージは、学習者がその日の勉強を「これから始める」タイミングで読む(前回勉強した内容の振り返り)。「今日もお疲れ様でした」のような、その日の勉強が終わったことを労うトーン・締めくくりの表現は使わないこと。これから始める・取り組む学習者を送り出す・後押しするトーンにすること。
-- 冒頭は必ず励ましの言葉から始めること。努力を続けていることを労い、モチベーションを支える一言にすること。
-- その後、渡された記録の内容(語彙・文法・問題の話題など)に具体的に触れながら、学習者が「おそらく身についた・理解できたであろう内容」と「おそらくまだ曖昧・知らなかったであろう内容」をリマインドすること。抽象的な精神論だけで終わらせないこと。
+- 「自己ベスト◯点」「◯点の壁を突破するために」のような、点数・スコアの話から書き始めたり、点数そのものをメッセージの中心に据えたりしないこと(渡された記録に点数の情報は含まれていない)。
+- 中心に据えるのは、渡された「これらの問題を解くために必要だった文法・語彙・表現」と、学習者自身が書いたノートの内容。これらに具体的に触れながら、学習者が「おそらく身についた・理解できたであろう内容」と「おそらくまだ曖昧・知らなかったであろう内容」をリマインドすること。抽象的な精神論だけで終わらせないこと。
+- 冒頭は励ましの言葉から始め、努力を続けていることを労い、無理なく続けられるよう背中を押すトーンにすること。プレッシャーをかけすぎないこと。
+- 時々(毎回でなくてよい)、TOEIC学習を長く続けるためのちょっとした工夫・ライフハックを、誰かのエピソード風に軽く一言添えてよい(説教くさくならない程度に、さらっと触れる程度)。
 - 説教くさくならず、専属コーチとして自然に語りかける文体にすること。
 - 学習者の年齢・性別・勉強を始めてからの年数など、記録に含まれていない個人属性には一切触れないこと。
 - 全体で日本語400〜500字程度に収めること。
 - Markdown記号(**など)や見出し記号、箇条書き記号は使わず、プレーンテキストの文章のみを書くこと。`;
 
-const COACH_PROMPT_NO_DATA = `あなたは、TOEIC800点を目指して勉強を続けている学習者専属のコーチです。現在の自己ベストは700点です。
-今回はまだ学習記録が見当たりません(これから勉強を始める、または記録がリセットされた状態です)。このメッセージは学習者がこれから勉強を始めるタイミングで読むので、「今日もお疲れ様でした」のような締めくくりの表現は使わず、励ましの言葉から始め、今日はどんなことに取り組むと良いか軽く後押しするメッセージを、日本語300字程度で書いてください。
+const COACH_PROMPT_NO_DATA = `あなたは、TOEICの得点アップを目指して勉強を続けている学習者専属のコーチです。
+今回はまだ学習記録が見当たりません(これから勉強を始める、または記録がリセットされた状態です)。このメッセージは学習者がこれから勉強を始めるタイミングで読むので、「今日もお疲れ様でした」のような締めくくりの表現は使わず、点数・スコアの話からは書き始めず、励ましの言葉から始め、今日はどんなことに取り組むと良いか軽く後押しするメッセージを、日本語300字程度で書いてください。
 学習者の年齢・性別・勉強を始めてからの年数など、個人属性には一切触れないこと。
 Markdown記号や見出し記号、箇条書き記号は使わず、プレーンテキストの文章のみを書くこと。`;
+
+// 解説文(getRichExplanationのキャッシュHTML)から「★知らないと解けない要素」の
+// 内容だけを抜き出す。formatRichExplainHtmlは■/★等の記号を取り除いてタグに
+// 変換してしまうため、プレーンテキスト化してから見出し行を探す(見出し単独の行の
+// 次に内容が続く形式・見出し行に内容が続けて書かれている形式の両方に対応)。
+function extractKeyElementFromExplanation(html) {
+  const lines = stripHtmlToText(html).split('\n').map(l => l.trim()).filter(Boolean);
+  const idx = lines.findIndex(l => l.includes('知らないと解けない要素'));
+  if (idx === -1) return null;
+  const inline = lines[idx].replace(/^★?知らないと解けない要素[:：]?\s*/, '').trim();
+  return inline || lines[idx + 1] || null;
+}
+
+// getRichExplanation()のキャッシュキー(`toeicRichExplain.<version>.<test>-<part>-
+// <number>-<選んだ選択肢>`)は選んだ選択肢の記号まで含むため、日別ログのキー
+// (test-part-number)だけからは正確に再現できない。localStorage内を前方一致で
+// 探して見つける(Part1/2は解説がAI生成ではなくヒットしない=正常)。
+function findRichExplanationHtml(test, part, number) {
+  const prefix = `${test}-${part}-${number}-`;
+  for (let i = 0; i < localStorage.length; i++) {
+    const lsKey = localStorage.key(i);
+    if (!lsKey || !lsKey.startsWith('toeicRichExplain.')) continue;
+    const afterVersion = lsKey.slice(lsKey.indexOf('.', 'toeicRichExplain.'.length) + 1);
+    if (afterVersion.startsWith(prefix)) return localStorage.getItem(lsKey);
+  }
+  return null;
+}
 
 function buildCoachContext(studyDateKey) {
   const log = getDailyQuestionsLog();
@@ -2469,15 +2533,23 @@ function buildCoachContext(studyDateKey) {
   const incorrectKeys = keys.filter(k => dayLog[k] === false);
 
   const noteLines = [];
+  const keyElementLines = [];
   keys.forEach(k => {
     const note = stripHtmlToText(localStorage.getItem(NOTES_LS_PREFIX + k));
     if (note) noteLines.push(`[${k}] ${note.slice(0, 300)}`);
     const aiNote = stripHtmlToText(localStorage.getItem(NOTES_LS_PREFIX + k + '-ai'));
     if (aiNote) noteLines.push(`[${k}のAI質問履歴] ${aiNote.slice(0, 300)}`);
+    const parsed = parseAttemptKey(k);
+    if (parsed) {
+      const explainHtml = findRichExplanationHtml(parsed.test, parsed.part, parsed.number);
+      const keyElement = explainHtml && extractKeyElementFromExplanation(explainHtml);
+      if (keyElement) keyElementLines.push(`[${k}] ${keyElement}`);
+    }
   });
 
   let text = `学習日: ${studyDateKey}\n取り組んだ問題数: ${keys.length}問(正解 ${correctCount} / 不正解 ${incorrectKeys.length})\n`;
   if (incorrectKeys.length) text += `不正解だった問題番号: ${incorrectKeys.join(', ')}\n`;
+  if (keyElementLines.length) text += `\nこれらの問題を解くために必要だった文法・語彙・表現:\n${keyElementLines.slice(0, 20).join('\n')}\n`;
   if (noteLines.length) text += `\n書いたノート・AIへの質問:\n${noteLines.slice(0, 20).join('\n')}`;
   return text;
 }
