@@ -1069,7 +1069,11 @@ function renderTranslateColumns(container, data, mode, notesArea, slash) {
 // ワイド・トールモード/意訳表示済みの状態で見せる(「翻訳」ボタンを押す手間や、
 // 原文だけの状態に戻す操作は不要)。意訳⇄直訳の切り替え、ワイド/トールモード、
 // クリックしたチャンク・文の解説をノートへ書き写す機能を持つ。
-function buildTranslatableBlock(text, cacheKey) {
+// speakersを渡すと(Part3/4の会話・トークの場合)、原文の左上に話者の国旗バッジを
+// 表示する。設問文の選択肢横に付けると「設問文を読み上げているのがこの話者」と
+// 誤解されるため、実際にその話者が話している本文(この関数が表示する原文)の
+// すぐ上に置く。
+function buildTranslatableBlock(text, cacheKey, speakers) {
   const wrap = document.createElement('div');
   wrap.className = 'translate-block';
 
@@ -1105,6 +1109,13 @@ function buildTranslatableBlock(text, cacheKey) {
   controls.appendChild(slashBtn);
 
   wrap.appendChild(controls);
+
+  if (speakers) {
+    const speakerRow = document.createElement('div');
+    speakerRow.className = 'translate-speaker-row';
+    speakerRow.appendChild(buildSpeakerBadges(speakers));
+    wrap.appendChild(speakerRow);
+  }
 
   const box = document.createElement('div');
   box.className = 'doc-box translate-box';
@@ -1764,6 +1775,14 @@ function updateStickyTopHeight() {
 }
 updateStickyTopHeight();
 window.addEventListener('resize', updateStickyTopHeight);
+// ヘッダーの高さは、設定アコーディオンの開閉やBox連携ステータスの表示などで
+// resizeイベントを介さずに変わることがある(例: 練習画面に入るときに設定
+// アコーディオンを閉じるとヘッダーが縮むが、それだけではresizeは発火しない)。
+// その場合--sticky-top-hが古いままだと音声プレーヤーのstickyがずれて画面外に
+// 隠れてしまうため、ResizeObserverで高さの変化そのものを監視して常に追従させる。
+if (stickyTopEl && window.ResizeObserver) {
+  new ResizeObserver(updateStickyTopHeight).observe(stickyTopEl);
+}
 
 // ---------- ストップウォッチ(問題画面の上部ナビ行の右端。設問が変わるたびリセットして自動計測開始) ----------
 
@@ -2096,9 +2115,6 @@ function deleteAttemptEntry(key) {
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
 }
 
-// 1週間より前の履歴を、何件ずつ「次ページ」ボタンで読み込むか。
-const HISTORY_PAGE_SIZE = 30;
-
 // 履歴1件ぶんの行DOMを組み立てる(トップ画面の回答履歴欄用)。
 function buildHistoryRow(item) {
     const row = document.createElement('div');
@@ -2121,7 +2137,7 @@ function buildHistoryRow(item) {
       e.stopPropagation();
       showDeleteConfirm(deleteBtn, () => {
         deleteAttemptEntry(item.key);
-        renderHistorySidebar();
+        renderHistorySidebar(historyWeekOffset);
       });
     });
     row.appendChild(label);
@@ -2169,12 +2185,16 @@ function buildHistoryRow(item) {
     return row;
 }
 
-// トップ画面の回答履歴欄。直近1週間分はまとめて表示し、それより前の記録は
-// 「次ページ」ボタンを押すまでDOMに作らない(件数が積み重なってもリストが
-// 重くならないよう、古い履歴は明示的に読み込むまで生成しない)。
-function renderHistorySidebar() {
+// トップ画面の回答履歴欄。週ごとに区切って表示し、「前◀」「▶次」ボタンで
+// 週を切り替える(以前は「次ページ」ボタンで古い履歴を際限なく追記していく
+// 方式だったため、ボタンを押すたびに表示がどんどん積み重なってしまっていた。
+// 常にその週の分だけを表示し直す方式に変更した)。
+let historyWeekOffset = 0; // 0=今週、-1=先週…
+
+function renderHistorySidebar(weekOffset = 0) {
   const listEl = document.getElementById('historySidebarList');
   if (!listEl) return;
+  historyWeekOffset = weekOffset;
   const items = buildAnswerHistoryList();
   listEl.innerHTML = '';
   historyPopupPinnedRow = null;
@@ -2184,33 +2204,45 @@ function renderHistorySidebar() {
     listEl.innerHTML = '<p class="history-sidebar-empty">まだ解いた問題がありません。</p>';
     return;
   }
-  const oneWeekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  const recentItems = items.filter(it => it.lastAt >= oneWeekAgo);
-  const olderItems = items.filter(it => it.lastAt < oneWeekAgo);
 
-  recentItems.forEach(item => listEl.appendChild(buildHistoryRow(item)));
+  const weekReference = new Date();
+  weekReference.setDate(weekReference.getDate() + weekOffset * 7);
+  const { dates: weekDates } = getWeekDates(weekReference);
+  const weekStart = new Date(weekDates[0]); weekStart.setHours(0, 0, 0, 0);
+  const weekEnd = new Date(weekDates[6]); weekEnd.setHours(23, 59, 59, 999);
+  const weekItems = items.filter(it => it.lastAt >= weekStart.getTime() && it.lastAt <= weekEnd.getTime());
+  const fmtMD = d => `${d.getMonth() + 1}/${d.getDate()}`;
+  const rangeLabel = `${fmtMD(weekDates[0])}〜${fmtMD(weekDates[6])}`;
 
-  if (!olderItems.length) return;
-  let olderShownCount = 0;
-  const nextPageBtn = document.createElement('button');
-  nextPageBtn.type = 'button';
-  nextPageBtn.className = 'history-next-page-btn';
-  function updateNextPageBtnLabel() {
-    const remaining = olderItems.length - olderShownCount;
-    nextPageBtn.textContent = `次ページ(1週間より前の履歴、残り${remaining}件)`;
+  if (!weekItems.length) {
+    const empty = document.createElement('p');
+    empty.className = 'history-sidebar-empty';
+    empty.textContent = `${rangeLabel}の記録はありません。`;
+    listEl.appendChild(empty);
+  } else {
+    weekItems.forEach(item => listEl.appendChild(buildHistoryRow(item)));
   }
-  updateNextPageBtnLabel();
-  nextPageBtn.addEventListener('click', () => {
-    nextPageBtn.remove();
-    const pageItems = olderItems.slice(olderShownCount, olderShownCount + HISTORY_PAGE_SIZE);
-    pageItems.forEach(item => listEl.appendChild(buildHistoryRow(item)));
-    olderShownCount += pageItems.length;
-    if (olderShownCount < olderItems.length) {
-      updateNextPageBtnLabel();
-      listEl.appendChild(nextPageBtn);
-    }
-  });
-  listEl.appendChild(nextPageBtn);
+
+  const nav = document.createElement('div');
+  nav.className = 'history-week-nav';
+  const prevBtn = document.createElement('button');
+  prevBtn.type = 'button';
+  prevBtn.className = 'history-week-nav-btn';
+  prevBtn.textContent = '前◀';
+  prevBtn.addEventListener('click', () => renderHistorySidebar(weekOffset - 1));
+  const rangeEl = document.createElement('span');
+  rangeEl.className = 'history-week-nav-label';
+  rangeEl.textContent = rangeLabel;
+  const nextBtn = document.createElement('button');
+  nextBtn.type = 'button';
+  nextBtn.className = 'history-week-nav-btn';
+  nextBtn.textContent = '▶次';
+  nextBtn.disabled = weekOffset >= 0;
+  nextBtn.addEventListener('click', () => { if (weekOffset < 0) renderHistorySidebar(weekOffset + 1); });
+  nav.appendChild(prevBtn);
+  nav.appendChild(rangeEl);
+  nav.appendChild(nextBtn);
+  listEl.appendChild(nav);
 }
 
 // ---------- 学習ログ(総学習時間・今週の学習状況・総学習回数・連続学習日数) ----------
@@ -2474,7 +2506,7 @@ async function syncProgressFromSheet() {
     mergeStudyLog(remote.studyLog);
     mergeCoachHistory(remote.coachHistory);
     renderStatsDashboard(statsWeekOffset);
-    renderHistorySidebar();
+    renderHistorySidebar(historyWeekOffset);
     await saveProgressToSheet();
   } catch (e) { /* ignore, ローカルのみで継続 */ }
 }
@@ -3917,8 +3949,10 @@ function renderPart3or4() {
     return;
   }
 
-  // 話者の国旗バッジは設問文の段階ではまだ出さず、解説が表示された時点で
-  // 初めて各設問の見出し(t)横に付与する(下の採点処理内を参照)。
+  // 話者の国旗バッジは設問の見出しには付けない(設問文・選択肢はこの話者が
+  // 読み上げているわけではないため誤解を招く)。解説表示後、実際にこの話者が
+  // 話している会話・トークの原文の左上(buildTranslatableBlock呼び出し側)に
+  // 表示する。
   const wrap = document.createElement('div');
   const audioLabel = document.createElement('div');
   audioLabel.className = 'audio-label';
@@ -3978,7 +4012,7 @@ function renderPart3or4() {
     const pdfSlot = document.createElement('div');
     block.appendChild(pdfSlot);
 
-    blocks[item.number] = { t, choicesDiv, explainDiv, letters, askAiSlot, pdfSlot };
+    blocks[item.number] = { choicesDiv, explainDiv, letters, askAiSlot, pdfSlot };
     blocksContainer.appendChild(block);
   });
   wrap.appendChild(wrapWithGroupHistorySidebar(blocksContainer, state.test, g.questions));
@@ -3994,7 +4028,7 @@ function renderPart3or4() {
       nextBtn.disabled = true;
       nextBtn.textContent = '採点中...';
       g.items.forEach(item => {
-        const { t, choicesDiv, explainDiv, letters } = blocks[item.number];
+        const { choicesDiv, explainDiv, letters } = blocks[item.number];
         const isCorrect = p34.selections[item.number] === item.answer;
         const buttons = choicesDiv.querySelectorAll('.choice');
         buttons.forEach((b, i) => {
@@ -4002,8 +4036,6 @@ function renderPart3or4() {
           if (letters[i] === item.answer) b.classList.add('correct');
           else if (letters[i] === p34.selections[item.number]) b.classList.add('wrong');
         });
-        // 話者の国旗バッジは、解説が表示されるこのタイミングで初めて付与する。
-        if (g.speakers) t.appendChild(buildSpeakerBadges(g.speakers));
         explainDiv.style.display = 'block';
         explainDiv.textContent = (isCorrect ? '正解です!\n\n' : '不正解です。\n\n') + '解説を生成中...';
       });
@@ -4024,7 +4056,7 @@ function renderPart3or4() {
       const fullText = g.conversationText || g.talkText;
       if (fullText) {
         translateSlot.style.display = 'block';
-        translateSlot.appendChild(buildTranslatableBlock(fullText, `${state.test}-${state.part}-${g.questions[0]}`));
+        translateSlot.appendChild(buildTranslatableBlock(fullText, `${state.test}-${state.part}-${g.questions[0]}`, g.speakers));
       }
       wrap.insertBefore(buildNotesWidget(`${state.test}-${state.part}-${g.questions[0]}`), nextBtn);
       nextBtn.disabled = false;
