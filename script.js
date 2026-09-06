@@ -2901,7 +2901,7 @@ function renderStatsDashboard(weekOffset = 0) {
       <div class="week-day-label${i === todayDow ? ' today' : ''}">${dayLabels[i]}</div>
     </div>`).join('');
   const weekCard = document.createElement('div');
-  weekCard.className = 'stat-card';
+  weekCard.className = 'stat-card stat-card-week';
   weekCard.innerHTML = `<div class="stat-card-title">📊 ${escapeHtml(isCurrentWeek ? '今週の学習状況' : `${weekRangeLabel}の学習状況`)}</div>` +
     `<div class="week-chart">${weekBarsHtml}</div><div class="stat-card-best">自己ベスト ${escapeHtml(formatStudyTime(bestDaySeconds))}</div>`;
   // ---- 週送りナビ(左:前週 / 右:次週) ----

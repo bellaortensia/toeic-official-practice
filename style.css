@@ -1105,6 +1105,16 @@ audio{
   justify-content:space-between;
   gap:6px;
 }
+/* 「今週の学習状況」カードは、リングと高さを揃えるため縦に余白ができやすい。
+   その余白をインジケータ(バー)自体の長さに使う: カードを縦のflexにして
+   week-chartを伸縮させ、各バーの高さもそれに合わせて伸びるようにする。 */
+.stat-card-week{
+  display:flex;
+  flex-direction:column;
+}
+.stat-card-week .week-chart{
+  flex:1 1 auto;
+}
 .week-day{
   display:flex;
   flex-direction:column;
@@ -1126,6 +1136,11 @@ audio{
   display:flex;
   align-items:flex-end;
   overflow:hidden;
+}
+.stat-card-week .week-bar-track{
+  flex:1 1 auto;
+  height:auto;
+  min-height:56px;
 }
 .week-bar-fill{
   width:100%;
