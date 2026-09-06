@@ -402,10 +402,16 @@ audio{
 .translate-col-en{border-right:1px dashed var(--line);padding-right:14px;color:#1f5c3f;}
 @media (max-width:640px){.translate-col-en{border-right:none;border-bottom:1px dashed var(--line);padding-right:0;padding-bottom:10px;margin-bottom:6px;}}
 .translate-box.wide-mode .translate-col-en{border-right:none;border-bottom:1px dashed var(--line);padding-right:0;padding-bottom:1.9em;margin-bottom:6px;}
+/* padding分をmarginでマイナスに相殺し、ハイライト(背景色)の見た目上の
+   余白は保ちつつ、実際の行送り・文字間隔には影響しないようにする。相殺
+   していないと、チャンクとチャンクの継ぎ目(単語間には既にスペース1文字
+   分の空白がある)に毎回paddingぶんの余分な隙間が積み重なり、特にハンギング
+   インデント行で単語間隔が不揃いに見える原因になっていた。 */
 .chunk-seg{
   cursor:pointer;
   border-radius:3px;
-  padding:1px 2px;
+  padding:1px 3px;
+  margin:0 -3px;
 }
 .transcript-line{
   margin:0;
@@ -1004,12 +1010,13 @@ audio{
 .meter-btn:disabled{opacity:.4;filter:none;}
 
 .stats-dashboard{margin-bottom:20px;}
-/* リング+2列(それぞれ縦にカード2枚)を、幅が完全に揃った3レーンとして並べる
-   (以前はリングだけ固定幅230pxで、残り2列がその余りを分け合っていたため、
-   3つの幅が揃っていなかった)。 */
+/* リング(今週の学習時間)/今週の学習状況/右カラム(総学習時間・総学習回数・
+   連続学習日数を縦に3枚)の3レーン。真ん中の「今週の学習状況」だけ幅を
+   広めに取り、左右はその分狭める。高さはalign-items:stretchにより、
+   最も内容の多いレーン(通常は右カラムの3枚分)に自然に揃う。 */
 .dashboard-top{
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);
+  grid-template-columns:minmax(0,0.85fr) minmax(0,1.3fr) minmax(0,0.85fr);
   gap:20px;
   align-items:stretch;
 }
@@ -1018,6 +1025,9 @@ audio{
   flex-direction:column;
   gap:14px;
 }
+/* 右カラムの3枚は、内容量の差(自己ベスト行の有無等)によらず高さを均等に
+   3等分する。 */
+.dashboard-col > .stat-card{flex:1 1 0;}
 @media (max-width:720px){
   .dashboard-top{grid-template-columns:1fr;}
 }

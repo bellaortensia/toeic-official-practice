@@ -1017,14 +1017,16 @@ function renderTranslateColumns(container, data, mode, notesArea, slash) {
     enSpan.dataset.seg = i;
     // スラッシュモードがONのときだけ、改行の直前を除いて毎回「/」を明示的に挟む
     // (スラッシュリーディング表示用)。OFFのときはスペース区切りのみにする。
-    enSpan.textContent = seg.en + (seg.lineBreak ? ' ' : (slash ? ' / ' : ' '));
+    // seg.en自体に前後の余分な空白が入っていることがあるため、まずtrimしてから
+    // 付け足す(そうしないとチャンクの継ぎ目でスペースが二重になることがある)。
+    enSpan.textContent = seg.en.trim() + (seg.lineBreak ? ' ' : (slash ? ' / ' : ' '));
     curEnLine.appendChild(enSpan);
     enSpans.push(enSpan);
     if (mode === 'literal') {
       const jaSpan = document.createElement('span');
       jaSpan.className = 'chunk-seg';
       jaSpan.dataset.seg = i;
-      jaSpan.textContent = seg.ja + ' ';
+      jaSpan.textContent = seg.ja.trim() + ' ';
       curJaLine.appendChild(jaSpan);
       jaSpans.push(jaSpan);
     }
@@ -1071,7 +1073,7 @@ function renderTranslateColumns(container, data, mode, notesArea, slash) {
         const jaSpan = document.createElement('span');
         jaSpan.className = 'natural-seg';
         jaSpan.dataset.seg = i;
-        jaSpan.textContent = s.ja + ' ';
+        jaSpan.textContent = s.ja.trim() + ' ';
         curNaturalLine.appendChild(jaSpan);
         naturalJaSpans.push(jaSpan);
         if (s.lineBreak) {
@@ -2879,22 +2881,16 @@ function renderStatsDashboard(weekOffset = 0) {
   ringBox.appendChild(goalBtn);
   top.appendChild(ringBox);
 
-  // ---- 統計カード2x2(リングを含めて3レーンの幅が揃うよう、リング+2列の
-  // 独立したカラムとして並べる。単純な数値カード(makeCard)は縦横中央寄せ) ----
+  // ---- 統計カード: リング/今週の学習状況/その他3カードを3レーンで並べる。
+  // 真ん中(今週の学習状況)を広めにし、左右(リング・右カラム)はその分狭める。
+  // 右カラムの3枚(総学習時間・総学習回数・連続学習日数)は縦に等分の高さで
+  // 並べ、左右の高さは中央のCSS Gridのstretchにより自然に揃う。 ----
   function makeCard(icon, title, innerHtml) {
     const card = document.createElement('div');
     card.className = 'stat-card stat-card-centered';
     card.innerHTML = `<div class="stat-card-title">${icon} ${escapeHtml(title)}</div>${innerHtml}`;
     return card;
   }
-
-  const col2 = document.createElement('div');
-  col2.className = 'dashboard-col';
-  const col3 = document.createElement('div');
-  col3.className = 'dashboard-col';
-
-  col2.appendChild(makeCard('🕐', '総学習時間', `<div class="stat-card-value">${escapeHtml(formatStudyTime(log.totalSeconds))}</div>`));
-  col3.appendChild(makeCard('↻', '総学習回数', `<div class="stat-card-value">${totalCount}回</div>`));
 
   const dayLabels = ['月', '火', '水', '木', '金', '土', '日'];
   const maxDaySec = Math.max(1, ...daySecondsThisWeek);
@@ -2929,12 +2925,14 @@ function renderStatsDashboard(weekOffset = 0) {
   weekNav.appendChild(rangeLabel);
   weekNav.appendChild(nextBtn);
   weekCard.appendChild(weekNav);
-  col2.appendChild(weekCard);
+  top.appendChild(weekCard);
 
+  const col3 = document.createElement('div');
+  col3.className = 'dashboard-col';
+  col3.appendChild(makeCard('🕐', '総学習時間', `<div class="stat-card-value">${escapeHtml(formatStudyTime(log.totalSeconds))}</div>`));
+  col3.appendChild(makeCard('↻', '総学習回数', `<div class="stat-card-value">${totalCount}回</div>`));
   col3.appendChild(makeCard('🔥', '連続学習日数',
     `<div class="stat-card-value">${streak}日</div><div class="stat-card-best">自己ベスト ${bestStreak}日</div>`));
-
-  top.appendChild(col2);
   top.appendChild(col3);
   container.appendChild(top);
 
