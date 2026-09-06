@@ -416,12 +416,23 @@ audio{
 .transcript-line{
   margin:0;
 }
-/* 「M: 」「W: 」のような話者ラベルで始まる行だけ、2行目以降を字下げする
-   (ぶら下げインデント)。text-indentをマイナスにして1行目(ラベル)の位置を
-   相殺し、折り返した2行目以降だけpadding-left分下がって見えるようにする。 */
+/* 「M: 」「W: 」「男性：」「女性：」のような話者ラベルで始まる行は、ラベルを
+   独立した要素(transcript-label)として切り出し、残りの本文(transcript-line-body)
+   と横並びのflexにする。text-indentの固定em幅方式だと、ラベルの実際の文字幅が
+   英語("M:")と日本語("男性：")で大きく異なり2行目以降の字下げ位置がずれて
+   しまっていたが、この方式なら実際のラベル幅ぶんだけ正確に字下げされる。 */
 .transcript-line-indent{
-  padding-left:2.2em;
-  text-indent:-2.2em;
+  display:flex;
+  align-items:baseline;
+}
+.transcript-label{
+  flex:0 0 auto;
+  margin-right:0.3em;
+  white-space:nowrap;
+}
+.transcript-line-body{
+  flex:1 1 auto;
+  min-width:0;
 }
 /* EN側: 現在チャンクはアクセント色で常時ハイライト。JA側: 現在チャンクは
    クリックされるまで背景=文字色で塗りつぶして読めなくし(単語帳の答え隠し)、

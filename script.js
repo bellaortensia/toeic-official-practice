@@ -989,27 +989,41 @@ function renderTranslateColumns(container, data, mode, notesArea, slash) {
   jaCol.className = 'translate-col translate-col-ja';
 
   // 各行を<br>区切りの1つの段落にせず、行ごとに独立した<div>(transcript-line)
-  // にまとめる。「M: 」「W: 」のような話者ラベルで始まる行だけhanging indent
-  // (2行目以降を字下げ)を付けるため(text-indentは段落の1行目にしか効かない
-  // ので、話者ラベル無しの地の文(Part6/7のパッセージ等)には適用しない)。
-  const SPEAKER_LABEL_RE = /^[A-Za-z]{1,3}[0-9]?:\s/;
+  // にまとめる。「M: 」「W: 」「男性：」「女性：」のような話者ラベルで始まる行は、
+  // ラベル部分を切り出して別要素(transcript-label)にし、残りの本文
+  // (transcript-line-body)と横並びのflexにする(詳細はCSS側のコメント参照)。
+  // EN・JAそれぞれの実際のテキストからラベルを判定・抽出するので、英語と
+  // 日本語でラベルの見た目・文字数が違っても2行目以降のずれが起きない。
+  const SPEAKER_LABEL_RE = /^([^\s:：]{1,6}[:：])\s*/;
+
+  function createTranscriptLine(col) {
+    const line = document.createElement('div');
+    line.className = 'transcript-line';
+    const body = document.createElement('div');
+    body.className = 'transcript-line-body';
+    line.appendChild(body);
+    col.appendChild(line);
+    return { line, body, labelChecked: false };
+  }
+  // 行の最初のチャンクに対してだけ、話者ラベルの有無を判定して切り出す
+  // (2つめ以降のチャンクではlabelCheckedが立っているので何もしない)。
+  function extractLineLabel(lineObj, text) {
+    if (lineObj.labelChecked) return text;
+    lineObj.labelChecked = true;
+    const m = SPEAKER_LABEL_RE.exec(text);
+    if (!m) return text;
+    lineObj.line.classList.add('transcript-line-indent');
+    const label = document.createElement('span');
+    label.className = 'transcript-label';
+    label.textContent = m[1];
+    lineObj.line.insertBefore(label, lineObj.body);
+    return text.slice(m[0].length);
+  }
 
   const enSpans = [];
   const jaSpans = []; // 直訳モードのみ使用
-  let curEnLine = document.createElement('div');
-  curEnLine.className = 'transcript-line';
-  enCol.appendChild(curEnLine);
-  let curJaLine = null;
-  if (mode === 'literal') {
-    curJaLine = document.createElement('div');
-    curJaLine.className = 'transcript-line';
-    jaCol.appendChild(curJaLine);
-  }
-  function applyIndentClass(line, sourceEn) {
-    if (line && SPEAKER_LABEL_RE.test(sourceEn || '')) line.classList.add('transcript-line-indent');
-  }
-  applyIndentClass(curEnLine, segments[0] && segments[0].en);
-  applyIndentClass(curJaLine, segments[0] && segments[0].en);
+  let curEnLine = createTranscriptLine(enCol);
+  let curJaLine = mode === 'literal' ? createTranscriptLine(jaCol) : null;
 
   segments.forEach((seg, i) => {
     const enSpan = document.createElement('span');
@@ -1019,29 +1033,22 @@ function renderTranslateColumns(container, data, mode, notesArea, slash) {
     // (スラッシュリーディング表示用)。OFFのときはスペース区切りのみにする。
     // seg.en自体に前後の余分な空白が入っていることがあるため、まずtrimしてから
     // 付け足す(そうしないとチャンクの継ぎ目でスペースが二重になることがある)。
-    enSpan.textContent = seg.en.trim() + (seg.lineBreak ? ' ' : (slash ? ' / ' : ' '));
-    curEnLine.appendChild(enSpan);
+    const cleanEn = extractLineLabel(curEnLine, seg.en.trim());
+    enSpan.textContent = cleanEn + (seg.lineBreak ? ' ' : (slash ? ' / ' : ' '));
+    curEnLine.body.appendChild(enSpan);
     enSpans.push(enSpan);
     if (mode === 'literal') {
       const jaSpan = document.createElement('span');
       jaSpan.className = 'chunk-seg';
       jaSpan.dataset.seg = i;
-      jaSpan.textContent = seg.ja.trim() + ' ';
-      curJaLine.appendChild(jaSpan);
+      const cleanJa = extractLineLabel(curJaLine, seg.ja.trim());
+      jaSpan.textContent = cleanJa + ' ';
+      curJaLine.body.appendChild(jaSpan);
       jaSpans.push(jaSpan);
     }
     if (seg.lineBreak) {
-      curEnLine = document.createElement('div');
-      curEnLine.className = 'transcript-line';
-      enCol.appendChild(curEnLine);
-      if (mode === 'literal') {
-        curJaLine = document.createElement('div');
-        curJaLine.className = 'transcript-line';
-        jaCol.appendChild(curJaLine);
-      }
-      const nextEn = segments[i + 1] && segments[i + 1].en;
-      applyIndentClass(curEnLine, nextEn);
-      applyIndentClass(curJaLine, nextEn);
+      curEnLine = createTranscriptLine(enCol);
+      if (mode === 'literal') curJaLine = createTranscriptLine(jaCol);
     }
   });
 
@@ -1065,23 +1072,16 @@ function renderTranslateColumns(container, data, mode, notesArea, slash) {
     if (!sentences.length) {
       jaCol.innerHTML = '<p class="translate-error">意訳データがありません。「翻訳を再取得」をお試しください。</p>';
     } else {
-      let curNaturalLine = document.createElement('div');
-      curNaturalLine.className = 'transcript-line';
-      jaCol.appendChild(curNaturalLine);
-      applyIndentClass(curNaturalLine, sentences[0] && sentences[0].en);
+      let curNaturalLine = createTranscriptLine(jaCol);
       sentences.forEach((s, i) => {
         const jaSpan = document.createElement('span');
         jaSpan.className = 'natural-seg';
         jaSpan.dataset.seg = i;
-        jaSpan.textContent = s.ja.trim() + ' ';
-        curNaturalLine.appendChild(jaSpan);
+        const cleanJa = extractLineLabel(curNaturalLine, s.ja.trim());
+        jaSpan.textContent = cleanJa + ' ';
+        curNaturalLine.body.appendChild(jaSpan);
         naturalJaSpans.push(jaSpan);
-        if (s.lineBreak) {
-          curNaturalLine = document.createElement('div');
-          curNaturalLine.className = 'transcript-line';
-          jaCol.appendChild(curNaturalLine);
-          applyIndentClass(curNaturalLine, sentences[i + 1] && sentences[i + 1].en);
-        }
+        if (s.lineBreak) curNaturalLine = createTranscriptLine(jaCol);
       });
     }
   }
