@@ -826,9 +826,77 @@ function buildAskAiWidget(questionContext, noteKey) {
 const chunkPopupEl = document.createElement('div');
 chunkPopupEl.className = 'chunk-popup';
 document.body.appendChild(chunkPopupEl);
+
+// 「聞き取れなかった単語▶」のホバーで右に出す単語一覧サブメニュー。chunkPopupEl
+// 本体とは別要素にし、どちらにマウスがあっても消えないようにする(すぐ隣に
+// 出るとはいえ、間の隙間を通るときにチラつかないよう少し遅延させて消す)。
+const unheardSubmenuEl = document.createElement('div');
+unheardSubmenuEl.className = 'chunk-popup unheard-submenu';
+document.body.appendChild(unheardSubmenuEl);
+let unheardHideTimer = null;
+function cancelHideUnheardSubmenu() { clearTimeout(unheardHideTimer); }
+function scheduleHideUnheardSubmenu() {
+  clearTimeout(unheardHideTimer);
+  unheardHideTimer = setTimeout(() => unheardSubmenuEl.classList.remove('show'), 250);
+}
+unheardSubmenuEl.addEventListener('mouseenter', cancelHideUnheardSubmenu);
+unheardSubmenuEl.addEventListener('mouseleave', scheduleHideUnheardSubmenu);
+
+// 前後の記号(カンマ・ピリオド等)を除いた、表示・検索用の単語本体を取り出す。
+function stripPunct(word) {
+  return word.replace(/^[^A-Za-z0-9']+|[^A-Za-z0-9']+$/g, '');
+}
+
+// notesAreaに「■聞き取れなかった単語」として、そのチャンクの英文(該当語を太字・
+// 青字にしたもの)と、チャンクの直訳(seg.ja)を()で添えて書き写す。AIを呼ばず
+// 既存のセグメントデータだけで完結するため即時に追記できる。
+function appendUnheardWordToNotes(notesArea, phraseEn, phraseJa, word) {
+  const block = document.createElement('div');
+  block.className = 'notes-entry';
+  const quote = document.createElement('div');
+  quote.className = 'notes-entry-quote';
+  quote.textContent = '■聞き取れなかった単語';
+  block.appendChild(quote);
+  const body = document.createElement('div');
+  body.className = 'notes-entry-body';
+  const idx = phraseEn.indexOf(word);
+  let html = idx === -1
+    ? escapeHtml(phraseEn)
+    : escapeHtml(phraseEn.slice(0, idx)) +
+      `<strong style="color:#2f5fa8">${escapeHtml(word)}</strong>` +
+      escapeHtml(phraseEn.slice(idx + word.length));
+  if (phraseJa) html += `（${escapeHtml(phraseJa)}）`;
+  body.innerHTML = html;
+  block.appendChild(body);
+  notesArea.appendChild(block);
+  notesArea.scrollTop = notesArea.scrollHeight;
+}
+
+function showUnheardSubmenu(triggerEl, seg, notesArea) {
+  cancelHideUnheardSubmenu();
+  const tokens = (seg.en || '').split(/\s+/).filter(Boolean);
+  unheardSubmenuEl.innerHTML = tokens.map((tok, i) => {
+    const clean = stripPunct(tok) || tok;
+    return `<div class="chunk-popup-item chunk-popup-unheard-word" data-action="unheard-word" data-token-idx="${i}"><strong>${escapeHtml(clean)}</strong></div>`;
+  }).join('');
+  unheardSubmenuEl.onclick = e => {
+    const wordTrigger = e.target.closest('[data-action="unheard-word"]');
+    if (!wordTrigger) return;
+    const tok = tokens[Number(wordTrigger.dataset.tokenIdx)];
+    const clean = stripPunct(tok) || tok;
+    appendUnheardWordToNotes(notesArea, seg.en, seg.ja, clean);
+    wordTrigger.classList.add('added');
+  };
+  const rect = triggerEl.getBoundingClientRect();
+  unheardSubmenuEl.style.left = (rect.right + window.scrollX + 4) + 'px';
+  unheardSubmenuEl.style.top = (rect.top + window.scrollY) + 'px';
+  unheardSubmenuEl.classList.add('show');
+}
+
 document.addEventListener('click', e => {
-  if (!chunkPopupEl.contains(e.target) && !e.target.closest('.chunk-seg') && !e.target.closest('.translate-col-ja') && !e.target.closest('.translate-col-en')) {
+  if (!chunkPopupEl.contains(e.target) && !unheardSubmenuEl.contains(e.target) && !e.target.closest('.chunk-seg') && !e.target.closest('.translate-col-ja') && !e.target.closest('.translate-col-en')) {
     chunkPopupEl.classList.remove('show');
+    unheardSubmenuEl.classList.remove('show');
   }
 });
 
@@ -841,8 +909,14 @@ function showChunkPopup(seg, anchorEl, notesArea, sentenceText, clauseText) {
     `<div class="chunk-popup-item chunk-popup-term" data-action="term" data-term-idx="${i}"><strong>${escapeHtml(t.term || '')}</strong><div>${escapeHtml(t.meaning || '')}</div></div>`
   ).join('');
   chunkPopupEl.innerHTML = literalHtml + termsHtml +
+    '<div class="chunk-popup-item chunk-popup-unheard" data-action="unheard-menu"><strong>聞き取れなかった単語▶</strong></div>' +
     '<div class="chunk-popup-item chunk-popup-explain" data-action="explain"><strong>この文を解説→ノートへ</strong></div>' +
     '<div class="chunk-popup-item chunk-popup-explain" data-action="explain-full"><strong>この文全体を解説→ノートへ</strong></div>';
+  const unheardTrigger = chunkPopupEl.querySelector('[data-action="unheard-menu"]');
+  if (unheardTrigger) {
+    unheardTrigger.addEventListener('mouseenter', () => showUnheardSubmenu(unheardTrigger, seg, notesArea));
+    unheardTrigger.addEventListener('mouseleave', scheduleHideUnheardSubmenu);
+  }
   chunkPopupEl.onclick = async e => {
     const literalTrigger = e.target.closest('[data-action="literal"]');
     if (literalTrigger) {
@@ -914,8 +988,29 @@ function renderTranslateColumns(container, data, mode, notesArea, slash) {
   const jaCol = document.createElement('div');
   jaCol.className = 'translate-col translate-col-ja';
 
+  // 各行を<br>区切りの1つの段落にせず、行ごとに独立した<div>(transcript-line)
+  // にまとめる。「M: 」「W: 」のような話者ラベルで始まる行だけhanging indent
+  // (2行目以降を字下げ)を付けるため(text-indentは段落の1行目にしか効かない
+  // ので、話者ラベル無しの地の文(Part6/7のパッセージ等)には適用しない)。
+  const SPEAKER_LABEL_RE = /^[A-Za-z]{1,3}[0-9]?:\s/;
+
   const enSpans = [];
   const jaSpans = []; // 直訳モードのみ使用
+  let curEnLine = document.createElement('div');
+  curEnLine.className = 'transcript-line';
+  enCol.appendChild(curEnLine);
+  let curJaLine = null;
+  if (mode === 'literal') {
+    curJaLine = document.createElement('div');
+    curJaLine.className = 'transcript-line';
+    jaCol.appendChild(curJaLine);
+  }
+  function applyIndentClass(line, sourceEn) {
+    if (line && SPEAKER_LABEL_RE.test(sourceEn || '')) line.classList.add('transcript-line-indent');
+  }
+  applyIndentClass(curEnLine, segments[0] && segments[0].en);
+  applyIndentClass(curJaLine, segments[0] && segments[0].en);
+
   segments.forEach((seg, i) => {
     const enSpan = document.createElement('span');
     enSpan.className = 'chunk-seg';
@@ -923,19 +1018,28 @@ function renderTranslateColumns(container, data, mode, notesArea, slash) {
     // スラッシュモードがONのときだけ、改行の直前を除いて毎回「/」を明示的に挟む
     // (スラッシュリーディング表示用)。OFFのときはスペース区切りのみにする。
     enSpan.textContent = seg.en + (seg.lineBreak ? ' ' : (slash ? ' / ' : ' '));
-    enCol.appendChild(enSpan);
+    curEnLine.appendChild(enSpan);
     enSpans.push(enSpan);
     if (mode === 'literal') {
       const jaSpan = document.createElement('span');
       jaSpan.className = 'chunk-seg';
       jaSpan.dataset.seg = i;
       jaSpan.textContent = seg.ja + ' ';
-      jaCol.appendChild(jaSpan);
+      curJaLine.appendChild(jaSpan);
       jaSpans.push(jaSpan);
     }
     if (seg.lineBreak) {
-      enCol.appendChild(document.createElement('br'));
-      if (mode === 'literal') jaCol.appendChild(document.createElement('br'));
+      curEnLine = document.createElement('div');
+      curEnLine.className = 'transcript-line';
+      enCol.appendChild(curEnLine);
+      if (mode === 'literal') {
+        curJaLine = document.createElement('div');
+        curJaLine.className = 'transcript-line';
+        jaCol.appendChild(curJaLine);
+      }
+      const nextEn = segments[i + 1] && segments[i + 1].en;
+      applyIndentClass(curEnLine, nextEn);
+      applyIndentClass(curJaLine, nextEn);
     }
   });
 
@@ -959,14 +1063,23 @@ function renderTranslateColumns(container, data, mode, notesArea, slash) {
     if (!sentences.length) {
       jaCol.innerHTML = '<p class="translate-error">意訳データがありません。「翻訳を再取得」をお試しください。</p>';
     } else {
+      let curNaturalLine = document.createElement('div');
+      curNaturalLine.className = 'transcript-line';
+      jaCol.appendChild(curNaturalLine);
+      applyIndentClass(curNaturalLine, sentences[0] && sentences[0].en);
       sentences.forEach((s, i) => {
         const jaSpan = document.createElement('span');
         jaSpan.className = 'natural-seg';
         jaSpan.dataset.seg = i;
         jaSpan.textContent = s.ja + ' ';
-        jaCol.appendChild(jaSpan);
+        curNaturalLine.appendChild(jaSpan);
         naturalJaSpans.push(jaSpan);
-        if (s.lineBreak) jaCol.appendChild(document.createElement('br'));
+        if (s.lineBreak) {
+          curNaturalLine = document.createElement('div');
+          curNaturalLine.className = 'transcript-line';
+          jaCol.appendChild(curNaturalLine);
+          applyIndentClass(curNaturalLine, sentences[i + 1] && sentences[i + 1].en);
+        }
       });
     }
   }
@@ -1108,14 +1221,14 @@ function buildTranslatableBlock(text, cacheKey, speakers) {
   slashBtn.disabled = true;
   controls.appendChild(slashBtn);
 
-  wrap.appendChild(controls);
-
+  // 話者の国旗バッジは、操作ボタン列の右端の余白に収める(単独の行にはしない)。
   if (speakers) {
-    const speakerRow = document.createElement('div');
-    speakerRow.className = 'translate-speaker-row';
-    speakerRow.appendChild(buildSpeakerBadges(speakers));
-    wrap.appendChild(speakerRow);
+    const speakerBadges = buildSpeakerBadges(speakers);
+    speakerBadges.classList.add('translate-speaker-inline');
+    controls.appendChild(speakerBadges);
   }
+
+  wrap.appendChild(controls);
 
   const box = document.createElement('div');
   box.className = 'doc-box translate-box';
@@ -2518,6 +2631,8 @@ const COACH_PROMPT = `あなたは、TOEICの得点アップを目指して勉�
 - このメッセージは、学習者がその日の勉強を「これから始める」タイミングで読む(前回勉強した内容の振り返り)。「今日もお疲れ様でした」のような、その日の勉強が終わったことを労うトーン・締めくくりの表現は使わないこと。これから始める・取り組む学習者を送り出す・後押しするトーンにすること。
 - 「自己ベスト◯点」「◯点の壁を突破するために」のような、点数・スコアの話から書き始めたり、点数そのものをメッセージの中心に据えたりしないこと(渡された記録に点数の情報は含まれていない)。
 - 中心に据えるのは、渡された「これらの問題を解くために必要だった文法・語彙・表現」と、学習者自身が書いたノートの内容。これらに具体的に触れながら、学習者が「おそらく身についた・理解できたであろう内容」と「おそらくまだ曖昧・知らなかったであろう内容」をリマインドすること。抽象的な精神論だけで終わらせないこと。
+- ノートの中に「■聞き取れなかった単語」という見出しの記録があれば、そこに書かれている単語・フレーズをそのまま挙げて、次に聞き取るためのコツ(リンキング・音の変化・弱形など、その単語特有の聞き取りづらさに応じた具体的なアドバイス)を必ず添えること。
+- ノートの中に単語・熟語の意味やコアイメージを書き写した記録(「■{語句}」「語句：」「コアイメージ：」等の形式)があれば、それは学習者がまだ知らなかった単語としてメモしたものなので、その語句をそのまま挙げて「これを復習しましょう」という趣旨で伝えること。
 - 冒頭は励ましの言葉から始め、努力を続けていることを労い、無理なく続けられるよう背中を押すトーンにすること。プレッシャーをかけすぎないこと。
 - 時々(毎回でなくてよい)、TOEIC学習を長く続けるためのちょっとした工夫・ライフハックを、誰かのエピソード風に軽く一言添えてよい(説教くさくならない程度に、さらっと触れる程度)。
 - 説教くさくならず、専属コーチとして自然に語りかける文体にすること。
@@ -2569,6 +2684,12 @@ function buildCoachContext(studyDateKey) {
   keys.forEach(k => {
     const note = stripHtmlToText(localStorage.getItem(NOTES_LS_PREFIX + k));
     if (note) noteLines.push(`[${k}] ${note.slice(0, 300)}`);
+    // 翻訳ウィジェット内の専用ノート欄(「この文を解説」「用語を解説」「聞き取れ
+    // なかった単語」の書き写し先)。Part3/4/6/7ではグループの先頭設問番号を
+    // キーに使っているため、kがそれと一致する場合だけヒットする(グループを
+    // 解いた日はほぼ必ず先頭設問のkeyも記録されているので実用上は十分)。
+    const translateNote = stripHtmlToText(localStorage.getItem(NOTES_LS_PREFIX + k + '-translate-notes'));
+    if (translateNote) noteLines.push(`[${k}の翻訳ノート] ${translateNote.slice(0, 500)}`);
     const aiNote = stripHtmlToText(localStorage.getItem(NOTES_LS_PREFIX + k + '-ai'));
     if (aiNote) noteLines.push(`[${k}のAI質問履歴] ${aiNote.slice(0, 300)}`);
     const parsed = parseAttemptKey(k);
@@ -2758,19 +2879,22 @@ function renderStatsDashboard(weekOffset = 0) {
   ringBox.appendChild(goalBtn);
   top.appendChild(ringBox);
 
-  // ---- 統計カード2x2 ----
-  const grid = document.createElement('div');
-  grid.className = 'stats-grid';
-
+  // ---- 統計カード2x2(リングを含めて3レーンの幅が揃うよう、リング+2列の
+  // 独立したカラムとして並べる。単純な数値カード(makeCard)は縦横中央寄せ) ----
   function makeCard(icon, title, innerHtml) {
     const card = document.createElement('div');
-    card.className = 'stat-card';
+    card.className = 'stat-card stat-card-centered';
     card.innerHTML = `<div class="stat-card-title">${icon} ${escapeHtml(title)}</div>${innerHtml}`;
     return card;
   }
 
-  grid.appendChild(makeCard('🕐', '総学習時間', `<div class="stat-card-value">${escapeHtml(formatStudyTime(log.totalSeconds))}</div>`));
-  grid.appendChild(makeCard('↻', '総学習回数', `<div class="stat-card-value">${totalCount}回</div>`));
+  const col2 = document.createElement('div');
+  col2.className = 'dashboard-col';
+  const col3 = document.createElement('div');
+  col3.className = 'dashboard-col';
+
+  col2.appendChild(makeCard('🕐', '総学習時間', `<div class="stat-card-value">${escapeHtml(formatStudyTime(log.totalSeconds))}</div>`));
+  col3.appendChild(makeCard('↻', '総学習回数', `<div class="stat-card-value">${totalCount}回</div>`));
 
   const dayLabels = ['月', '火', '水', '木', '金', '土', '日'];
   const maxDaySec = Math.max(1, ...daySecondsThisWeek);
@@ -2805,12 +2929,13 @@ function renderStatsDashboard(weekOffset = 0) {
   weekNav.appendChild(rangeLabel);
   weekNav.appendChild(nextBtn);
   weekCard.appendChild(weekNav);
-  grid.appendChild(weekCard);
+  col2.appendChild(weekCard);
 
-  grid.appendChild(makeCard('🔥', '連続学習日数',
+  col3.appendChild(makeCard('🔥', '連続学習日数',
     `<div class="stat-card-value">${streak}日</div><div class="stat-card-best">自己ベスト ${bestStreak}日</div>`));
 
-  top.appendChild(grid);
+  top.appendChild(col2);
+  top.appendChild(col3);
   container.appendChild(top);
 
   container.appendChild(buildCoachBox());

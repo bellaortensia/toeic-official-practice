@@ -279,26 +279,23 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
   font-weight:700;
 }
 .speaker-flag{
-  width:28px;
+  width:32px;
   height:auto;
   display:block;
   border-radius:3px;
 }
 .speaker-gender{
   font-family:'JetBrains Mono',monospace;
-  font-size:19px;
+  font-size:21px;
   color:var(--text-soft);
 }
 .speaker-arrow{
   color:var(--text-soft);
-  font-size:21px;
+  font-size:24px;
 }
-.translate-speaker-row{
-  text-align:left;
-  margin-bottom:8px;
-}
-.translate-speaker-row .speaker-badges{
-  margin-left:0;
+/* 翻訳エリアの操作ボタン列の右端に収める国旗バッジ。 */
+.translate-speaker-inline{
+  margin-left:auto;
 }
 
 .choice{
@@ -402,13 +399,23 @@ audio{
    切り替わる(wideWrapのwheelイベントは子要素の余白部分でも発火するため、
    JS側の追加対応なしにこのCSSの余白だけで実現できる)。 */
 .translate-box.wide-mode .translate-col{padding-top:1.9em;padding-bottom:1.9em;}
-.translate-col-en{border-right:1px dashed var(--line);padding-right:14px;}
+.translate-col-en{border-right:1px dashed var(--line);padding-right:14px;color:#1f5c3f;}
 @media (max-width:640px){.translate-col-en{border-right:none;border-bottom:1px dashed var(--line);padding-right:0;padding-bottom:10px;margin-bottom:6px;}}
 .translate-box.wide-mode .translate-col-en{border-right:none;border-bottom:1px dashed var(--line);padding-right:0;padding-bottom:1.9em;margin-bottom:6px;}
 .chunk-seg{
   cursor:pointer;
   border-radius:3px;
   padding:1px 2px;
+}
+.transcript-line{
+  margin:0;
+}
+/* 「M: 」「W: 」のような話者ラベルで始まる行だけ、2行目以降を字下げする
+   (ぶら下げインデント)。text-indentをマイナスにして1行目(ラベル)の位置を
+   相殺し、折り返した2行目以降だけpadding-left分下がって見えるようにする。 */
+.transcript-line-indent{
+  padding-left:2.2em;
+  text-indent:-2.2em;
 }
 /* EN側: 現在チャンクはアクセント色で常時ハイライト。JA側: 現在チャンクは
    クリックされるまで背景=文字色で塗りつぶして読めなくし(単語帳の答え隠し)、
@@ -445,11 +452,17 @@ audio{
 .chunk-popup-literal.added{opacity:.5;}
 .chunk-popup-explain{border-top:1px solid #333f4b;padding-top:8px;cursor:pointer;}
 .chunk-popup-explain:hover strong{color:var(--paper);}
+.chunk-popup-unheard{border-top:1px solid #333f4b;padding-top:8px;cursor:pointer;}
+.chunk-popup-unheard:hover strong{color:var(--paper);}
+.unheard-submenu{max-width:180px;}
+.chunk-popup-unheard-word{cursor:pointer;}
+.chunk-popup-unheard-word:hover strong{color:var(--paper);}
+.chunk-popup-unheard-word.added{opacity:.5;}
 .translate-error{color:var(--danger);font-size:13px;}
 
 .translate-block{margin:10px 0;}
-/* .doc-boxの標準背景(#faf7ee、ベージュ寄り)より白っぽくする。 */
-.translate-box{position:relative;background:#fdfcf7;}
+/* .doc-boxの標準背景(#faf7ee、ベージュ寄り)ではなく白にする。 */
+.translate-box{position:relative;background:#ffffff;}
 .translate-controls{
   display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px;
 }
@@ -991,21 +1004,25 @@ audio{
 .meter-btn:disabled{opacity:.4;filter:none;}
 
 .stats-dashboard{margin-bottom:20px;}
+/* リング+2列(それぞれ縦にカード2枚)を、幅が完全に揃った3レーンとして並べる
+   (以前はリングだけ固定幅230pxで、残り2列がその余りを分け合っていたため、
+   3つの幅が揃っていなかった)。 */
 .dashboard-top{
-  display:flex;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1fr);
   gap:20px;
   align-items:stretch;
 }
+.dashboard-col{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
 @media (max-width:720px){
-  .dashboard-top{flex-direction:column;}
-  /* 縦積みになると230pxはflex-basisとして高さ側に効いてしまい、中身(リング+
-     文字+ボタン)がその230pxに収まらない場合に表示が崩れることがあるため、
-     縦積み時は高さを内容に合わせて自動にする。 */
-  .week-ring-box{flex-basis:auto;}
+  .dashboard-top{grid-template-columns:1fr;}
 }
 
 .week-ring-box{
-  flex:0 0 230px;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -1040,20 +1057,21 @@ audio{
 .legend-goal{display:block;font-size:12.5px;margin-top:4px;}
 .ring-goal-btn{margin-top:14px;}
 
-.stats-grid{
-  flex:1 1 auto;
-  display:grid;
-  /* bareの1frは中身のmin-content分は縮められないため、幅の狭い画面で
-     カード内の週間ナビ等が原因で片方の列だけ極端に狭くなることがあった。
-     minmax(0,1fr)にして、必要なら中身が折り返す形で確実に半分ずつ分ける。 */
-  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
-  gap:14px;
-}
 .stat-card{
   background:#faf7ee;
   border:1px solid var(--line);
   border-radius:var(--radius);
   padding:18px 20px;
+  flex:1 1 auto;
+}
+/* 総学習時間・総学習回数・連続学習日数のような単純な数値カードは、
+   縦横とも中央寄せにする(週間状況カードは左寄せのまま据え置き)。 */
+.stat-card-centered{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
 }
 .stat-card-title{
   font-size:14px;
@@ -1338,9 +1356,6 @@ audio{
   .player-track-row{flex:1 1 100%;order:1;}
   .player-track{height:14px;}
   .player-rate{flex:1 1 100%;justify-content:center;order:2;}
-  /* 「今週の学習状況」カード(週間ナビ付き)などが2列だと窮屈になるため、
-     幅の狭い画面では統計カードを1列に積む。 */
-  .stats-grid{grid-template-columns:1fr;}
   /* 「前回学習した問題」の見出し行(ラベル|まとめて再生ボタン|余白の3列)も、
      幅の狭い画面ではラベルが折り返してボタンと詰まって見えるため、縦積みにする。 */
   .prev-study-header{grid-template-columns:1fr;justify-items:start;row-gap:8px;}
