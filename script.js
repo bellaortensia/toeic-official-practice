@@ -3462,10 +3462,10 @@ const partOverviewStartBtn = document.getElementById('partOverviewStartBtn');
 function buildLandingNav() {
   const container = document.getElementById('landingNav');
   if (!container) return;
-  ['T1', 'T2'].forEach((test, gi) => {
+  ['T1', 'T2'].forEach(test => {
     const testDetails = document.createElement('details');
     testDetails.className = 'landing-test';
-    if (gi === 0) testDetails.open = true;
+    testDetails.open = true;
     const testSummary = document.createElement('summary');
     testSummary.textContent = test === 'T1' ? 'TEST 1' : 'TEST 2';
     testDetails.appendChild(testSummary);
