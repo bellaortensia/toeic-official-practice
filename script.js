@@ -486,15 +486,28 @@ async function getTermExplanation(term, meaning, contextSentence) {
 // 下線+右下の小さな注記(Part5解説のS[...]/V[...]等と同じ、下線+subラベルの見た目)
 // に変換する。まずescapeHtmlでエスケープしてから変換するので、{{}}を使わない
 // 普通の解説文をそのまま渡しても安全にそのまま表示される(該当する記法が無ければ
-// 何も変換されない)。
+// 何も変換されない)。あわせて、最初の行が■で始まっている場合(「この文を解説」
+// 「用語を解説」等のAI出力1行目)は、その行だけ赤字・太字にする(appendToNotes
+// が別途作る.notes-entry-quoteの■見出しと見た目を揃えるため)。
 function formatNoteBody(text) {
-  const escaped = escapeHtml(text);
-  return escaped.replace(/\{\{([^|{}]+)\|([^{}]*)\}\}/g, (m, phrase, note) => {
-    const noteHtml = note
-      ? `<sub style="color:#2f5fa8;font-weight:700;font-size:9.5px;">${note}</sub>`
-      : '';
-    return `<span style="text-decoration:underline;text-decoration-color:#2f5fa8;text-underline-offset:3px;">${phrase}</span>${noteHtml}`;
-  });
+  const raw = text || '';
+  const nlIdx = raw.indexOf('\n');
+  const firstLine = nlIdx === -1 ? raw : raw.slice(0, nlIdx);
+  const rest = nlIdx === -1 ? '' : raw.slice(nlIdx); // 先頭の改行を含めて残す(pre-wrapで改行を保持するため)
+  function processInline(s) {
+    const escaped = escapeHtml(s);
+    return escaped.replace(/\{\{([^|{}]+)\|([^{}]*)\}\}/g, (m, phrase, note) => {
+      const noteHtml = note
+        ? `<sub style="color:#2f5fa8;font-weight:700;font-size:9.5px;">${note}</sub>`
+        : '';
+      return `<span style="text-decoration:underline;text-decoration-color:#2f5fa8;text-underline-offset:3px;">${phrase}</span>${noteHtml}`;
+    });
+  }
+  let firstHtml = processInline(firstLine);
+  if (firstLine.trim().startsWith('■')) {
+    firstHtml = `<strong style="color:#c1503f">${firstHtml}</strong>`;
+  }
+  return firstHtml + processInline(rest);
 }
 
 // enTextがある場合だけ引用行を作る。「この文を解説」「用語を解説」の出力は、

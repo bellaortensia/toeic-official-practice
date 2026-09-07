@@ -516,7 +516,7 @@ audio{
 .notes-entry:last-child{margin-bottom:0;padding-bottom:0;border-bottom:none;}
 /* ノート欄内は書き込み元(直訳クイック追加・AI解説・手書き)によらずフォント・色を
    統一する(以前は引用行だけ緑のJetBrains Monoになっており不揃いだった)。 */
-.notes-entry-quote{font-family:Arial,'Helvetica Neue',sans-serif;font-size:13px;font-weight:700;color:#000;margin-bottom:4px;}
+.notes-entry-quote{font-family:Arial,'Helvetica Neue',sans-serif;font-size:13px;font-weight:700;color:#c1503f;margin-bottom:4px;}
 .notes-entry-body{font-family:Arial,'Helvetica Neue',sans-serif;color:#000;white-space:pre-wrap;}
 
 .ask-ai-wrap{margin-top:14px;}
@@ -851,10 +851,10 @@ audio{
   margin-bottom:6px;
 }
 .history-note-popup hr{border:none;border-top:1px solid #333f4b;margin:16px 0;}
-/* .notes-entry-quoteはvar(--accent-2)(明るい背景前提の緑)をクラスで指定しているため
-   JS側のsanitizeNoteHtmlForDarkPopup(inline colorのみ対象)では拾えない。この暗い
-   ポップアップの中でだけ、白寄りの色に上書きする。 */
-.history-note-popup .notes-entry-quote{color:#a9c9c1;}
+/* .notes-entry-quoteの赤(#c1503f)は暗い背景でもある程度読めるが、念のため
+   このポップアップの中だけ少し明るい赤に上書きする(JS側のsanitizeNoteHtml
+   ForDarkPopupはinline colorのみ対象でクラス指定の色は拾えないため)。 */
+.history-note-popup .notes-entry-quote{color:#e2897a;}
 /* .notes-entry-body(ノート本文)は#000(黒)をクラス指定しているため、暗い背景の
    このポップアップの中では黒文字に黒背景で読めなくなる。同じ理由でここだけ
    明るい色に上書きする。 */
