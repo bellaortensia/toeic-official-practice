@@ -1543,29 +1543,42 @@ async function getAudioIndex() {
 // だけがブロックされている、といったケースを利用者自身が気づけるようにするため。
 let lastAudioError = '';
 const audioUrlCache = {};
+// 通信そのものが一瞬失敗しただけ(モバイル回線の切り替わり、バックグラウンド中の
+// 通信制限など)で音声が取得できないケースがあるため、最大3回まで自動で再試行する。
+// 権限エラー(4xx)は再試行しても直らないので1回で諦め、それ以外(通信例外・5xx・
+// 429)だけリトライ対象にする。
+const AUDIO_FETCH_MAX_ATTEMPTS = 3;
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 async function getAudioUrl(filename) {
   lastAudioError = '';
   if (audioUrlCache[filename]) return audioUrlCache[filename];
-  try {
-    const index = await getAudioIndex();
-    const id = index[filename];
-    if (!id) { lastAudioError = `音声ファイルが見つかりませんでした(${filename})。(一覧の総数: ${Object.keys(index).length}件)`; return null; }
-    const token = await getValidAccessToken();
-    const res = await fetch(`https://api.box.com/2.0/files/${id}/content`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    if (!res.ok) {
-      lastAudioError = `音声のダウンロードに失敗しました(HTTP ${res.status})。会社のネットワークがBoxからのファイルダウンロードをブロックしている可能性があります。`;
-      return null;
+  const index = await getAudioIndex();
+  const id = index[filename];
+  if (!id) { lastAudioError = `音声ファイルが見つかりませんでした(${filename})。(一覧の総数: ${Object.keys(index).length}件)`; return null; }
+
+  for (let attempt = 1; attempt <= AUDIO_FETCH_MAX_ATTEMPTS; attempt++) {
+    try {
+      const token = await getValidAccessToken();
+      const res = await fetch(`https://api.box.com/2.0/files/${id}/content`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        lastAudioError = `音声のダウンロードに失敗しました(HTTP ${res.status})。会社のネットワークがBoxからのファイルダウンロードをブロックしている可能性があります。`;
+        // 4xx(権限・認証・見つからない等)は再試行しても直らないため即諦める。
+        // それ以外(429・5xx)は一時的な不調の可能性があるので再試行する。
+        if (res.status >= 400 && res.status < 500 && res.status !== 429) return null;
+      } else {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        audioUrlCache[filename] = url;
+        return url;
+      }
+    } catch (e) {
+      lastAudioError = `音声の取得中にエラーが発生しました(${e.message})。ネットワーク環境をご確認ください。`;
     }
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    audioUrlCache[filename] = url;
-    return url;
-  } catch (e) {
-    lastAudioError = `音声の取得中にエラーが発生しました(${e.message})。ネットワーク環境をご確認ください。`;
-    return null;
+    if (attempt < AUDIO_FETCH_MAX_ATTEMPTS) await sleep(700 * attempt);
   }
+  return null;
 }
 
 // トラックのクリック/ドラッグでシーク移動できるようにする。getAudio()は現在の
@@ -3020,6 +3033,17 @@ async function playStudySequence(filenames, loop, onEnd, onError) {
   stopAllAudio();
   studySequencePlaying = true;
   let idx = 0;
+  // 同じAudio要素を最初から最後まで使い回す(トラックが変わるたびにnew Audio()を
+  // 作り直さない)。一部のAndroidブラウザ(Sleipnir Black等)は、タップした瞬間から
+  // 離れた場所での新しいAudio要素へのplay()を「ユーザー操作に紐付いていない再生」
+  // とみなしてブロックすることがあり、これが原因で1曲目の再生後、無音のまま
+  // 「■停止」表示だけが残り続ける不具合が起きていた。タップ直後に(まだ空の状態で)
+  // 一度play()しておいた同じ要素を最後まで使い回すことで、この制限を回避する
+  // (下のplayIndex()内でのiOS向けの対策と同じ考え方)。
+  const audio = new Audio();
+  audio.play().catch(() => {}); // プライミング用。この時点では失敗しても無視してよい
+  globalAudio.current = audio;
+  audio.addEventListener('ended', () => { idx++; next(); });
   async function next() {
     if (!studySequencePlaying) return;
     if (idx >= filenames.length) {
@@ -3032,10 +3056,14 @@ async function playStudySequence(filenames, loop, onEnd, onError) {
       if (onError) onError(lastAudioError || '音声の読み込みに失敗しました。');
       idx++; next(); return;
     }
-    const audio = new Audio(url);
-    globalAudio.current = audio;
-    audio.addEventListener('ended', () => { idx++; next(); });
-    audio.play().catch(() => {});
+    audio.src = url;
+    audio.play().catch(() => {
+      // 自動再生がブロックされた場合、無音のまま「■停止」表示だけが残り続けて
+      // 利用者が気づけないという事態を避け、エラー表示とボタン表示の復帰を行う。
+      studySequencePlaying = false;
+      if (onError) onError('このブラウザでは連続再生がブロックされました。各行の▶ボタンで1曲ずつ再生するか、別のブラウザ(Chrome等)でお試しください。');
+      if (onEnd) onEnd();
+    });
   }
   next();
 }
