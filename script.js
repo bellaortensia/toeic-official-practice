@@ -1421,10 +1421,20 @@ async function refreshToken() {
   return true;
 }
 
+// refreshToken()が同時に複数走らないようにする(音声の一括先読みで複数ファイルを
+// 並行取得すると、トークン期限切れのタイミングでgetValidAccessToken()が同時に何度も
+// 呼ばれうる。Boxのrefresh_tokenは使うたびに新しいものへ入れ替わる仕組みのため、
+// 同時に2回以上リフレッシュ通信を送ると、後から返ってきた方は既に無効になった
+// refresh_tokenを使ったことになり失敗してしまう)。進行中のリフレッシュがあれば
+// それを使い回し、新たに追加では走らせない。
+let refreshTokenPromise = null;
 async function getValidAccessToken() {
   const expiresAt = Number(localStorage.getItem('box_token_expires_at') || 0);
   if (Date.now() > expiresAt - 60000) {
-    const ok = await refreshToken();
+    if (!refreshTokenPromise) {
+      refreshTokenPromise = refreshToken().finally(() => { refreshTokenPromise = null; });
+    }
+    const ok = await refreshTokenPromise;
     if (!ok) return null;
   }
   return localStorage.getItem('box_access_token');
@@ -3044,13 +3054,24 @@ async function playStudySequence(filenames, loop, onEnd, onError) {
   audio.play().catch(() => {}); // プライミング用。この時点では失敗しても無視してよい
   globalAudio.current = audio;
   audio.addEventListener('ended', () => { idx++; next(); });
+
+  // 再生を始める前に、対象ファイルを全て先読みして手元(メモリ上)に持っておく。
+  // スマホの画面ロック中はOS/ブラウザがバックグラウンドの通信を制限・停止する
+  // ことがあり、「次の曲に切り替わる瞬間」や「ループで最初に戻る瞬間」に新しく
+  // 通信が必要だと、そこで再生が止まってしまう。あらかじめ全曲分を取得しておけば、
+  // 再生開始後は(取得済みの曲に関しては)追加の通信が発生しないため、画面ロック中
+  // でもループを含めて途切れにくくなる。
+  const uniqueNames = [...new Set(filenames)];
+  await Promise.all(uniqueNames.map(f => getAudioUrl(f)));
+  if (!studySequencePlaying) return; // 先読み中に停止された場合は何もしない
+
   async function next() {
     if (!studySequencePlaying) return;
     if (idx >= filenames.length) {
       if (!loop) { studySequencePlaying = false; if (onEnd) onEnd(); return; }
       idx = 0;
     }
-    const url = await getAudioUrl(filenames[idx]);
+    const url = await getAudioUrl(filenames[idx]); // 先読み済みなら通信なしでキャッシュから返る
     if (!studySequencePlaying) return;
     if (!url) {
       if (onError) onError(lastAudioError || '音声の読み込みに失敗しました。');
