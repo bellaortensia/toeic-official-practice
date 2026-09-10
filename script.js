@@ -23,6 +23,9 @@ let studySequencePlaying = false;
 // 参照先のボタンが今も画面上にあれば表示を元に戻す(activePlayCtrlはこのファイルの
 // 後方で宣言されるが、実際に値が入るのはユーザー操作後なのでここでの参照で問題ない)。
 let activePlayCtrl = null;
+// 「前回学習した問題」欄の再生用に、複数の音声ファイルを1本に連結して作った
+// object URL。作り直す/停止する際に古いものを解放する。
+let studyLoopUrl = null;
 function stopAllAudio() {
   studySequencePlaying = false;
   if (activePlayCtrl) {
@@ -33,6 +36,13 @@ function stopAllAudio() {
   if (globalAudio.current) {
     try { globalAudio.current.pause(); } catch (e) { /* ignore */ }
     globalAudio.current = null;
+  }
+  if (studyLoopUrl) {
+    try { URL.revokeObjectURL(studyLoopUrl); } catch (e) { /* ignore */ }
+    studyLoopUrl = null;
+  }
+  if ('mediaSession' in navigator) {
+    try { navigator.mediaSession.playbackState = 'none'; } catch (e) { /* ignore */ }
   }
 }
 
@@ -3033,60 +3043,97 @@ async function resolvePreviousStudyItems() {
   return items;
 }
 
-// filenamesを順番に再生する。loop=trueの場合、最後まで再生したら自動で先頭に戻って
-// 繰り返す(手動で止めるか、他のstopAllAudio()呼び出しで止まるまで継続)。
-// loop=falseで最後まで自然に再生し終えた場合はonEndを呼ぶ(呼び出し元でボタン表示を
-// 元に戻すために使う。手動で停止した場合や他の再生に割り込まれた場合は呼ばない)。
-// onErrorは1トラックでも取得に失敗した場合に理由付きで呼ばれる(無言で次へスキップ
-// せず、利用者が気づけるようにするため)。
-async function playStudySequence(filenames, loop, onEnd, onError) {
+// ロック画面等にメディア情報を出し、OSに「再生中のメディアセッションがある」と
+// 認識させる(バックグラウンドで再生を止められにくくする狙い)。
+function setupStudyMediaSession() {
+  if (!('mediaSession' in navigator)) return;
+  try {
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: '前回学習した問題',
+      artist: 'TOEIC Official Practice'
+    });
+    navigator.mediaSession.playbackState = 'playing';
+    navigator.mediaSession.setActionHandler('pause', () => stopAllAudio());
+    navigator.mediaSession.setActionHandler('stop', () => stopAllAudio());
+    navigator.mediaSession.setActionHandler('play', () => {
+      if (globalAudio.current) globalAudio.current.play().catch(() => {});
+    });
+  } catch (e) { /* ignore */ }
+}
+
+// filenamesの音声を連結して1本の音声トラックにし、それを再生する。
+// loop=trueの場合はブラウザ標準のloop機能で先頭から繰り返す(JavaScriptを介さず
+// ブラウザ内部で繰り返すため、画面ロック中でも「曲の切り替わり」で止まらない)。
+// loop=falseで最後まで再生し終えた場合はonEndを呼ぶ。onReadyは実際に音が鳴り
+// 始めた時点で呼ぶ(ボタンの「読み込み中」表示を「■停止」に切り替えるため)。
+// onErrorは取得・再生に失敗した場合に理由付きで呼ばれる。
+async function playStudySequence(filenames, loop, onEnd, onError, onReady) {
   stopAllAudio();
   studySequencePlaying = true;
-  let idx = 0;
-  // 同じAudio要素を最初から最後まで使い回す(トラックが変わるたびにnew Audio()を
-  // 作り直さない)。一部のAndroidブラウザ(Sleipnir Black等)は、タップした瞬間から
-  // 離れた場所での新しいAudio要素へのplay()を「ユーザー操作に紐付いていない再生」
-  // とみなしてブロックすることがあり、これが原因で1曲目の再生後、無音のまま
-  // 「■停止」表示だけが残り続ける不具合が起きていた。タップ直後に(まだ空の状態で)
-  // 一度play()しておいた同じ要素を最後まで使い回すことで、この制限を回避する
-  // (下のplayIndex()内でのiOS向けの対策と同じ考え方)。
+
+  // タップ操作に再生を紐付けるため、通信を挟む前にこの場で一度play()しておく空要素。
+  // 取得完了後、この同じ要素にsrcを入れて再生する(iOS/一部Androidは、タップ済みの
+  // 同じ要素なら後からの遅延play()を許可するため。下のplayIndex()と同じ考え方)。
   const audio = new Audio();
-  audio.play().catch(() => {}); // プライミング用。この時点では失敗しても無視してよい
+  audio.play().catch(() => {});
   globalAudio.current = audio;
-  audio.addEventListener('ended', () => { idx++; next(); });
 
-  // 再生を始める前に、対象ファイルを全て先読みして手元(メモリ上)に持っておく。
-  // スマホの画面ロック中はOS/ブラウザがバックグラウンドの通信を制限・停止する
-  // ことがあり、「次の曲に切り替わる瞬間」や「ループで最初に戻る瞬間」に新しく
-  // 通信が必要だと、そこで再生が止まってしまう。あらかじめ全曲分を取得しておけば、
-  // 再生開始後は(取得済みの曲に関しては)追加の通信が発生しないため、画面ロック中
-  // でもループを含めて途切れにくくなる。
-  const uniqueNames = [...new Set(filenames)];
-  await Promise.all(uniqueNames.map(f => getAudioUrl(f)));
-  if (!studySequencePlaying) return; // 先読み中に停止された場合は何もしない
-
-  async function next() {
-    if (!studySequencePlaying) return;
-    if (idx >= filenames.length) {
-      if (!loop) { studySequencePlaying = false; if (onEnd) onEnd(); return; }
-      idx = 0;
-    }
-    const url = await getAudioUrl(filenames[idx]); // 先読み済みなら通信なしでキャッシュから返る
-    if (!studySequencePlaying) return;
-    if (!url) {
-      if (onError) onError(lastAudioError || '音声の読み込みに失敗しました。');
-      idx++; next(); return;
-    }
-    audio.src = url;
-    audio.play().catch(() => {
-      // 自動再生がブロックされた場合、無音のまま「■停止」表示だけが残り続けて
-      // 利用者が気づけないという事態を避け、エラー表示とボタン表示の復帰を行う。
-      studySequencePlaying = false;
-      if (onError) onError('このブラウザでは連続再生がブロックされました。各行の▶ボタンで1曲ずつ再生するか、別のブラウザ(Chrome等)でお試しください。');
-      if (onEnd) onEnd();
-    });
+  // 全ファイルのバイト列を取得し、順番どおりに1本へ連結する。曲間で新たにplay()も
+  // 通信も挟まないため、画面ロック中に固まりやすい「曲の切り替わり」「ループの先頭
+  // 復帰」という瞬間そのものが無くなる。
+  let buffers;
+  try {
+    buffers = await Promise.all(filenames.map(async f => {
+      const url = await getAudioUrl(f);
+      if (!url) return null;
+      try {
+        const res = await fetch(url); // object URLからバイト列を取り出すだけ(外部通信は発生しない)
+        return await res.arrayBuffer();
+      } catch (e) { return null; }
+    }));
+  } catch (e) {
+    buffers = [];
   }
-  next();
+  if (!studySequencePlaying) return; // 取得中に停止された場合は何もしない
+
+  const ok = buffers.filter(Boolean);
+  if (ok.length === 0) {
+    studySequencePlaying = false;
+    if (onError) onError(lastAudioError || '音声を取得できませんでした。ネットワーク環境をご確認ください。');
+    if (onEnd) onEnd();
+    return;
+  }
+  if (ok.length < filenames.length && onError) {
+    onError('一部の音声を取得できなかったため、取得できた分のみ再生します。');
+  }
+
+  const blob = new Blob(ok, { type: 'audio/mpeg' });
+  if (studyLoopUrl) { try { URL.revokeObjectURL(studyLoopUrl); } catch (e) { /* ignore */ } }
+  studyLoopUrl = URL.createObjectURL(blob);
+
+  audio.src = studyLoopUrl;
+  audio.loop = !!loop;
+  audio.addEventListener('ended', () => {
+    // loop=trueのときはendedは発生しない。loop=falseで最後まで再生し終えたときだけ来る。
+    if (!studySequencePlaying) return;
+    studySequencePlaying = false;
+    if (onEnd) onEnd();
+  });
+  audio.addEventListener('error', () => {
+    if (!studySequencePlaying) return;
+    studySequencePlaying = false;
+    if (onError) onError('音声の再生でエラーが発生しました。別のブラウザ(Chrome等)でお試しください。');
+    if (onEnd) onEnd();
+  });
+
+  audio.play().then(() => {
+    setupStudyMediaSession();
+    if (onReady) onReady();
+  }).catch(() => {
+    studySequencePlaying = false;
+    if (onError) onError('このブラウザで再生がブロックされました。もう一度ボタンを押すか、別のブラウザ(Chrome等)でお試しください。');
+    if (onEnd) onEnd();
+  });
 }
 
 // 「前回学習した問題」欄: まとめて再生ボタン・各行の再生ボタンは、どれか1つを
@@ -3099,16 +3146,20 @@ function togglePlayback(btn, filenames, loop, label, stopLabel, onError) {
     return;
   }
   stopAllAudio();
+  // 連結音声を取得している間は「読み込み中」を表示し、実際に鳴り始めたら(onReady)
+  // 「■停止」表示へ切り替える。曲数が多いと数秒かかることがあるため。
+  btn.textContent = '⏳';
+  btn.classList.add('is-playing');
+  activePlayCtrl = { btn, label };
   playStudySequence(filenames, loop, () => {
     if (activePlayCtrl && activePlayCtrl.btn === btn) {
       btn.textContent = label;
       btn.classList.remove('is-playing');
       activePlayCtrl = null;
     }
-  }, onError);
-  btn.textContent = stopLabel;
-  btn.classList.add('is-playing');
-  activePlayCtrl = { btn, label };
+  }, onError, () => {
+    if (activePlayCtrl && activePlayCtrl.btn === btn) btn.textContent = stopLabel;
+  });
 }
 
 // 「前回学習した問題」の各行にマウスオーバー(またはクリックで固定)すると出る、
