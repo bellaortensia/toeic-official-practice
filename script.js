@@ -3,6 +3,19 @@ const CLIENT_SECRET = 'd1QAC50V41mR9NAhquGi9l5p12fYqlHS';
 const REDIRECT_URI = 'https://bellaortensia.github.io/toeic-official-practice/';
 const AUDIO_FOLDER_ID = '409318407954';
 
+// このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
+// 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
+// コードが読み込まれているか」を目視確認できる。
+const BUILD_VERSION = 'v92';
+(function showBuildTag() {
+  function set() {
+    const el = document.getElementById('buildTag');
+    if (el) el.textContent = 'build ' + BUILD_VERSION;
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', set);
+  else set();
+})();
+
 const loginBtn = document.getElementById('login-btn');
 const logoutBtn = document.getElementById('logout-btn');
 const statusEl = document.getElementById('status');
