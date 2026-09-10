@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v92';
+const BUILD_VERSION = 'v93';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -3075,13 +3075,18 @@ function setupStudyMediaSession() {
 }
 
 // filenamesの音声を連結して1本の音声トラックにし、それを再生する。
-// loop=trueの場合はブラウザ標準のloop機能で先頭から繰り返す(JavaScriptを介さず
-// ブラウザ内部で繰り返すため、画面ロック中でも「曲の切り替わり」で止まらない)。
+// loop=trueの場合、1周分をメモリ上限の範囲で何十回分も連結して「非常に長い1本」に
+// してから再生する。スマホは画面ロック中でも "1本の音声の頭から終わりまでの連続
+// 再生" は止めないが、ブラウザのloop機能の「終わったら頭に戻す」処理はロック中に
+// 止められてしまうことがある(Xperia等で確認)。そのため実質的にloop相当を、
+// 「最初から長いトラックにしておく」ことで実現する。念のため audio.loop も立てる
+// ので、上限を超える長さの学習でも起きていれば頭に戻る。
 // loop=falseで最後まで再生し終えた場合はonEndを呼ぶ。onReadyは実際に音が鳴り
 // 始めた時点で呼ぶ(ボタンの「読み込み中」表示を「■停止」に切り替えるため)。
 // onErrorは取得・再生に失敗した場合に理由付きで呼ばれる。
+// 呼び出し前に必ず stopAllAudio() を呼ぶこと(ここでは呼ばない。呼ぶと togglePlayback
+// が直前にセットした activePlayCtrl を巻き戻してしまい、ボタン表示が変わらなくなる)。
 async function playStudySequence(filenames, loop, onEnd, onError, onReady) {
-  stopAllAudio();
   studySequencePlaying = true;
 
   // タップ操作に再生を紐付けるため、通信を挟む前にこの場で一度play()しておく空要素。
@@ -3120,12 +3125,32 @@ async function playStudySequence(filenames, loop, onEnd, onError, onReady) {
     onError('一部の音声を取得できなかったため、取得できた分のみ再生します。');
   }
 
-  const blob = new Blob(ok, { type: 'audio/mpeg' });
+  // loop再生のときは、1周分(ok)をメモリ上限の範囲で繰り返し連結し、非常に長い
+  // 1本のトラックにする。画面ロック中でも "1本の連続再生" は続くため、これで
+  // 実質的に長時間ループし続ける。
+  let parts = ok.slice();
+  if (loop) {
+    const passBytes = ok.reduce((n, b) => n + b.byteLength, 0);
+    const MAX_BYTES = 60 * 1024 * 1024; // 約60MB(端末メモリを圧迫しない上限)
+    const MAX_REPEATS = 40;
+    if (passBytes > 0) {
+      parts = [];
+      let total = 0, reps = 0;
+      while (reps < MAX_REPEATS && total + passBytes <= MAX_BYTES) {
+        parts = parts.concat(ok);
+        total += passBytes;
+        reps++;
+      }
+      if (reps === 0) parts = ok.slice(); // 1周分が上限を超える場合でも最低1周は入れる
+    }
+  }
+
+  const blob = new Blob(parts, { type: 'audio/mpeg' });
   if (studyLoopUrl) { try { URL.revokeObjectURL(studyLoopUrl); } catch (e) { /* ignore */ } }
   studyLoopUrl = URL.createObjectURL(blob);
 
   audio.src = studyLoopUrl;
-  audio.loop = !!loop;
+  audio.loop = !!loop; // 連結した長いトラックすら再生し切った場合の保険
   audio.addEventListener('ended', () => {
     // loop=trueのときはendedは発生しない。loop=falseで最後まで再生し終えたときだけ来る。
     if (!studySequencePlaying) return;
