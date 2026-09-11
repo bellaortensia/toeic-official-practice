@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v94';
+const BUILD_VERSION = 'v95';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -158,7 +158,8 @@ async function callGemini(systemPrompt, userText, options = {}) {
     generationConfig: {
       temperature: 0.3,
       maxOutputTokens: options.maxOutputTokens || 1024,
-      ...(options.responseMimeType ? { responseMimeType: options.responseMimeType } : {})
+      ...(options.responseMimeType ? { responseMimeType: options.responseMimeType } : {}),
+      ...(options.responseSchema ? { responseSchema: options.responseSchema } : {})
     }
   };
   const res = await fetchGeminiWithFailover(url, body);
@@ -396,6 +397,54 @@ segmentsの"en"を出現順にそのまま連結すると、空白の増減を�
 
 const TRANSLATE_PROMPT_VERSION = 'v7';
 
+// レビュー文などに引用符("...")を含む原文だと、AIがJSON文字列内でその引用符を
+// エスケープし忘れ(\"にせず"のまま出力し)、JSON.parseが「Expected double-quoted
+// property name」等で毎回失敗することがあった(TEST1 Part7 196-200 "Review 1"で
+// 実際に発生)。responseMimeTypeだけでは構文の妥当性が保証されないため、
+// responseSchemaでGemini側に構造化出力(スキーマに沿った生成)を強制させ、
+// 文字列中の引用符が必ず正しくエスケープされるようにする。
+const TRANSLATE_RESPONSE_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    segments: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          en: { type: 'STRING' },
+          ja: { type: 'STRING' },
+          keyTerms: {
+            type: 'ARRAY',
+            items: {
+              type: 'OBJECT',
+              properties: {
+                term: { type: 'STRING' },
+                meaning: { type: 'STRING' }
+              },
+              required: ['term', 'meaning']
+            }
+          },
+          lineBreak: { type: 'BOOLEAN' }
+        },
+        required: ['en', 'ja']
+      }
+    },
+    naturalSentences: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          en: { type: 'STRING' },
+          ja: { type: 'STRING' },
+          lineBreak: { type: 'BOOLEAN' }
+        },
+        required: ['en', 'ja']
+      }
+    }
+  },
+  required: ['segments', 'naturalSentences']
+};
+
 // AIが返すlineBreakは「ピリオドの直後」など原文に無い位置でもtrueを付けがちで、
 // EN/JA両カラムの改行位置がずれる原因になる。原文中の実際の改行位置とチャンクの
 // 出現位置を突き合わせて、lineBreakをこちら側で確定し直す(AIの判断は信用しない)。
@@ -426,7 +475,11 @@ async function getTranslationChunks(cacheKey, text, forceRefresh) {
   // 3〜8語ごとに細かく区切るこの翻訳形式だとJSON出力がかなり長くなる。4096だと
   // 出力が途中で打ち切られ(MAX_TOKENS)、JSON.parseが毎回失敗することがあったため
   // 引き上げた(TEST1 Part7 196-200 "Review 1"(263語)で実際に発生していた)。
-  const outText = await callGemini(TRANSLATE_PROMPT, text, { responseMimeType: 'application/json', maxOutputTokens: 8192 });
+  const outText = await callGemini(TRANSLATE_PROMPT, text, {
+    responseMimeType: 'application/json',
+    responseSchema: TRANSLATE_RESPONSE_SCHEMA,
+    maxOutputTokens: 8192
+  });
   let parsed;
   try { parsed = JSON.parse(outText); } catch (e) { throw new Error('翻訳結果の解析に失敗しました(' + e.message + ')'); }
   const segments = reconcileLineBreaks(Array.isArray(parsed.segments) ? parsed.segments : [], text);
