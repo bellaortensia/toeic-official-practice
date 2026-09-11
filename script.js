@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v93';
+const BUILD_VERSION = 'v94';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -164,8 +164,16 @@ async function callGemini(systemPrompt, userText, options = {}) {
   const res = await fetchGeminiWithFailover(url, body);
   if (!res.ok) throw new Error(`Gemini APIエラー (${res.status}): ${(await res.text()).slice(0, 200)}`);
   const data = await res.json();
-  const parts = data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts;
+  const candidate = data.candidates && data.candidates[0];
+  const parts = candidate && candidate.content && candidate.content.parts;
   const text = (parts || []).filter(p => !p.thought).map(p => p.text || '').join('').trim();
+  // 出力がmaxOutputTokensの上限に達して途中で打ち切られた場合(finishReasonが
+  // MAX_TOKENS)、特にJSON形式の応答はほぼ確実にJSON.parseに失敗する。原因不明の
+  // 「解析に失敗しました」で終わらせず、ここで気づけるようにしておく(長い設問文
+  // ほど起きやすい。呼び出し側でmaxOutputTokensを増やすのが対策になる)。
+  if (candidate && candidate.finishReason === 'MAX_TOKENS') {
+    throw new Error('出力が長すぎて途中で打ち切られました(MAX_TOKENS)。設問文が長い可能性があります。');
+  }
   if (!text) throw new Error('空の応答でした');
   return text;
 }
@@ -414,9 +422,13 @@ async function getTranslationChunks(cacheKey, text, forceRefresh) {
   const lsKey = 'toeicTranslate.' + TRANSLATE_PROMPT_VERSION + '.' + cacheKey;
   const cached = !forceRefresh && localStorage.getItem(lsKey);
   if (cached) return JSON.parse(cached);
-  const outText = await callGemini(TRANSLATE_PROMPT, text, { responseMimeType: 'application/json', maxOutputTokens: 4096 });
+  // Part7の複数文書問題(トリプルパッセージ)などは1文書が300語近くになることがあり、
+  // 3〜8語ごとに細かく区切るこの翻訳形式だとJSON出力がかなり長くなる。4096だと
+  // 出力が途中で打ち切られ(MAX_TOKENS)、JSON.parseが毎回失敗することがあったため
+  // 引き上げた(TEST1 Part7 196-200 "Review 1"(263語)で実際に発生していた)。
+  const outText = await callGemini(TRANSLATE_PROMPT, text, { responseMimeType: 'application/json', maxOutputTokens: 8192 });
   let parsed;
-  try { parsed = JSON.parse(outText); } catch (e) { throw new Error('翻訳結果の解析に失敗しました'); }
+  try { parsed = JSON.parse(outText); } catch (e) { throw new Error('翻訳結果の解析に失敗しました(' + e.message + ')'); }
   const segments = reconcileLineBreaks(Array.isArray(parsed.segments) ? parsed.segments : [], text);
   const naturalSentences = reconcileLineBreaks(Array.isArray(parsed.naturalSentences) ? parsed.naturalSentences : [], text);
   const result = { segments, naturalSentences };
