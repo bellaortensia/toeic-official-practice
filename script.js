@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v97';
+const BUILD_VERSION = 'v98';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -1960,7 +1960,10 @@ const dataCache = {};
 async function loadPartData(test, part) {
   const key = test + '-' + part;
   if (dataCache[key]) return dataCache[key];
-  const res = await fetch(`data/${test === 'T1' ? 'test1' : 'test2'}/part${part}.json`);
+  // data/*.jsonはscript.js/index.htmlと違いキャッシュ回避のクエリが付いておらず、
+  // 問題文データを修正しても古い内容がブラウザ/CDNにキャッシュされたまま残る
+  // ことがあった。BUILD_VERSIONを付けて、デプロイのたびに確実に取り直す。
+  const res = await fetch(`data/${test === 'T1' ? 'test1' : 'test2'}/part${part}.json?v=${BUILD_VERSION}`);
   const json = await res.json();
   dataCache[key] = json;
   return json;
@@ -1974,7 +1977,7 @@ const pdfExplainMapCache = {};
 async function loadPdfExplainMap(test) {
   if (pdfExplainMapCache[test]) return pdfExplainMapCache[test];
   try {
-    const res = await fetch(`data/${test === 'T1' ? 'test1' : 'test2'}/pdfExplain.json`);
+    const res = await fetch(`data/${test === 'T1' ? 'test1' : 'test2'}/pdfExplain.json?v=${BUILD_VERSION}`);
     if (!res.ok) return null;
     const json = await res.json();
     pdfExplainMapCache[test] = json;
