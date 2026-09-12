@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v96';
+const BUILD_VERSION = 'v97';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -818,10 +818,23 @@ function buildNotesWidget(noteKey, label) {
 // ---------- 解説画面の「AIに質問する」欄 ----------
 
 const ASK_AI_PROMPT = `あなたはTOEIC対策の講師です。以下の問題とその解説を踏まえて、学習者からの追加の質問に日本語で分かりやすく答えてください。
+【これまでのやり取り】が含まれている場合は、必ずその文脈を踏まえて回答すること。「それ」「さっきの」「なぜ」のような指示語・省略を含む質問は、直前のやり取りの内容を指している可能性が高いので、会話の流れを無視して単独の質問として答えないこと。
 装飾やMarkdown記号(**など)は使わず、プレーンテキストで簡潔に答えてください。`;
 
-async function askAiAboutQuestion(questionContext, userQuestion) {
-  const input = `【問題】\n${questionContext}\n\n【学習者からの質問】\n${userQuestion}`;
+// 同じ設問への質問が2回目以降でも、それまでの質問・回答のやり取り(history、
+// {q,a}の配列)を毎回プロンプトに含めて渡す。Gemini側は1回ごとに独立した
+// リクエストで会話状態を覚えていないため、こちらで毎回文脈を渡し直さないと
+// 「それ」「なぜ」等の前の質問を踏まえた追加質問に答えられなかった。
+// 履歴が長くなりすぎて送信サイズが膨らまないよう、直近8往復までに絞って渡す。
+async function askAiAboutQuestion(questionContext, userQuestion, history) {
+  let input = `【問題】\n${questionContext}\n\n`;
+  const recent = (history || []).slice(-8);
+  if (recent.length) {
+    input += '【これまでのやり取り】\n' +
+      recent.map((h, i) => `Q${i + 1}. ${h.q}\nA${i + 1}. ${h.a}`).join('\n\n') +
+      '\n\n';
+  }
+  input += `【学習者からの新しい質問】\n${userQuestion}`;
   return await callGemini(ASK_AI_PROMPT, input, { maxOutputTokens: 800 });
 }
 
@@ -885,13 +898,19 @@ function buildAskAiWidget(questionContext, noteKey) {
 
   let lastFailedQuestion = null;
   let lastFailedDiv = null;
+  // このウィジェット(=この設問)内で続けて質問したときに、直前までのやり取りを
+  // 踏まえて回答できるようにするための会話履歴。失敗した質問は文脈として
+  // 不正確なので含めない(成功した往復だけ積み上げる)。
+  const history = [];
 
   async function runQuestion(q, aDiv) {
     btn.disabled = true;
     btn.textContent = '質問中...';
     answerArea.style.display = 'block';
     try {
-      aDiv.textContent = await askAiAboutQuestion(questionContext, q);
+      const answer = await askAiAboutQuestion(questionContext, q, history);
+      aDiv.textContent = answer;
+      history.push({ q, a: answer });
       lastFailedQuestion = null;
       lastFailedDiv = null;
       retryBtn.style.display = 'none';
