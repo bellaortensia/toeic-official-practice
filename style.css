@@ -471,10 +471,17 @@ audio{
 .chunk-popup-explain:hover strong{color:var(--paper);}
 .chunk-popup-unheard{border-top:1px solid #333f4b;padding-top:8px;cursor:pointer;}
 .chunk-popup-unheard:hover strong{color:var(--paper);}
-.unheard-submenu{max-width:180px;}
-.chunk-popup-unheard-word{cursor:pointer;}
+.unheard-submenu{max-width:200px;}
+.chunk-popup-unheard-word{cursor:pointer;padding:2px 4px;border-radius:4px;}
 .chunk-popup-unheard-word:hover strong{color:var(--paper);}
 .chunk-popup-unheard-word.added{opacity:.5;}
+/* 複数選択の見た目: 選ばれた単語は背景を付けて白文字にし、選択中だと分かるようにする */
+.chunk-popup-unheard-word.selected{background:rgba(0,153,255,.35);}
+.chunk-popup-unheard-word.selected strong{color:#fff;}
+.chunk-popup-unheard-confirm{border-bottom:1px solid #333f4b;padding-bottom:8px;margin-bottom:8px;cursor:pointer;}
+.chunk-popup-unheard-confirm strong{color:#8be28b;}
+.chunk-popup-unheard-confirm:hover strong{color:#cdf3dc;}
+.chunk-popup-unheard-confirm.disabled{opacity:.4;pointer-events:none;}
 .translate-error{color:var(--danger);font-size:13px;}
 
 .translate-block{margin:10px 0;}
@@ -518,6 +525,9 @@ audio{
    統一する(以前は引用行だけ緑のJetBrains Monoになっており不揃いだった)。 */
 .notes-entry-quote{font-family:Arial,'Helvetica Neue',sans-serif;font-size:13px;font-weight:700;color:#c1503f;margin-bottom:4px;}
 .notes-entry-body{font-family:Arial,'Helvetica Neue',sans-serif;color:#000;white-space:pre-wrap;}
+/* 「■ボトルネックポイント」で書き写した単語の強調表示。黒字と見分けやすいよう、
+   青の中でも彩度・明度を上げた蛍光寄りの色にしている。 */
+.unheard-highlight{color:#0057ff;}
 
 .ask-ai-wrap{margin-top:14px;}
 .ask-ai-row{display:flex;gap:8px;}

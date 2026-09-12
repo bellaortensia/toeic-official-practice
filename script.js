@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v95';
+const BUILD_VERSION = 'v96';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -929,7 +929,7 @@ const chunkPopupEl = document.createElement('div');
 chunkPopupEl.className = 'chunk-popup';
 document.body.appendChild(chunkPopupEl);
 
-// 「聞き取れなかった単語▶」のホバーで右に出す単語一覧サブメニュー。chunkPopupEl
+// 「ボトルネックポイント▶」のホバーで右に出す単語一覧サブメニュー。chunkPopupEl
 // 本体とは別要素にし、どちらにマウスがあっても消えないようにする(すぐ隣に
 // 出るとはいえ、間の隙間を通るときにチラつかないよう少し遅延させて消す)。
 const unheardSubmenuEl = document.createElement('div');
@@ -949,24 +949,23 @@ function stripPunct(word) {
   return word.replace(/^[^A-Za-z0-9']+|[^A-Za-z0-9']+$/g, '');
 }
 
-// notesAreaに「■聞き取れなかった単語」として、そのチャンクの英文(該当語を太字・
-// 青字にしたもの)と、チャンクの直訳(seg.ja)を()で添えて書き写す。AIを呼ばず
-// 既存のセグメントデータだけで完結するため即時に追記できる。
-function appendUnheardWordToNotes(notesArea, phraseEn, phraseJa, word) {
+// notesAreaに「■ボトルネックポイント」として、そのチャンクの英文(選ばれた単語を
+// すべて太字・強調色にしたもの)と、チャンクの直訳(seg.ja)を()で添えて書き写す。
+// tokensはseg.enを空白区切りにしたもの、selectedIdxSetはその中で選ばれた
+// (複数可)インデックスの集合。AIを呼ばず既存のセグメントデータだけで完結する
+// ため即時に追記できる。
+function appendUnheardWordsToNotes(notesArea, tokens, selectedIdxSet, phraseJa) {
   const block = document.createElement('div');
   block.className = 'notes-entry';
   const quote = document.createElement('div');
   quote.className = 'notes-entry-quote';
-  quote.textContent = '■聞き取れなかった単語';
+  quote.textContent = '■ボトルネックポイント';
   block.appendChild(quote);
   const body = document.createElement('div');
   body.className = 'notes-entry-body';
-  const idx = phraseEn.indexOf(word);
-  let html = idx === -1
-    ? escapeHtml(phraseEn)
-    : escapeHtml(phraseEn.slice(0, idx)) +
-      `<strong style="color:#2f5fa8">${escapeHtml(word)}</strong>` +
-      escapeHtml(phraseEn.slice(idx + word.length));
+  let html = tokens.map((tok, i) =>
+    selectedIdxSet.has(i) ? `<strong class="unheard-highlight">${escapeHtml(tok)}</strong>` : escapeHtml(tok)
+  ).join(' ');
   if (phraseJa) html += `（${escapeHtml(phraseJa)}）`;
   body.innerHTML = html;
   block.appendChild(body);
@@ -974,20 +973,37 @@ function appendUnheardWordToNotes(notesArea, phraseEn, phraseJa, word) {
   notesArea.scrollTop = notesArea.scrollHeight;
 }
 
+// 複数の単語をまとめて選んでから1つのノートにできるよう、単語をクリックする
+// たびに選択のオン/オフを切り替え、「✓ 選んだ単語をノートへ」を押した時点で
+// まとめて1件のノートに書き出す(単語ごとに即追記していた旧仕様からの変更)。
 function showUnheardSubmenu(triggerEl, seg, notesArea) {
   cancelHideUnheardSubmenu();
   const tokens = (seg.en || '').split(/\s+/).filter(Boolean);
-  unheardSubmenuEl.innerHTML = tokens.map((tok, i) => {
-    const clean = stripPunct(tok) || tok;
-    return `<div class="chunk-popup-item chunk-popup-unheard-word" data-action="unheard-word" data-token-idx="${i}"><strong>${escapeHtml(clean)}</strong></div>`;
-  }).join('');
+  const selected = new Set();
+  function render() {
+    const confirmDisabled = selected.size === 0 ? ' disabled' : '';
+    unheardSubmenuEl.innerHTML =
+      `<div class="chunk-popup-item chunk-popup-unheard-confirm${confirmDisabled}" data-action="unheard-confirm"><strong>✓ 選んだ単語をノートへ</strong></div>` +
+      tokens.map((tok, i) => {
+        const clean = stripPunct(tok) || tok;
+        const sel = selected.has(i) ? ' selected' : '';
+        return `<div class="chunk-popup-item chunk-popup-unheard-word${sel}" data-action="unheard-word" data-token-idx="${i}"><strong>${escapeHtml(clean)}</strong></div>`;
+      }).join('');
+  }
+  render();
   unheardSubmenuEl.onclick = e => {
+    const confirmTrigger = e.target.closest('[data-action="unheard-confirm"]');
+    if (confirmTrigger) {
+      if (!selected.size) return;
+      appendUnheardWordsToNotes(notesArea, tokens, selected, seg.ja);
+      unheardSubmenuEl.classList.remove('show');
+      return;
+    }
     const wordTrigger = e.target.closest('[data-action="unheard-word"]');
     if (!wordTrigger) return;
-    const tok = tokens[Number(wordTrigger.dataset.tokenIdx)];
-    const clean = stripPunct(tok) || tok;
-    appendUnheardWordToNotes(notesArea, seg.en, seg.ja, clean);
-    wordTrigger.classList.add('added');
+    const idx = Number(wordTrigger.dataset.tokenIdx);
+    if (selected.has(idx)) selected.delete(idx); else selected.add(idx);
+    render();
   };
   const rect = triggerEl.getBoundingClientRect();
   unheardSubmenuEl.style.left = (rect.right + window.scrollX + 4) + 'px';
@@ -1002,7 +1018,10 @@ document.addEventListener('click', e => {
   }
 });
 
-function showChunkPopup(seg, anchorEl, notesArea, sentenceText, clauseText) {
+// showUnheard=false(Part5/6/7のリーディング設問)では「ボトルネックポイント▶」
+// (聞き取れなかった単語)の項目自体を出さない。リーディングには音声が無く、
+// 「聞き取れない」という状況が発生しないため。
+function showChunkPopup(seg, anchorEl, notesArea, sentenceText, clauseText, showUnheard = true) {
   const terms = seg.keyTerms || [];
   const literalHtml = seg.ja
     ? `<div class="chunk-popup-item chunk-popup-literal" data-action="literal"><strong>${escapeHtml(seg.ja)}</strong></div>`
@@ -1010,8 +1029,10 @@ function showChunkPopup(seg, anchorEl, notesArea, sentenceText, clauseText) {
   const termsHtml = terms.map((t, i) =>
     `<div class="chunk-popup-item chunk-popup-term" data-action="term" data-term-idx="${i}"><strong>${escapeHtml(t.term || '')}</strong><div>${escapeHtml(t.meaning || '')}</div></div>`
   ).join('');
-  chunkPopupEl.innerHTML = literalHtml + termsHtml +
-    '<div class="chunk-popup-item chunk-popup-unheard" data-action="unheard-menu"><strong>聞き取れなかった単語▶</strong></div>' +
+  const unheardHtml = showUnheard
+    ? '<div class="chunk-popup-item chunk-popup-unheard" data-action="unheard-menu"><strong>ボトルネックポイント▶</strong></div>'
+    : '';
+  chunkPopupEl.innerHTML = literalHtml + termsHtml + unheardHtml +
     '<div class="chunk-popup-item chunk-popup-explain" data-action="explain"><strong>この文を解説→ノートへ</strong></div>' +
     '<div class="chunk-popup-item chunk-popup-explain" data-action="explain-full"><strong>この文全体を解説→ノートへ</strong></div>';
   const unheardTrigger = chunkPopupEl.querySelector('[data-action="unheard-menu"]');
@@ -1078,7 +1099,7 @@ function showChunkPopup(seg, anchorEl, notesArea, sentenceText, clauseText) {
 // ・意訳: 文単位、常時表示。チャンク単位で正確に対応する箇所をハイライトするのは
 //   難しいため背景ハイライトはしないが、今EN側でハイライトされているチャンクが
 //   含まれる文だけに下線を引き、ホイール操作と連動させる(常時全文下線にはしない)。
-function renderTranslateColumns(container, data, mode, notesArea, slash) {
+function renderTranslateColumns(container, data, mode, notesArea, slash, showUnheard = true) {
   container.innerHTML = '';
   const segments = data.segments || [];
   let curSeg = -1;
@@ -1251,7 +1272,7 @@ function renderTranslateColumns(container, data, mode, notesArea, slash) {
         if (extracted) clauseText = extracted;
       }
     }
-    showChunkPopup(seg, enSpans[curSeg], notesArea, sentenceText, clauseText);
+    showChunkPopup(seg, enSpans[curSeg], notesArea, sentenceText, clauseText, showUnheard);
     popupOpenSeg = curSeg;
   }
 
@@ -1290,7 +1311,11 @@ function renderTranslateColumns(container, data, mode, notesArea, slash) {
 // 表示する。設問文の選択肢横に付けると「設問文を読み上げているのがこの話者」と
 // 誤解されるため、実際にその話者が話している本文(この関数が表示する原文)の
 // すぐ上に置く。
-function buildTranslatableBlock(text, cacheKey, speakers) {
+// showUnheard=false を渡すと、チャンクのポップアップメニューから「ボトルネック
+// ポイント▶」(聞き取れなかった単語)の項目を省く。Part5/6/7のリーディング設問には
+// 音声が無く「聞き取れない」状況が起こらないため、呼び出し側(renderPart6/renderPart7)
+// から false を渡している。
+function buildTranslatableBlock(text, cacheKey, speakers, showUnheard = true) {
   const wrap = document.createElement('div');
   wrap.className = 'translate-block';
 
@@ -1385,7 +1410,7 @@ function buildTranslatableBlock(text, cacheKey, speakers) {
     restoreNotesIfSaved(notesArea, cacheKey + '-translate-notes');
 
     function renderCurrentMode() {
-      renderTranslateColumns(contentContainer, data, mode, notesArea, slash);
+      renderTranslateColumns(contentContainer, data, mode, notesArea, slash, showUnheard);
     }
 
     modeBtn.onclick = () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); renderCurrentMode(); };
@@ -2758,7 +2783,7 @@ const COACH_PROMPT = `あなたは、TOEICの得点アップを目指して勉�
 - このメッセージは、学習者がその日の勉強を「これから始める」タイミングで読む(前回勉強した内容の振り返り)。「今日もお疲れ様でした」のような、その日の勉強が終わったことを労うトーン・締めくくりの表現は使わないこと。これから始める・取り組む学習者を送り出す・後押しするトーンにすること。
 - 「自己ベスト◯点」「◯点の壁を突破するために」のような、点数・スコアの話から書き始めたり、点数そのものをメッセージの中心に据えたりしないこと(渡された記録に点数の情報は含まれていない)。
 - 中心に据えるのは、渡された「これらの問題を解くために必要だった文法・語彙・表現」と、学習者自身が書いたノートの内容。これらに具体的に触れながら、学習者が「おそらく身についた・理解できたであろう内容」と「おそらくまだ曖昧・知らなかったであろう内容」をリマインドすること。抽象的な精神論だけで終わらせないこと。
-- ノートの中に「■聞き取れなかった単語」という見出しの記録があれば、そこに書かれている単語・フレーズをそのまま挙げて、次に聞き取るためのコツ(リンキング・音の変化・弱形など、その単語特有の聞き取りづらさに応じた具体的なアドバイス)を必ず添えること。
+- ノートの中に「■ボトルネックポイント」または(旧仕様の)「■聞き取れなかった単語」という見出しの記録があれば、そこに書かれている単語・フレーズをそのまま挙げて、次に聞き取るためのコツ(リンキング・音の変化・弱形など、その単語特有の聞き取りづらさに応じた具体的なアドバイス)を必ず添えること。
 - ノートの中に単語・熟語の意味やコアイメージを書き写した記録(「■{語句}」「語句：」「コアイメージ：」等の形式)があれば、それは学習者がまだ知らなかった単語としてメモしたものなので、その語句をそのまま挙げて「これを復習しましょう」という趣旨で伝えること。
 - 冒頭は励ましの言葉から始め、努力を続けていることを労い、無理なく続けられるよう背中を押すトーンにすること。プレッシャーをかけすぎないこと。
 - 時々(毎回でなくてよい)、TOEIC学習を長く続けるためのちょっとした工夫・ライフハックを、誰かのエピソード風に軽く一言添えてよい(説教くさくならない程度に、さらっと触れる程度)。
@@ -4717,7 +4742,7 @@ function renderPart6() {
         audioSlot.appendChild(createAudioPlayerWidget(p.audio, { sticky: true }));
       }
       translateSlot.style.display = 'block';
-      translateSlot.appendChild(buildTranslatableBlock(p.text, `${state.test}-6-${p.questions[0]}`));
+      translateSlot.appendChild(buildTranslatableBlock(p.text, `${state.test}-6-${p.questions[0]}`, null, false));
     } else {
       p67AdvancePassage(renderPart6);
     }
@@ -4814,7 +4839,7 @@ function renderPart7() {
       }
       translateSlots.forEach(({ slot, doc, di }) => {
         slot.style.display = 'block';
-        slot.appendChild(buildTranslatableBlock(doc.text, `${state.test}-7-${p.questions[0]}-doc${di}`));
+        slot.appendChild(buildTranslatableBlock(doc.text, `${state.test}-7-${p.questions[0]}-doc${di}`, null, false));
       });
     } else {
       p67AdvancePassage(renderPart7);
