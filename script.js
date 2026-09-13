@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v101';
+const BUILD_VERSION = 'v102';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -996,41 +996,43 @@ function stripPunct(word) {
   return word.replace(/^[^A-Za-z0-9']+|[^A-Za-z0-9']+$/g, '');
 }
 
-// notesAreaに「■ボトルネックポイント」として、そのチャンクの英文(選ばれた単語を
-// すべて太字・強調色にしたもの)と、チャンクの直訳(seg.ja)を()で添えて書き写す。
-// tokensはseg.enを空白区切りにしたもの、selectedIdxSetはその中で選ばれた
-// (複数可)インデックスの集合。AIを呼ばず既存のセグメントデータだけで完結する
-// ため即時に追記できる。
-function appendUnheardWordsToNotes(notesArea, tokens, selectedIdxSet, phraseJa) {
-  const block = document.createElement('div');
-  block.className = 'notes-entry';
-  const quote = document.createElement('div');
-  quote.className = 'notes-entry-quote';
-  quote.textContent = '■ボトルネックポイント';
-  block.appendChild(quote);
-  const body = document.createElement('div');
-  body.className = 'notes-entry-body';
-  let html = tokens.map((tok, i) =>
-    selectedIdxSet.has(i) ? `<strong class="unheard-highlight">${escapeHtml(tok)}</strong>` : escapeHtml(tok)
-  ).join(' ');
-  if (phraseJa) html += `（${escapeHtml(phraseJa)}）`;
-  body.innerHTML = html;
-  block.appendChild(body);
-  notesArea.appendChild(block);
-  notesArea.scrollTop = notesArea.scrollHeight;
+// textを空白で区切り、bottleneckIdxSetに含まれるインデックスの単語(記号込みの
+// 元の表記のまま)だけを<strong class="unheard-highlight">で囲んだHTMLを作る。
+// 空白そのものは連続していてもそのまま保持する(見た目の間隔を変えないため)。
+function buildHighlightedHtml(text, bottleneckIdxSet) {
+  if (!bottleneckIdxSet || !bottleneckIdxSet.size) return escapeHtml(text);
+  let wordIdx = -1;
+  return text.split(/(\s+)/).map(tok => {
+    if (tok === '' || /^\s+$/.test(tok)) return escapeHtml(tok);
+    wordIdx++;
+    return bottleneckIdxSet.has(wordIdx)
+      ? `<strong class="unheard-highlight">${escapeHtml(tok)}</strong>`
+      : escapeHtml(tok);
+  }).join('');
 }
 
-// 複数の単語をまとめて選んでから1つのノートにできるよう、単語をクリックする
-// たびに選択のオン/オフを切り替え、「✓ 選んだ単語をノートへ」を押した時点で
-// まとめて1件のノートに書き出す(単語ごとに即追記していた旧仕様からの変更)。
-function showUnheardSubmenu(triggerEl, seg, notesArea) {
+// 「ボトルネックポイント」の強調位置(セグメントごとのbottleneck配列)を追記した
+// data全体を、翻訳キャッシュと同じlocalStorageキーへ上書き保存する。これにより
+// 次回このcacheKeyを開いたとき(getTranslationChunksのキャッシュ命中時)も、
+// 強調表示を復元できる。翻訳結果自体と同じくこの端末のブラウザ内だけの保存で、
+// スプレッドシート同期(他端末との共有)の対象ではない点はノートと異なる。
+function persistTranslationCache(cacheKey, data) {
+  try {
+    localStorage.setItem('toeicTranslate.' + TRANSLATE_PROMPT_VERSION + '.' + cacheKey, JSON.stringify(data));
+  } catch (e) { /* 保存容量オーバー等は無視 */ }
+}
+
+// 単語をクリックするたびに選択のオン/オフを切り替え、「✓ 更新」を押した時点で
+// そのチャンクのボトルネック強調(seg.bottleneck、トークン番号の配列)をまとめて
+// 反映する。既にそのチャンクで選ばれている単語があれば、開いた時点で選択済みの
+// 状態から始まる(選び直し・解除がしやすいように)。
+function showUnheardSubmenu(triggerEl, seg, displayEn, onApply) {
   cancelHideUnheardSubmenu();
-  const tokens = (seg.en || '').split(/\s+/).filter(Boolean);
-  const selected = new Set();
+  const tokens = (displayEn || '').split(/\s+/).filter(Boolean);
+  const selected = new Set(seg.bottleneck || []);
   function render() {
-    const confirmDisabled = selected.size === 0 ? ' disabled' : '';
     unheardSubmenuEl.innerHTML =
-      `<div class="chunk-popup-item chunk-popup-unheard-confirm${confirmDisabled}" data-action="unheard-confirm"><strong>✓ 選んだ単語をノートへ</strong></div>` +
+      '<div class="chunk-popup-item chunk-popup-unheard-confirm" data-action="unheard-confirm"><strong>✓ 更新</strong></div>' +
       tokens.map((tok, i) => {
         const clean = stripPunct(tok) || tok;
         const sel = selected.has(i) ? ' selected' : '';
@@ -1048,8 +1050,7 @@ function showUnheardSubmenu(triggerEl, seg, notesArea) {
     e.stopPropagation();
     const confirmTrigger = e.target.closest('[data-action="unheard-confirm"]');
     if (confirmTrigger) {
-      if (!selected.size) return;
-      appendUnheardWordsToNotes(notesArea, tokens, selected, seg.ja);
+      onApply(selected);
       unheardSubmenuEl.classList.remove('show');
       return;
     }
@@ -1075,7 +1076,12 @@ document.addEventListener('click', e => {
 // showUnheard=false(Part5/6/7のリーディング設問)では「ボトルネックポイント▶」
 // (聞き取れなかった単語)の項目自体を出さない。リーディングには音声が無く、
 // 「聞き取れない」という状況が発生しないため。
-function showChunkPopup(seg, anchorEl, notesArea, clauseText, showUnheard = true) {
+// displayEnは、話者ラベルを取り除いた後の実際にEN列へ表示されている英文
+// (renderTranslateColumns側で計算済みのもの)。ボトルネックの単語選択・強調表示の
+// 対象を、実際に画面に見えている文字列と一致させるために使う。
+// onBottleneckChangeは、強調する単語(トークン番号のSet)が確定した時点で呼ばれ、
+// 呼び出し側でseg.bottleneckへの反映・保存・再描画を行う。
+function showChunkPopup(seg, anchorEl, notesArea, clauseText, showUnheard = true, displayEn = seg.en, onBottleneckChange = null) {
   const terms = seg.keyTerms || [];
   const literalHtml = seg.ja
     ? `<div class="chunk-popup-item chunk-popup-literal" data-action="literal"><strong>${escapeHtml(seg.ja)}</strong></div>`
@@ -1090,7 +1096,7 @@ function showChunkPopup(seg, anchorEl, notesArea, clauseText, showUnheard = true
     '<div class="chunk-popup-item chunk-popup-explain" data-action="explain"><strong>この文を解説→ノートへ</strong></div>';
   const unheardTrigger = chunkPopupEl.querySelector('[data-action="unheard-menu"]');
   if (unheardTrigger) {
-    unheardTrigger.addEventListener('mouseenter', () => showUnheardSubmenu(unheardTrigger, seg, notesArea));
+    unheardTrigger.addEventListener('mouseenter', () => showUnheardSubmenu(unheardTrigger, seg, displayEn, onBottleneckChange));
     unheardTrigger.addEventListener('mouseleave', scheduleHideUnheardSubmenu);
   }
   chunkPopupEl.onclick = async e => {
@@ -1150,7 +1156,7 @@ function showChunkPopup(seg, anchorEl, notesArea, clauseText, showUnheard = true
 // ・意訳: 文単位、常時表示。チャンク単位で正確に対応する箇所をハイライトするのは
 //   難しいため背景ハイライトはしないが、今EN側でハイライトされているチャンクが
 //   含まれる文だけに下線を引き、ホイール操作と連動させる(常時全文下線にはしない)。
-function renderTranslateColumns(container, data, mode, notesArea, slash, showUnheard = true) {
+function renderTranslateColumns(container, data, mode, notesArea, slash, showUnheard = true, cacheKey = null) {
   container.innerHTML = '';
   const segments = data.segments || [];
   let curSeg = -1;
@@ -1196,8 +1202,16 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, showUnh
 
   const enSpans = [];
   const jaSpans = []; // 直訳モードのみ使用
+  // 各セグメントの、話者ラベルを取り除いた後の実際の表示英文(ボトルネック単語の
+  // 選択・強調のトークン番号を、画面表示と一致させるために使う)。
+  const enCleanTexts = [];
   let curEnLine = createTranscriptLine(enCol);
   let curJaLine = mode === 'literal' ? createTranscriptLine(jaCol) : null;
+
+  function renderEnSpan(enSpan, seg, cleanEn) {
+    const trailing = seg.lineBreak ? ' ' : (slash ? ' / ' : ' ');
+    enSpan.innerHTML = buildHighlightedHtml(cleanEn, new Set(seg.bottleneck || [])) + escapeHtml(trailing);
+  }
 
   segments.forEach((seg, i) => {
     const enSpan = document.createElement('span');
@@ -1208,7 +1222,8 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, showUnh
     // seg.en自体に前後の余分な空白が入っていることがあるため、まずtrimしてから
     // 付け足す(そうしないとチャンクの継ぎ目でスペースが二重になることがある)。
     const cleanEn = extractLineLabel(curEnLine, seg.en.trim());
-    enSpan.textContent = cleanEn + (seg.lineBreak ? ' ' : (slash ? ' / ' : ' '));
+    enCleanTexts.push(cleanEn);
+    renderEnSpan(enSpan, seg, cleanEn);
     curEnLine.body.appendChild(enSpan);
     enSpans.push(enSpan);
     if (mode === 'literal') {
@@ -1322,7 +1337,17 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, showUnh
         if (extracted) clauseText = extracted;
       }
     }
-    showChunkPopup(seg, enSpans[curSeg], notesArea, clauseText, showUnheard);
+    // ボトルネックの単語選択が確定したら、そのチャンクに反映して保存し、EN列の
+    // 表示をその場で更新する(ページの再読み込み・再取得なしで見た目に反映)。
+    // targetIdxはこの時点のcurSegを固定で捉える(確定を押すまでの間に別のチャンクへ
+    // 移動していても、開いたときのチャンクを正しく更新できるようにするため)。
+    const targetIdx = curSeg;
+    const onBottleneckChange = cacheKey ? (selectedIdxSet) => {
+      seg.bottleneck = [...selectedIdxSet];
+      persistTranslationCache(cacheKey, data);
+      renderEnSpan(enSpans[targetIdx], seg, enCleanTexts[targetIdx]);
+    } : null;
+    showChunkPopup(seg, enSpans[curSeg], notesArea, clauseText, showUnheard, enCleanTexts[curSeg], onBottleneckChange);
     popupOpenSeg = curSeg;
   }
 
@@ -1460,7 +1485,7 @@ function buildTranslatableBlock(text, cacheKey, speakers, showUnheard = true) {
     restoreNotesIfSaved(notesArea, cacheKey + '-translate-notes');
 
     function renderCurrentMode() {
-      renderTranslateColumns(contentContainer, data, mode, notesArea, slash, showUnheard);
+      renderTranslateColumns(contentContainer, data, mode, notesArea, slash, showUnheard, cacheKey);
     }
 
     modeBtn.onclick = () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); renderCurrentMode(); };

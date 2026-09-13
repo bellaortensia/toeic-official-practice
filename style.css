@@ -481,7 +481,6 @@ audio{
 .chunk-popup-unheard-confirm{border-bottom:1px solid #333f4b;padding-bottom:8px;margin-bottom:8px;cursor:pointer;}
 .chunk-popup-unheard-confirm strong{color:#8be28b;}
 .chunk-popup-unheard-confirm:hover strong{color:#cdf3dc;}
-.chunk-popup-unheard-confirm.disabled{opacity:.4;pointer-events:none;}
 .translate-error{color:var(--danger);font-size:13px;}
 
 .translate-block{margin:10px 0;}
