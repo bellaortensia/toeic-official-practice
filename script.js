@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v99';
+const BUILD_VERSION = 'v100';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -501,42 +501,40 @@ function getCachedNaturalJa(cacheKey) {
   } catch (e) { return null; }
 }
 
-// クリックしたチャンクが属する「一文全体」を対象に、文構造がひと目で分かる解説を
-// 生成する(decode-toeicの「この文を解説→学習メモ」と同じ発想だが、チャンク単体
-// ではなく文全体を解説する)。ノート欄はプレーンテキストで実際の下線は引けないため、
-// {{語句|注記}} という専用記法を使い、formatNoteBody()側でこれを下線+右下の小さな
-// 注記(何を修飾しているか、接続詞の意味・用法、熟語の意味など)に変換して表示する。
+// クリックしたチャンクが属する節(clauseText)を対象に、①意味のまとまりごとの
+// 全文和訳と、②文構造の分析を生成する。②はMarkdown箇条書き(- で始める)で
+// 出力させ、formatNoteBody()側でリスト・太字(**)をHTMLに変換して表示する
+// (他の解説プロンプトはMarkdown記号を禁止しているが、このプロンプトだけは
+// 意図的にMarkdownを許可・要求している点に注意)。
 const CLAUSE_EXPLAIN_PROMPT_READING = `あなたはTOEIC満点を何度も取得し、初心者指導歴20年以上の英語講師です。
-入力される英文(一文または一節)を、必ず次の形式・見出しどおりに日本語で解説してください。この形式以外の前置き・後書き・装飾やMarkdown記号(**など)は一切使わないこと。
+入力される英文(一文または一節)を、必ず次の形式・見出しどおりに日本語で解説してください。この形式以外の前置き・後書きは一切書かないこと。
 
-■文の解説
-＜全体文＞
-(入力された英文を、省略・言い換えせず一字一句そのまま、意味のまとまり(3〜8語程度のチャンク)ごとに改行して書く。)
+①全文和訳
+入力された英文全体を、省略・言い換えせず一字一句そのまま使い、意味のまとまり(3〜8語程度のチャンク)ごとに分割する。各チャンクを「英語チャンク（そのチャンクを英語の語順のまま前から訳した直訳）」の形にし、チャンクとチャンクの間は半角スペース+「/」+半角スペースで区切って、改行せずに1行で書く。
 
-(1行空けてから、直前のチャンクと同じ順番・同じ行数になるよう、各チャンクを英語の語順のまま前から訳した「直訳調」の日本語訳を1行ずつ書く。自然な日本語の語順に並べ替えたり、行をまとめたりしないこと。)
-
-＜重要単語・熟語・言い回し＞
-(その文中にあるTOEIC頻出の単語・熟語・言い回しを「用語 意味」の形で並べ、／で区切る。2〜3行に折り返してよい。該当が無ければこの見出しごと省略する。)
+②文構造分析
+入力文を、意味・文法上のまとまり(節・句・接続詞・省略された語を補ったものなど)ごとに分割し、それぞれについてMarkdown形式の箇条書きで解説する。文中に複数の節がある場合はS/V/O/Cに節ごとの通し番号を付ける(例: S1+V1、S2+V2+O2)。箇条書きの各項目は必ず次の2行構成にすること。
+1行目: 半角ハイフンと半角スペース"- "で始め、続けて該当箇所の英語(原文のまま。省略されている語があれば(word)のようにカッコ付きで補ってよい)を**で囲んで太字にし、その直後に全角括弧で文法的な役割(S1+V1のような文型記号、品詞・節の種類、または「修飾語：〜句」のような具体的な種類)を書く。
+2行目: 改行して、字下げや記号は付けずに、その箇所についての文法的な説明(省略されている語があれば明記する、なぜその形になっているか、何を修飾しているか等)を1〜2文で書く。
 
 出力例(入力文: "Since enrolling in our comprehensive motor vehicle insurance four years ago, you have saved an average of $510 per year compared to the cost of policies from leading competitors."):
-■文の解説
-＜全体文＞
-Since enrolling in our comprehensive motor vehicle insurance four years ago,
-you have saved an average of $510 per year
-compared to the cost of policies
-from leading competitors.
+①全文和訳
+Since enrolling in our comprehensive motor vehicle insurance four years ago（4年前に当社の総合自動車保険に加入して以来）/ you have saved an average of $510 per year（あなたは年間平均510ドルを節約してきました）/ compared to the cost of policies（保険契約の費用と比べて）/ from leading competitors.（大手競合他社の）
 
-4年前に当社の総合自動車保険に加入して以来、
-あなたは年間平均510ドルを節約してきました
-保険契約の費用と比べて。
-大手競合他社の
-
-＜重要単語・熟語・言い回し＞
-Since ～ing ～して以来 ／enrolling in～ ～に加入すること ／comprehensive 総合的な、補償範囲の広い
-／average of ～ ～の平均 ／compared to ～ ～と比較して`;
+②文構造分析
+- **Since enrolling in our comprehensive motor vehicle insurance four years ago**（副詞節：分詞構文）
+  Since は「〜して以来」という意味の接続詞で、動名詞 enrolling を伴って「加入して以来」という時を表す節を作っています。
+- **you have saved**（S + V：現在完了形）
+  have + 過去分詞の現在完了形で、過去から現在まで続く「節約してきた」という結果を表しています。
+- **an average of $510 per year**（O：目的語）
+  saved の目的語で、「年間平均510ドル」という節約額を表します。
+- **compared to the cost of policies**（修飾語：過去分詞構文）
+  compared to 〜で「〜と比較して」という意味を作る過去分詞構文です。
+- **from leading competitors**（修飾語：前置詞句）
+  直前の competitors を修飾し、「大手の」競合他社であることを示しています。`;
 
 async function getClauseExplanation(clauseText) {
-  return await callGemini(CLAUSE_EXPLAIN_PROMPT_READING, clauseText, { maxOutputTokens: 800 });
+  return await callGemini(CLAUSE_EXPLAIN_PROMPT_READING, clauseText, { maxOutputTokens: 1200 });
 }
 
 // 単語ポップアップから「用語を解説」した際に呼ぶ。単語1つの場合だけコアイメージ
@@ -578,25 +576,55 @@ async function getTermExplanation(term, meaning, contextSentence) {
 // 何も変換されない)。あわせて、最初の行が■で始まっている場合(「この文を解説」
 // 「用語を解説」等のAI出力1行目)は、その行だけ赤字・太字にする(appendToNotes
 // が別途作る.notes-entry-quoteの■見出しと見た目を揃えるため)。
+// また、簡易的にMarkdownの太字(**text**)と箇条書き(- で始まる行)にも対応する
+// (CLAUSE_EXPLAIN_PROMPT_READINGの②文構造分析用。他のプロンプトはMarkdown記号を
+// 使わない前提なので、通常の解説文をそのまま渡しても影響しない)。
 function formatNoteBody(text) {
   const raw = text || '';
   const nlIdx = raw.indexOf('\n');
   const firstLine = nlIdx === -1 ? raw : raw.slice(0, nlIdx);
-  const rest = nlIdx === -1 ? '' : raw.slice(nlIdx); // 先頭の改行を含めて残す(pre-wrapで改行を保持するため)
+  const restLines = nlIdx === -1 ? [] : raw.slice(nlIdx + 1).split('\n');
   function processInline(s) {
     const escaped = escapeHtml(s);
-    return escaped.replace(/\{\{([^|{}]+)\|([^{}]*)\}\}/g, (m, phrase, note) => {
+    const withTerms = escaped.replace(/\{\{([^|{}]+)\|([^{}]*)\}\}/g, (m, phrase, note) => {
       const noteHtml = note
         ? `<sub style="color:#2f5fa8;font-weight:700;font-size:9.5px;">${note}</sub>`
         : '';
       return `<span style="text-decoration:underline;text-decoration-color:#2f5fa8;text-underline-offset:3px;">${phrase}</span>${noteHtml}`;
     });
+    return withTerms.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  }
+  // 「- 」で始まる行を<ul><li>にまとめる。箇条書き行の直後に続く(- で始まらない)
+  // 非空行は、その項目の説明の続きとして同じ<li>内に<br>で追加する。
+  function renderRest(lines) {
+    const out = [];
+    let items = null;
+    function flushList() {
+      if (items) { out.push(`<ul class="note-md-list">${items.join('')}</ul>`); items = null; }
+    }
+    lines.forEach(line => {
+      const m = /^\s*-\s+(.*)$/.exec(line);
+      if (m) {
+        if (!items) items = [];
+        items.push(`<li>${processInline(m[1])}</li>`);
+      } else if (line.trim() === '') {
+        flushList();
+        out.push('');
+      } else if (items) {
+        items[items.length - 1] = items[items.length - 1].replace(/<\/li>$/, `<br>${processInline(line.trim())}</li>`);
+      } else {
+        out.push(processInline(line));
+      }
+    });
+    flushList();
+    return out.join('\n');
   }
   let firstHtml = processInline(firstLine);
   if (firstLine.trim().startsWith('■')) {
     firstHtml = `<strong style="color:#c1503f">${firstHtml}</strong>`;
   }
-  return firstHtml + processInline(rest);
+  const restHtml = renderRest(restLines);
+  return firstHtml + (nlIdx === -1 ? '' : '\n' + restHtml);
 }
 
 // enTextがある場合だけ引用行を作る。「この文を解説」「用語を解説」の出力は、
@@ -1040,7 +1068,7 @@ document.addEventListener('click', e => {
 // showUnheard=false(Part5/6/7のリーディング設問)では「ボトルネックポイント▶」
 // (聞き取れなかった単語)の項目自体を出さない。リーディングには音声が無く、
 // 「聞き取れない」という状況が発生しないため。
-function showChunkPopup(seg, anchorEl, notesArea, sentenceText, clauseText, showUnheard = true) {
+function showChunkPopup(seg, anchorEl, notesArea, clauseText, showUnheard = true) {
   const terms = seg.keyTerms || [];
   const literalHtml = seg.ja
     ? `<div class="chunk-popup-item chunk-popup-literal" data-action="literal"><strong>${escapeHtml(seg.ja)}</strong></div>`
@@ -1052,8 +1080,7 @@ function showChunkPopup(seg, anchorEl, notesArea, sentenceText, clauseText, show
     ? '<div class="chunk-popup-item chunk-popup-unheard" data-action="unheard-menu"><strong>ボトルネックポイント▶</strong></div>'
     : '';
   chunkPopupEl.innerHTML = literalHtml + termsHtml + unheardHtml +
-    '<div class="chunk-popup-item chunk-popup-explain" data-action="explain"><strong>この文を解説→ノートへ</strong></div>' +
-    '<div class="chunk-popup-item chunk-popup-explain" data-action="explain-full"><strong>この文全体を解説→ノートへ</strong></div>';
+    '<div class="chunk-popup-item chunk-popup-explain" data-action="explain"><strong>この文を解説→ノートへ</strong></div>';
   const unheardTrigger = chunkPopupEl.querySelector('[data-action="unheard-menu"]');
   if (unheardTrigger) {
     unheardTrigger.addEventListener('mouseenter', () => showUnheardSubmenu(unheardTrigger, seg, notesArea));
@@ -1088,11 +1115,9 @@ function showChunkPopup(seg, anchorEl, notesArea, sentenceText, clauseText, show
       return;
     }
     // 「この文を解説」: カンマ区切りの節(clauseText)だけを対象に解説する。
-    // 「この文全体を解説」: チャンクが属する一文全体(sentenceText)を対象にする。
-    const trigger = e.target.closest('[data-action="explain"]') || e.target.closest('[data-action="explain-full"]');
+    const trigger = e.target.closest('[data-action="explain"]');
     if (!trigger || trigger.dataset.loading === '1') return;
-    const isFull = trigger.dataset.action === 'explain-full';
-    const target = isFull ? (sentenceText || seg.en) : (clauseText || seg.en);
+    const target = clauseText || seg.en;
     trigger.dataset.loading = '1';
     trigger.querySelector('strong').textContent = '解説中...';
     try {
@@ -1275,7 +1300,6 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, showUnh
     const seg = segments[curSeg];
     const sentIdx = segToSentenceIdx[curSeg];
     const sentenceObj = sentIdx != null && sentIdx >= 0 ? sentences[sentIdx] : null;
-    const sentenceText = sentenceObj ? sentenceObj.en : null;
     // 「この文を解説」用: チャンクが属する一文全体ではなく、直前・直後のカンマで
     // 区切られた節(カンマが無ければ文の先頭/末尾まで)だけを対象にする。
     let clauseText = seg.en;
@@ -1291,7 +1315,7 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, showUnh
         if (extracted) clauseText = extracted;
       }
     }
-    showChunkPopup(seg, enSpans[curSeg], notesArea, sentenceText, clauseText, showUnheard);
+    showChunkPopup(seg, enSpans[curSeg], notesArea, clauseText, showUnheard);
     popupOpenSeg = curSeg;
   }
 

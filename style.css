@@ -528,6 +528,12 @@ audio{
 /* 「■ボトルネックポイント」で書き写した単語の強調表示。黒字と見分けやすいよう、
    青の中でも彩度・明度を上げた蛍光寄りの色にしている。 */
 .unheard-highlight{color:#0057ff;}
+/* 「この文を解説」②文構造分析の箇条書き(formatNoteBody側でMarkdownの
+   - 箇条書きから変換)。white-space:pre-wrapの親の中でも余白が詰まりすぎない
+   よう項目間に少し余白を持たせる。 */
+.note-md-list{margin:4px 0 10px;padding-left:1.3em;white-space:normal;}
+.note-md-list li{margin-bottom:6px;}
+.note-md-list li:last-child{margin-bottom:0;}
 
 .ask-ai-wrap{margin-top:14px;}
 .ask-ai-row{display:flex;gap:8px;}
