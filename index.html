@@ -64,7 +64,7 @@
 
       <details class="help sub-details">
         <summary>③ 端末間同期用スプレッドシート(任意)</summary>
-        <p class="hint">ノートだけでなく、回答履歴・学習時間・連続学習日数・コーチメッセージ履歴も、このスプレッドシートを通じて端末間で同期されます(自宅PC・会社PC・スマホ等、どの端末からアクセスしても同じ進捗が見られるようにするためのものです)。</p>
+        <p class="hint">ノートだけでなく、回答履歴・学習時間・連続学習日数・コーチメッセージ履歴・ボトルネックポイント(翻訳画面で強調表示した単語)も、このスプレッドシートを通じて端末間で同期されます(自宅PC・会社PC・スマホ等、どの端末からアクセスしても同じ進捗が見られるようにするためのものです)。</p>
         <div class="setup-fields">
           <div class="field">
             <label for="sheetUrl">APPS SCRIPT WEB APP URL</label>
@@ -91,9 +91,11 @@
   return sheet;
 }
 function _getNotesSheet() { return _getSheet('Notes', ['key', 'html', 'updatedAt']); }
-// Progressタブ: 回答履歴・学習時間・連続日数・コーチメッセージ履歴など、ノート以外の
-// 進捗データをまとめて保存する(key列は 'attempts'|'dailyQuestions'|'studyLog'|
-// 'coachHistory' の固定4種、json列にその中身をJSON文字列で1つだけ格納する)。
+// Progressタブ: 回答履歴・学習時間・連続日数・コーチメッセージ履歴・ボトルネック
+// ポイント(強調表示した単語)など、ノート以外の進捗データをまとめて保存する
+// (key列は 'attempts'|'dailyQuestions'|'studyLog'|'coachHistory'|'bottleneckMarks'
+// の固定5種、json列にその中身をJSON文字列で1つだけ格納する。このApps Script自体は
+// key名を特に限定しない汎用の実装なので、今後さらに種類が増えてもコード変更は不要)。
 function _getProgressSheet() { return _getSheet('Progress', ['key', 'json', 'updatedAt']); }
 
 function _getAllRows(sheet) {
@@ -231,6 +233,6 @@ function doPost(e) {
   <div class="build-tag" id="buildTag" title="このページの版。PCで公開した最新版の番号と一致していれば、最新のコードが読み込まれています。" style="text-align:center;color:#8a94a0;font-size:11px;font-family:monospace;padding:14px 0 22px;">build …</div>
 </div>
 
-  <script src="script.js?v=102"></script>
+  <script src="script.js?v=103"></script>
 </body>
 </html>

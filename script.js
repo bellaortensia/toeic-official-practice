@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v102';
+const BUILD_VERSION = 'v103';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -1011,25 +1011,42 @@ function buildHighlightedHtml(text, bottleneckIdxSet) {
   }).join('');
 }
 
-// 「ボトルネックポイント」の強調位置(セグメントごとのbottleneck配列)を追記した
-// data全体を、翻訳キャッシュと同じlocalStorageキーへ上書き保存する。これにより
-// 次回このcacheKeyを開いたとき(getTranslationChunksのキャッシュ命中時)も、
-// 強調表示を復元できる。翻訳結果自体と同じくこの端末のブラウザ内だけの保存で、
-// スプレッドシート同期(他端末との共有)の対象ではない点はノートと異なる。
-function persistTranslationCache(cacheKey, data) {
-  try {
-    localStorage.setItem('toeicTranslate.' + TRANSLATE_PROMPT_VERSION + '.' + cacheKey, JSON.stringify(data));
-  } catch (e) { /* 保存容量オーバー等は無視 */ }
+// 「ボトルネックポイント」の強調位置は、翻訳キャッシュ(AIの応答本体、端末ごとに
+// 再取得されうる/TRANSLATE_PROMPT_VERSIONが変わると失効する)とは別に、進捗データ
+// (回答履歴・学習時間などと同じ「Progress」スプレッドシート経由で端末間同期される
+// もの)として保存する。cacheKey(問題/パッセージ単位) → segIdx(チャンク番号) →
+// 選ばれたトークン番号の配列、という構造。
+// { "<cacheKey>": { marks: { "<segIdx>": [tokenIdx, ...] }, updatedAt: <ms> } }
+const BOTTLENECK_MARKS_LS = 'toeicOfficialPractice.bottleneckMarks';
+function getBottleneckMarksStore() {
+  try { return JSON.parse(localStorage.getItem(BOTTLENECK_MARKS_LS) || '{}'); } catch (e) { return {}; }
+}
+function getBottleneckMarksForSegment(cacheKey, segIdx) {
+  const entry = getBottleneckMarksStore()[cacheKey];
+  return (entry && entry.marks && entry.marks[segIdx]) || [];
+}
+// idxArrayが空の場合はそのセグメントの記録ごと削除する(強調をすべて解除した
+// ときに、空配列がいつまでも残り続けないようにするため)。
+function setBottleneckMarksForSegment(cacheKey, segIdx, idxArray) {
+  const store = getBottleneckMarksStore();
+  const entry = store[cacheKey] || { marks: {} };
+  if (idxArray.length) entry.marks[segIdx] = idxArray;
+  else delete entry.marks[segIdx];
+  entry.updatedAt = Date.now();
+  if (Object.keys(entry.marks).length) store[cacheKey] = entry;
+  else delete store[cacheKey];
+  try { localStorage.setItem(BOTTLENECK_MARKS_LS, JSON.stringify(store)); } catch (e) { /* 保存容量オーバー等は無視 */ }
 }
 
 // 単語をクリックするたびに選択のオン/オフを切り替え、「✓ 更新」を押した時点で
-// そのチャンクのボトルネック強調(seg.bottleneck、トークン番号の配列)をまとめて
-// 反映する。既にそのチャンクで選ばれている単語があれば、開いた時点で選択済みの
-// 状態から始まる(選び直し・解除がしやすいように)。
-function showUnheardSubmenu(triggerEl, seg, displayEn, onApply) {
+// そのチャンクのボトルネック強調(トークン番号の配列)をまとめて反映する。
+// 既にそのチャンクで選ばれている単語があれば、開いた時点で選択済みの状態から
+// 始まる(選び直し・解除がしやすいように)。currentMarksは現在の強調位置
+// (トークン番号の配列)。
+function showUnheardSubmenu(triggerEl, displayEn, currentMarks, onApply) {
   cancelHideUnheardSubmenu();
   const tokens = (displayEn || '').split(/\s+/).filter(Boolean);
-  const selected = new Set(seg.bottleneck || []);
+  const selected = new Set(currentMarks || []);
   function render() {
     unheardSubmenuEl.innerHTML =
       '<div class="chunk-popup-item chunk-popup-unheard-confirm" data-action="unheard-confirm"><strong>✓ 更新</strong></div>' +
@@ -1080,8 +1097,9 @@ document.addEventListener('click', e => {
 // (renderTranslateColumns側で計算済みのもの)。ボトルネックの単語選択・強調表示の
 // 対象を、実際に画面に見えている文字列と一致させるために使う。
 // onBottleneckChangeは、強調する単語(トークン番号のSet)が確定した時点で呼ばれ、
-// 呼び出し側でseg.bottleneckへの反映・保存・再描画を行う。
-function showChunkPopup(seg, anchorEl, notesArea, clauseText, showUnheard = true, displayEn = seg.en, onBottleneckChange = null) {
+// 呼び出し側で保存・再描画を行う。currentMarksは現在このセグメントに設定されて
+// いる強調位置(トークン番号の配列)。
+function showChunkPopup(seg, anchorEl, notesArea, clauseText, showUnheard = true, displayEn = seg.en, currentMarks = [], onBottleneckChange = null) {
   const terms = seg.keyTerms || [];
   const literalHtml = seg.ja
     ? `<div class="chunk-popup-item chunk-popup-literal" data-action="literal"><strong>${escapeHtml(seg.ja)}</strong></div>`
@@ -1096,7 +1114,7 @@ function showChunkPopup(seg, anchorEl, notesArea, clauseText, showUnheard = true
     '<div class="chunk-popup-item chunk-popup-explain" data-action="explain"><strong>この文を解説→ノートへ</strong></div>';
   const unheardTrigger = chunkPopupEl.querySelector('[data-action="unheard-menu"]');
   if (unheardTrigger) {
-    unheardTrigger.addEventListener('mouseenter', () => showUnheardSubmenu(unheardTrigger, seg, displayEn, onBottleneckChange));
+    unheardTrigger.addEventListener('mouseenter', () => showUnheardSubmenu(unheardTrigger, displayEn, currentMarks, onBottleneckChange));
     unheardTrigger.addEventListener('mouseleave', scheduleHideUnheardSubmenu);
   }
   chunkPopupEl.onclick = async e => {
@@ -1208,9 +1226,10 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, showUnh
   let curEnLine = createTranscriptLine(enCol);
   let curJaLine = mode === 'literal' ? createTranscriptLine(jaCol) : null;
 
-  function renderEnSpan(enSpan, seg, cleanEn) {
+  function renderEnSpan(enSpan, seg, cleanEn, segIdx) {
     const trailing = seg.lineBreak ? ' ' : (slash ? ' / ' : ' ');
-    enSpan.innerHTML = buildHighlightedHtml(cleanEn, new Set(seg.bottleneck || [])) + escapeHtml(trailing);
+    const marks = cacheKey ? getBottleneckMarksForSegment(cacheKey, segIdx) : [];
+    enSpan.innerHTML = buildHighlightedHtml(cleanEn, new Set(marks)) + escapeHtml(trailing);
   }
 
   segments.forEach((seg, i) => {
@@ -1223,7 +1242,7 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, showUnh
     // 付け足す(そうしないとチャンクの継ぎ目でスペースが二重になることがある)。
     const cleanEn = extractLineLabel(curEnLine, seg.en.trim());
     enCleanTexts.push(cleanEn);
-    renderEnSpan(enSpan, seg, cleanEn);
+    renderEnSpan(enSpan, seg, cleanEn, i);
     curEnLine.body.appendChild(enSpan);
     enSpans.push(enSpan);
     if (mode === 'literal') {
@@ -1343,11 +1362,11 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, showUnh
     // 移動していても、開いたときのチャンクを正しく更新できるようにするため)。
     const targetIdx = curSeg;
     const onBottleneckChange = cacheKey ? (selectedIdxSet) => {
-      seg.bottleneck = [...selectedIdxSet];
-      persistTranslationCache(cacheKey, data);
-      renderEnSpan(enSpans[targetIdx], seg, enCleanTexts[targetIdx]);
+      setBottleneckMarksForSegment(cacheKey, targetIdx, [...selectedIdxSet]);
+      renderEnSpan(enSpans[targetIdx], seg, enCleanTexts[targetIdx], targetIdx);
     } : null;
-    showChunkPopup(seg, enSpans[curSeg], notesArea, clauseText, showUnheard, enCleanTexts[curSeg], onBottleneckChange);
+    const currentMarks = cacheKey ? getBottleneckMarksForSegment(cacheKey, curSeg) : [];
+    showChunkPopup(seg, enSpans[curSeg], notesArea, clauseText, showUnheard, enCleanTexts[curSeg], currentMarks, onBottleneckChange);
     popupOpenSeg = curSeg;
   }
 
@@ -2769,7 +2788,8 @@ function collectLocalProgress() {
     attempts: getAttemptsStore(),
     dailyQuestions: getDailyQuestionsLog(),
     studyLog: getStudyLog(),
-    coachHistory: getCoachHistory()
+    coachHistory: getCoachHistory(),
+    bottleneckMarks: getBottleneckMarksStore()
   };
 }
 
@@ -2820,6 +2840,21 @@ function mergeCoachHistory(remote) {
   try { localStorage.setItem(COACH_HISTORY_LS, JSON.stringify(merged)); } catch (e) { /* ignore */ }
 }
 
+// cacheKey(問題/パッセージ)ごとにupdatedAtがより新しい方をまるごと残す
+// (mergeAttemptsと同じ考え方。単語単位で足し合わせる方式だと、強調を外した
+// つもりの操作が古い端末の記録で復活してしまうため、チャンク単位のスナップ
+// ショットごと新しい方を採用する)。
+function mergeBottleneckMarks(remote) {
+  const local = getBottleneckMarksStore();
+  const merged = { ...local };
+  Object.keys(remote || {}).forEach(key => {
+    const r = remote[key];
+    const l = local[key];
+    if (!l || (r && (r.updatedAt || 0) > (l.updatedAt || 0))) merged[key] = r;
+  });
+  try { localStorage.setItem(BOTTLENECK_MARKS_LS, JSON.stringify(merged)); } catch (e) { /* ignore */ }
+}
+
 async function saveProgressToSheet() {
   const url = getSheetUrl();
   if (!url) return;
@@ -2848,6 +2883,7 @@ async function syncProgressFromSheet() {
     mergeDailyQuestions(remote.dailyQuestions);
     mergeStudyLog(remote.studyLog);
     mergeCoachHistory(remote.coachHistory);
+    mergeBottleneckMarks(remote.bottleneckMarks);
     renderStatsDashboard(statsWeekOffset);
     renderHistorySidebar(historyWeekOffset);
     await saveProgressToSheet();
