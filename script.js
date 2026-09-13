@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v100';
+const BUILD_VERSION = 'v101';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -1039,6 +1039,13 @@ function showUnheardSubmenu(triggerEl, seg, notesArea) {
   }
   render();
   unheardSubmenuEl.onclick = e => {
+    // render()が単語クリックのたびにinnerHTMLを丸ごと作り直すため、クリックされた
+    // 要素(e.target)がイベントバブリング中にDOMツリーから切り離されてしまう。
+    // それがdocument側の「外側クリックで閉じる」判定(unheardSubmenuEl.contains
+    // (e.target))まで届くと、切り離された要素はどこにも属さないため「外側への
+    // クリック」と誤判定され、ポップアップごと閉じてしまっていた。ここで伝播を
+    // 止め、documentまでイベントを届かせないようにする。
+    e.stopPropagation();
     const confirmTrigger = e.target.closest('[data-action="unheard-confirm"]');
     if (confirmTrigger) {
       if (!selected.size) return;
