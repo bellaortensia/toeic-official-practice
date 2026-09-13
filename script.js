@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v103';
+const BUILD_VERSION = 'v104';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -1374,6 +1374,28 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, showUnh
     e.preventDefault();
     setSeg((curSeg < 0 ? 0 : curSeg) + (e.deltaY > 0 ? 1 : -1));
   }, { passive: false });
+  // ノート欄にマウスがある間もホイールでチャンク送りできるようにする(英文・
+  // ノートのどちらにマウスを置けばいいのか分かりにくい、という声を受けて)。
+  // ただしノート欄は内容が増えるとそれ自体が内部スクロールする(CSS側
+  // max-height:280px)ため、そのスクロールが上端/下端に達するまでは従来通り
+  // ノート欄自身のスクロールを優先し、端まで来たら(またはそもそも内部スクロールが
+  // 不要なら)チャンク送りに切り替える(いわゆるスクロールチェイニング)。
+  // notesAreaはモード切り替え(直訳⇄意訳・スラッシュON/OFF)のたびにこの関数が
+  // 再実行されても使い回される同一要素なので、前回分のリスナーを外してから
+  // 付け直す(外さないとモード切り替えのたびに重複して増えてしまう)。
+  if (notesArea._chunkNavWheelHandler) {
+    notesArea.removeEventListener('wheel', notesArea._chunkNavWheelHandler);
+  }
+  const notesWheelHandler = e => {
+    const atTop = notesArea.scrollTop <= 0;
+    const atBottom = notesArea.scrollTop + notesArea.clientHeight >= notesArea.scrollHeight - 1;
+    const canScrollNotesFurther = (e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom);
+    if (notesArea.scrollHeight > notesArea.clientHeight && canScrollNotesFurther) return;
+    e.preventDefault();
+    setSeg((curSeg < 0 ? 0 : curSeg) + (e.deltaY > 0 ? 1 : -1));
+  };
+  notesArea._chunkNavWheelHandler = notesWheelHandler;
+  notesArea.addEventListener('wheel', notesWheelHandler, { passive: false });
   // JA欄・EN欄どちらでクリックしても現在位置のポップアップが開閉する
   // (意訳モードでもJA側クリックで反応させる。ポップアップ自体は常にEN側に表示)。
   // スマホ等のタッチ端末はマウスホイールが発生せずチャンク送りができないため、
