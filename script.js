@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v104';
+const BUILD_VERSION = 'v105';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -1370,38 +1370,48 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, showUnh
     popupOpenSeg = curSeg;
   }
 
-  wideWrap.addEventListener('wheel', e => {
+  // ホイールでのチャンク送りは、EN/JA表示エリア(wideWrap。EN列とJA列の間の
+  // 点線寄りの余白部分も、グリッドのgapとしてwideWrap自身の領域に含まれるため
+  // ここだけで反応する)と、下のノート欄一式(notesWrap。ラベル行・書式ボタン行・
+  // ノート本文のいずれにマウスがあっても)の両方で効くようにする。「英文とノートの
+  // どちらにマウスを置けばチャンクが送れるのか分かりにくい」という声を受けての対応。
+  function chunkNavWheelHandler(e) {
+    // ノート本文(.notes-area)自体は、メモが増えるとそれ自体が内部スクロールする
+    // (CSS側max-height:280px)。マウスが実際にノート本文の上にあるときだけ、その
+    // スクロールが上端/下端に達するまでは従来通りノート本文自身のスクロールを
+    // 優先し、端まで来たら(またはそもそも内部スクロールが不要なら)チャンク送りに
+    // 切り替える(スクロールチェイニング)。ラベル行・書式ボタン行の上ではそもそも
+    // スクロールする対象が無いので、常にチャンク送りでよい。
+    if (e.target.closest('.notes-area')) {
+      const atTop = notesArea.scrollTop <= 0;
+      const atBottom = notesArea.scrollTop + notesArea.clientHeight >= notesArea.scrollHeight - 1;
+      const canScrollNotesFurther = (e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom);
+      if (notesArea.scrollHeight > notesArea.clientHeight && canScrollNotesFurther) return;
+    }
     e.preventDefault();
     setSeg((curSeg < 0 ? 0 : curSeg) + (e.deltaY > 0 ? 1 : -1));
-  }, { passive: false });
-  // ノート欄にマウスがある間もホイールでチャンク送りできるようにする(英文・
-  // ノートのどちらにマウスを置けばいいのか分かりにくい、という声を受けて)。
-  // ただしノート欄は内容が増えるとそれ自体が内部スクロールする(CSS側
-  // max-height:280px)ため、そのスクロールが上端/下端に達するまでは従来通り
-  // ノート欄自身のスクロールを優先し、端まで来たら(またはそもそも内部スクロールが
-  // 不要なら)チャンク送りに切り替える(いわゆるスクロールチェイニング)。
-  // notesAreaはモード切り替え(直訳⇄意訳・スラッシュON/OFF)のたびにこの関数が
-  // 再実行されても使い回される同一要素なので、前回分のリスナーを外してから
-  // 付け直す(外さないとモード切り替えのたびに重複して増えてしまう)。
-  if (notesArea._chunkNavWheelHandler) {
-    notesArea.removeEventListener('wheel', notesArea._chunkNavWheelHandler);
   }
-  const notesWheelHandler = e => {
-    const atTop = notesArea.scrollTop <= 0;
-    const atBottom = notesArea.scrollTop + notesArea.clientHeight >= notesArea.scrollHeight - 1;
-    const canScrollNotesFurther = (e.deltaY < 0 && !atTop) || (e.deltaY > 0 && !atBottom);
-    if (notesArea.scrollHeight > notesArea.clientHeight && canScrollNotesFurther) return;
-    e.preventDefault();
-    setSeg((curSeg < 0 ? 0 : curSeg) + (e.deltaY > 0 ? 1 : -1));
-  };
-  notesArea._chunkNavWheelHandler = notesWheelHandler;
-  notesArea.addEventListener('wheel', notesWheelHandler, { passive: false });
+  wideWrap.addEventListener('wheel', chunkNavWheelHandler, { passive: false });
+  // notesWrap(notesAreaの親。ラベル・書式ボタン・ノート本文をまとめて含む)は、
+  // 直訳⇄意訳・スラッシュON/OFFの切り替えでこの関数が再実行されても使い回される
+  // 同一要素なので、前回分のリスナーを外してから付け直す(外さないと切り替えの
+  // たびに重複して増えてしまう)。
+  const notesWrapEl = notesArea.parentElement;
+  if (notesWrapEl) {
+    if (notesWrapEl._chunkNavWheelHandler) {
+      notesWrapEl.removeEventListener('wheel', notesWrapEl._chunkNavWheelHandler);
+    }
+    notesWrapEl._chunkNavWheelHandler = chunkNavWheelHandler;
+    notesWrapEl.addEventListener('wheel', chunkNavWheelHandler, { passive: false });
+  }
   // JA欄・EN欄どちらでクリックしても現在位置のポップアップが開閉する
   // (意訳モードでもJA側クリックで反応させる。ポップアップ自体は常にEN側に表示)。
   // スマホ等のタッチ端末はマウスホイールが発生せずチャンク送りができないため、
   // タップされたチャンクへ直接ハイライトを移動させてから開閉する(タップした
   // その場のチャンクをそのまま選べるようにする)。意訳モードのJA側(.natural-seg、
   // 文単位で別の対応表を使う)は対象外で、今まで通りEN側の現在位置のまま開閉する。
+  // wideWrap1箇所に付ければ(バブリングで)EN列・JA列・その間の余白すべてを
+  // カバーできるので、enCol/jaColに個別で付けるのはやめて二重発火を避ける。
   function handleColClick(e) {
     const segEl = e.target.closest('.chunk-seg');
     if (segEl && segEl.dataset.seg != null) {
@@ -1410,8 +1420,24 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, showUnh
     }
     revealCurrent();
   }
-  enCol.addEventListener('click', handleColClick);
-  jaCol.addEventListener('click', handleColClick);
+  wideWrap.addEventListener('click', handleColClick);
+  // notesWrapのラベル行・書式ボタン行の余白をクリックしたときも、現在位置の
+  // ポップアップが開閉するようにする(enCol/jaColの余白クリックと同じ挙動)。
+  // ただし書式ボタン(赤字・太字等)自体のクリックはそのボタン本来の動作だけを
+  // 行い、ノート本文(.notes-area)自体のクリックは編集用途なので何もしない。
+  if (notesWrapEl) {
+    // notesWrapElはモード切り替えのたびに使い回されるので、wheelハンドラ同様
+    // 前回分を外してから付け直す。
+    if (notesWrapEl._chunkNavClickHandler) {
+      notesWrapEl.removeEventListener('click', notesWrapEl._chunkNavClickHandler);
+    }
+    const notesClickHandler = e => {
+      if (e.target.closest('button') || e.target.closest('.notes-area')) return;
+      handleColClick(e);
+    };
+    notesWrapEl._chunkNavClickHandler = notesClickHandler;
+    notesWrapEl.addEventListener('click', notesClickHandler);
+  }
 
   wideWrap.appendChild(enCol);
   wideWrap.appendChild(jaCol);
