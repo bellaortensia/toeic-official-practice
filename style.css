@@ -478,7 +478,7 @@ audio{
 /* 複数選択の見た目: 選ばれた単語は背景を付けて白文字にし、選択中だと分かるようにする */
 .chunk-popup-unheard-word.selected{background:rgba(0,153,255,.35);}
 .chunk-popup-unheard-word.selected strong{color:#fff;}
-.chunk-popup-unheard-confirm{border-bottom:1px solid #333f4b;padding-bottom:8px;margin-bottom:8px;cursor:pointer;}
+.chunk-popup-unheard-confirm{border-top:1px solid #333f4b;padding-top:8px;margin-top:4px;cursor:pointer;}
 .chunk-popup-unheard-confirm strong{color:#8be28b;}
 .chunk-popup-unheard-confirm:hover strong{color:#cdf3dc;}
 .translate-error{color:var(--danger);font-size:13px;}

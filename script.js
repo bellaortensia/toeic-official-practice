@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v105';
+const BUILD_VERSION = 'v106';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -380,7 +380,7 @@ function buildP12ExplainHtml(q, isPart1, choiceTexts, jaTexts, letters, selected
 
 const TRANSLATE_PROMPT = `あなたは英語学習者向けの解析エンジンです。与えられた英文全体を解析してください。
 1) 最初の1文字から最後の1文字まで省略せず、意味のまとまり(チャンク)ごとに分割し、各チャンクに英語の語順のまま前から順番に理解できる「直訳調」の日本語訳を付けてください(自然な日本語の語順に並べ替えないこと)。1チャンクは必ず英単語3〜8語程度に収めること。8語を超えそうな場合は、接続詞・関係詞・前置詞句の前やカンマの後など意味の区切りで必ずさらに分割すること。どんなに短い文でも、1文をまるごと1つのチャンクにするのは禁止(主語のまとまりと動詞以降のまとまりなど、最低2つ以上に分けること)。
-1.5) 重要: 原文中に改行(\\n)がある箇所では、必ずその改行の直前でチャンクを区切ること。改行をまたいで複数行分のテキストを1つのチャンクにまとめてはならない(例えばメールや文書の"From: 〜"「To: 〜」「Date: 〜」のような短い見出し行が連続している場合、それぞれの行を別々のチャンクにすること。3〜8語という基準より、改行で区切ることの方を優先する。1語だけの行でも構わない)。
+1.5) 重要: 原文中に改行(\\n)がある箇所では、必ずその改行の直前でチャンクを区切ること。改行をまたいで複数行分のテキストを1つのチャンクにまとめてはならない。これは"From: 〜"「To: 〜」「Date: 〜」のようなラベル付きの見出し行に限らず、ビジネスレターの差出人・宛先の住所ブロック(会社名・番地・市区町村・国名などがラベル無しで1行ずつ短く続くもの。例: "Nakaima Industries" "10 4-1262, Makiku Yoshitsubo" "Joetsu-shi, Niigata" "Japan" のような並び)や日付単独の行、"Dear 〜,"のような書き出しの行など、短い行が連続する箇所すべてに当てはまる。3〜8語という基準より、改行で区切ることの方を必ず優先する(1語だけ、あるいは会社名や地名だけの行でも構わない)。原文中の改行の数と、区切ったチャンクの数・位置が一致しているか、出力前に必ず自己チェックすること。
 2) 各チャンクの中にTOEIC頻出の単語・熟語・言い回しがあれば、その語句を一字一句原文のまま抜き出し、keyTermsに追加してください(該当が無いチャンクではkeyTermsを空配列にする)。
 3) 原文中でそのチャンクの直後に改行(\\n)がある場合(会話の話者交代や段落の変わり目、文書の見出し行の区切りなど)は、そのチャンクに "lineBreak": true を付けてください(改行が無ければ省略またはfalseでよい)。
 4) 英文全体を文単位(ピリオド・感嘆符・疑問符などの文末記号まで)に区切り、それぞれの原文(en、一字一句そのまま抜粋)と、自然な日本語の語順・言い回しでの意訳(ja)のペアをnaturalSentencesに入れてください。長すぎない限り1文=1要素とすること。原文中でその文の直後に改行がある場合は、segmentsと同様に"lineBreak": trueを付けてください。
@@ -395,7 +395,7 @@ const TRANSLATE_PROMPT = `あなたは英語学習者向けの解析エンジン
 }
 segmentsの"en"を出現順にそのまま連結すると、空白の増減を除いて原文と完全に一致するようにしてください。naturalSentencesの"en"を出現順にそのまま連結した場合も同様に原文と完全に一致させてください。`;
 
-const TRANSLATE_PROMPT_VERSION = 'v7';
+const TRANSLATE_PROMPT_VERSION = 'v8';
 
 // レビュー文などに引用符("...")を含む原文だと、AIがJSON文字列内でその引用符を
 // エスケープし忘れ(\"にせず"のまま出力し)、JSON.parseが「Expected double-quoted
@@ -1049,12 +1049,12 @@ function showUnheardSubmenu(triggerEl, displayEn, currentMarks, onApply) {
   const selected = new Set(currentMarks || []);
   function render() {
     unheardSubmenuEl.innerHTML =
-      '<div class="chunk-popup-item chunk-popup-unheard-confirm" data-action="unheard-confirm"><strong>✓ 更新</strong></div>' +
       tokens.map((tok, i) => {
         const clean = stripPunct(tok) || tok;
         const sel = selected.has(i) ? ' selected' : '';
         return `<div class="chunk-popup-item chunk-popup-unheard-word${sel}" data-action="unheard-word" data-token-idx="${i}"><strong>${escapeHtml(clean)}</strong></div>`;
-      }).join('');
+      }).join('') +
+      '<div class="chunk-popup-item chunk-popup-unheard-confirm" data-action="unheard-confirm"><strong>✓ 更新</strong></div>';
   }
   render();
   unheardSubmenuEl.onclick = e => {
@@ -3414,6 +3414,21 @@ async function playStudySequence(filenames, loop, onEnd, onError, onReady) {
     studySequencePlaying = false;
     if (onError) onError('音声の再生でエラーが発生しました。別のブラウザ(Chrome等)でお試しください。');
     if (onEnd) onEnd();
+  });
+  // 画面ロック中、OS/ブラウザ側の事情(バックグラウンド制限など)でこちらの
+  // 意図に反して一時停止させられることがある(Android・Sleipnir Black等で
+  // 確認。ロック解除すると再生が再開する、という症状と一致する)。
+  // stopAllAudio()による意図した停止ならこの時点でstudySequencePlayingは
+  // 既にfalseになっているので、trueのままここに来た場合だけ外的要因による
+  // 一時停止とみなし、少し待ってから自動で再開を試みる(即座だと一時停止処理
+  // 自体とかち合うことがあるため1秒待つ)。OS側の制限が強い場合は、この
+  // 再開自体もブロックされて効果が無いことはあり得るが、効く場合は画面を
+  // 手動でロック解除しなくても再生が続く。
+  audio.addEventListener('pause', () => {
+    if (!studySequencePlaying) return;
+    setTimeout(() => {
+      if (studySequencePlaying && audio.paused) audio.play().catch(() => {});
+    }, 1000);
   });
 
   audio.play().then(() => {
