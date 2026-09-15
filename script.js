@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v106';
+const BUILD_VERSION = 'v107';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -2525,6 +2525,30 @@ function deleteAttemptEntry(key) {
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
 }
 
+// 回答履歴のポップアップに表示する「設問本文」。翻訳ウィジェットは解説画面を
+// 開いた時点で自動的に翻訳を取得・キャッシュしているため(cacheKeyBaseは
+// noteKeyと同じ規則)、ここでは新たにAIを呼んだり問題データを読み込み直したり
+// せず、既にlocalStorageにある翻訳キャッシュ(segments)から本文を組み立てる。
+// ボトルネックポイントの強調(青太字)があれば、そのまま再現する。翻訳を一度も
+// 取得していない設問(Part5など翻訳ウィジェットが無いPart、またはAPIキー未設定で
+// 翻訳が失敗したまま)では該当キャッシュが無いため、その場合は空文字を返す
+// (無理にAIを呼び直したりはしない)。
+function getPassageBodyHtmlForHistory(cacheKeyBase) {
+  const marksStore = getBottleneckMarksStore();
+  const parts = ['', '-doc0', '-doc1', '-doc2'].map(suffix => {
+    const cacheKey = cacheKeyBase + suffix;
+    const raw = localStorage.getItem('toeicTranslate.' + TRANSLATE_PROMPT_VERSION + '.' + cacheKey);
+    if (!raw) return null;
+    let data;
+    try { data = JSON.parse(raw); } catch (e) { return null; }
+    const segments = Array.isArray(data.segments) ? data.segments : [];
+    if (!segments.length) return null;
+    const marks = (marksStore[cacheKey] && marksStore[cacheKey].marks) || {};
+    return segments.map((seg, i) => buildHighlightedHtml(seg.en.trim(), new Set(marks[i] || []))).join(' ');
+  }).filter(Boolean);
+  return parts.join('<hr>');
+}
+
 // 履歴1件ぶんの行DOMを組み立てる(トップ画面の回答履歴欄用)。
 function buildHistoryRow(item) {
     const row = document.createElement('div');
@@ -2566,7 +2590,9 @@ function buildHistoryRow(item) {
       .filter(h => h && h.trim())
       .join('<hr>');
     const aiNote = localStorage.getItem(NOTES_LS_PREFIX + `${item.test}-${item.part}-${item.number}-ai`);
+    const passageHtml = getPassageBodyHtmlForHistory(item.noteKey);
     const noteSections = [
+      { label: '設問本文', html: passageHtml },
       { label: 'ノート', html: generalNote },
       { label: '翻訳ウィジェットのノート', html: translateNote },
       { label: 'AIへの質問', html: aiNote }
