@@ -473,7 +473,12 @@ audio{
 .chunk-popup-unheard:hover strong{color:var(--paper);}
 /* 単語を縦に積むのではなく、元の文のように横並び(折り返しあり)で表示する。
    確定ボタンは無いので、単語チップだけが並ぶ。 */
-.unheard-submenu{max-width:380px;display:flex;flex-wrap:wrap;gap:3px 6px;align-content:flex-start;}
+.unheard-submenu{max-width:380px;}
+/* .chunk-popup.show{display:block}(2クラス)の方が.unheard-submenu単体(1クラス)
+   より詳細度が高く、display:flexが指定していても無視されて縦積みになって
+   しまっていた。.show込みの2クラスにして詳細度を合わせ、あとに書くことで
+   上書きする。 */
+.unheard-submenu.show{display:flex;flex-wrap:wrap;gap:3px 6px;align-content:flex-start;}
 .unheard-submenu .chunk-popup-item{margin-bottom:0;}
 .chunk-popup-unheard-word{cursor:pointer;padding:2px 6px;border-radius:4px;}
 .chunk-popup-unheard-word strong{display:inline;margin-bottom:0;}
