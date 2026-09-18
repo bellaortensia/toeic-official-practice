@@ -878,6 +878,12 @@ audio{
    背景前提の色でクラス指定のためJS側では拾えない)で、このポップアップの中だけ
    明るい色に上書きする。 */
 .history-note-popup .ask-ai-answer-entry{color:#c7cfd6;}
+/* ボトルネックポイントの強調(.unheard-highlight、通常は#0057ff)も、暗い背景の
+   このポップアップの中では沈んで見えにくいため、明るめの水色に上書きする。
+   「前回学習した問題」のポップアップ(.prev-study-popup、同じ暗い背景)にも
+   同じ理由で同じ色を適用する。 */
+.history-note-popup .unheard-highlight,
+.prev-study-popup .unheard-highlight{color:#8ec6ff;}
 .history-note-popup-link{
   display:block;
   margin-top:16px;

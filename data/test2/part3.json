@@ -84,7 +84,7 @@
       { "number": 60, "text": "Why is the woman concerned?", "choices": {"A":"She lost her wallet.","B":"A product is damaged.","C":"A color is not available.","D":"A warranty is not included."}, "answer": "B" },
       { "number": 61, "text": "Why does the woman say, \"Thursday is two days from now\"?", "choices": {"A":"To express surprise","B":"To make a correction","C":"To offer reassurance","D":"To show disappointment"}, "answer": "A" }
     ]},
-    { "questions": [62,63,64], "audioConversation": "205 T2 Pt3 Q62-64 会話.mp3", "audioQuestions": "206 T2 Pt3 Q62-64 設問.mp3", "graphic": "October Class Schedule table (Mon Vegetarian Delights 5:00PM, Tue Intro to Pasta Making 6:30PM, Wed Bread Making for Beginners 7:00PM, Thu Advanced Bread Making 4:30PM, Fri Classic French Cuisine 5:30PM) - not yet captured as image",
+    { "questions": [62,63,64], "audioConversation": "205 T2 Pt3 Q62-64 会話.mp3", "audioQuestions": "206 T2 Pt3 Q62-64 設問.mp3", "graphic": "October Class Schedule table (Mon Vegetarian Delights 5:00PM, Tue Intro to Pasta Making 6:30PM, Wed Bread Making for Beginners 7:00PM, Thu Advanced Bread Making 4:30PM, Fri Classic French Cuisine 5:30PM)", "graphicImage": "images/test2/part3/q62-64.jpg",
       "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],
       "conversationText": "M: Hi. I mentioned to my neighbor that I'd like to take a cooking class, and he recommended your cooking school. I'd like to sign up for a class.\nW: Sure, here's the schedule. Bread Making for Beginners is a good beginner course. It's being offered on Wednesdays in October.\nM: Unfortunately, I work late on Wednesdays, so I couldn't do that.\nW: Well, the class on Tuesdays is very popular. It still has a few spots available.\nM: Seems interesting — yes, I'll try that.\nW: And we're always interested in learning more about who takes our classes. Would you mind completing a survey? It'll only take a few minutes.",
       "items": [
@@ -92,7 +92,7 @@
       { "number": 63, "text": "Look at the graphic. What course will the man sign up for?", "choices": {"A":"Vegetarian Delights","B":"Intro to Pasta Making","C":"Bread Making for Beginners","D":"Advanced Bread Making"}, "answer": "B" },
       { "number": 64, "text": "What does the woman want the man to do?", "choices": {"A":"Speak to an instructor","B":"Purchase class materials","C":"Pay with a credit card","D":"Fill out a survey"}, "answer": "D" }
     ]},
-    { "questions": [65,66,67], "audioConversation": "207 T2 Pt3 Q65-67 会話.mp3", "audioQuestions": "208 T2 Pt3 Q65-67 設問.mp3", "graphic": "Purchase order table: Business cards 100, Exhibit banners 10, Brochures 75, Posters 50",
+    { "questions": [65,66,67], "audioConversation": "207 T2 Pt3 Q65-67 会話.mp3", "audioQuestions": "208 T2 Pt3 Q65-67 設問.mp3", "graphic": "Purchase order table: Business cards 100, Exhibit banners 10, Brochures 75, Posters 50", "graphicImage": "images/test2/part3/q65-67.jpg",
       "speakers": [{"nat":"us","gender":"W"},{"nat":"ca","gender":"M"}],
       "conversationText": "W: The promotional materials for next month's art show just arrived. And they all look great!\nM: Now we can start advertising the event at the gallery.\nW: Wait. Didn't we request 50 of these? I just see 20 here.\nM: Let me check the order we sent to the printing company. Hmm. Yep, we ordered 50. Looks like they made a mistake.\nW: I'll call the printing company about the order and request that they send us the missing items. I'll see if they can rush the batch since the error was their fault.\nM: OK. We are only a month away from the show. I hope the items will be delivered in time.",
       "items": [
@@ -100,7 +100,7 @@
       { "number": 66, "text": "Look at the graphic. Which item arrived in the wrong quantity?", "choices": {"A":"Business cards","B":"Exhibit banners","C":"Brochures","D":"Posters"}, "answer": "D" },
       { "number": 67, "text": "What is the man concerned about?", "choices": {"A":"A deadline","B":"Paper quality","C":"A venue","D":"An extra expense"}, "answer": "A" }
     ]},
-    { "questions": [68,69,70], "audioConversation": "209 T2 Pt3 Q68-70 会話.mp3", "audioQuestions": "210 T2 Pt3 Q68-70 設問.mp3", "graphic": "Filter Model / Price table: J3 $26, T5 $32, X7 $55, Y12 $70",
+    { "questions": [68,69,70], "audioConversation": "209 T2 Pt3 Q68-70 会話.mp3", "audioQuestions": "210 T2 Pt3 Q68-70 設問.mp3", "graphic": "Filter Model / Price table: J3 $26, T5 $32, X7 $55, Y12 $70", "graphicImage": "images/test2/part3/q68-70.jpg",
       "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],
       "conversationText": "W: Hi, Artem. Have you figured out why the water in the hotel pool looks cloudy? Some guests have complained.\nM: I tested the water, and the chemicals are OK. The problem is with the filtration system. We need to replace the filter cartridge.\nW: OK. What model do we need?\nM: It's the X7.\nW: OK. I'll call now to make sure the pool supply store has the part in stock. Can you drop by the store later today to pick it up?\nM: Sure. That way I can install the new filter tomorrow morning.",
       "items": [

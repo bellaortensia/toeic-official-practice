@@ -68,7 +68,7 @@
       { "number": 93, "text": "Why does the speaker say, \"I just heard that there is fog at the airport\"?", "choices": {"A":"To suggest using alternate transportation","B":"To request help from the audience","C":"To explain a schedule change","D":"To complain about poor communication"}, "answer": "C" },
       { "number": 94, "text": "Who does the speaker thank at the end of the speech?", "choices": {"A":"An archivist","B":"An event planner","C":"Some public officials","D":"Some restaurant owners"}, "answer": "D" }
     ]},
-    { "questions": [95,96,97], "audioTalk": "228 T2 Pt4 Q95-97 トーク.mp3", "audioQuestions": "229 T2 Pt4 Q95-97 設問.mp3", "graphic": "Map: Food Market (212 Klein St.), City Hall (1 Main St.), Cobb Museum (555 1st St.), Seafront Park (1066 Grand St.) - not yet captured as image",
+    { "questions": [95,96,97], "audioTalk": "228 T2 Pt4 Q95-97 トーク.mp3", "audioQuestions": "229 T2 Pt4 Q95-97 設問.mp3", "graphic": "Map: Food Market (212 Klein St.), City Hall (1 Main St.), Cobb Museum (555 1st St.), Seafront Park (1066 Grand St.)", "graphicImage": "images/test2/part4/q95-97.jpg",
       "speakers": [{"nat":"ca","gender":"M"}],
       "talkText": "Thanks for joining our city tour. My name is Hector Flores, and I take great pride in all that Clearview has to offer. Over the coming hour, we'll be discussing the city's founding and historical development. Please feel free to ask me questions as we go. By the way, your tickets will get you a discount to be used at any of the eateries at Seafront Park. That's where we'll be ending our tour. Don't worry — you'll have plenty of time to enjoy your meal before you're due to get back on your cruise ship at eight P.M.",
       "items": [
@@ -76,7 +76,7 @@
       { "number": 96, "text": "According to the speaker, what is included in the tickets?", "choices": {"A":"Meal discounts","B":"Free parking","C":"Complimentary photographs","D":"Museum admission"}, "answer": "A" },
       { "number": 97, "text": "Look at the graphic. Where did the tour end?", "choices": {"A":"At 212 Klein St.","B":"At 1 Main St.","C":"At 1066 Grand St.","D":"At 555 1st St."}, "answer": "C" }
     ]},
-    { "questions": [98,99,100], "audioTalk": "230 T2 Pt4 Q98-100 トーク.mp3", "audioQuestions": "231 T2 Pt4 Q98-100 設問.mp3", "graphic": "Project step / Beginning Date table: Model development (July 27), Client review (August 3), Prototype revisions (August 8), Production (August 16)",
+    { "questions": [98,99,100], "audioTalk": "230 T2 Pt4 Q98-100 トーク.mp3", "audioQuestions": "231 T2 Pt4 Q98-100 設問.mp3", "graphic": "Project step / Beginning Date table: Model development (July 27), Client review (August 3), Prototype revisions (August 8), Production (August 16)", "graphicImage": "images/test2/part4/q98-100.jpg",
       "speakers": [{"nat":"us","gender":"W"}],
       "talkText": "Hi, Adisa. It's Rebecca Kwon. I'm calling because we've just completed development of a new fragrance line for J. M. Scents Incorporated, and now I need models of the bottles they'll be packaged in. Could you make 3-D prints of the perfume bottles, based on my digital renderings? The problem is that we have a very tight timeline. The client review is at the end of the week, so the bottles need to be ready by the day the clients start their review. I'll be happy to pay extra if you can make this project a priority.",
       "items": [

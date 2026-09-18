@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v107';
+const BUILD_VERSION = 'v108';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -501,37 +501,45 @@ function getCachedNaturalJa(cacheKey) {
   } catch (e) { return null; }
 }
 
-// クリックしたチャンクが属する節(clauseText)を対象に、①意味のまとまりごとの
-// 全文和訳と、②文構造の分析を生成する。②はMarkdown箇条書き(- で始める)で
-// 出力させ、formatNoteBody()側でリスト・太字(**)をHTMLに変換して表示する
-// (他の解説プロンプトはMarkdown記号を禁止しているが、このプロンプトだけは
-// 意図的にMarkdownを許可・要求している点に注意)。
+// クリックしたチャンクが属する節(clauseText)を対象に、■精読ポイントとして
+// 全文和訳+文構造分析をまとめて生成する。プレーンテキストの見出し・箇条書き
+// (・)のみを使い、Markdown記号(**、- 箇条書き等)は一切使わない。1行目が
+// ■で始まるため、formatNoteBody()側の「最初の行が■なら赤字太字にする」規則で
+// 見出しが自動的に強調表示される。
 const CLAUSE_EXPLAIN_PROMPT_READING = `あなたはTOEIC満点を何度も取得し、初心者指導歴20年以上の英語講師です。
-入力される英文(一文または一節)を、必ず次の形式・見出しどおりに日本語で解説してください。この形式以外の前置き・後書きは一切書かないこと。
+入力される英文(一文または一節)を、必ず次の形式・見出しどおりに日本語で解説してください。この形式以外の前置き・後書きは一切書かないこと。装飾記号(**など)は使わないこと。
 
-①全文和訳
-入力された英文全体を、省略・言い換えせず一字一句そのまま使い、意味のまとまり(3〜8語程度のチャンク)ごとに分割する。各チャンクを「英語チャンク（そのチャンクを英語の語順のまま前から訳した直訳）」の形にし、チャンクとチャンクの間は半角スペース+「/」+半角スペースで区切って、改行せずに1行で書く。
+■精読ポイント
+入力された英文全体を、省略・言い換えせず一字一句そのまま使い、意味のまとまり(3〜8語程度のチャンク)ごとに分割する。各チャンクを「英語チャンク(そのチャンクを英語の語順のまま前から訳した直訳)」の形にし、チャンクとチャンクの間は半角スペース+「/」+半角スペースで区切って、改行せずに1行で書く。
 
-②文構造分析
-入力文を、意味・文法上のまとまり(節・句・接続詞・省略された語を補ったものなど)ごとに分割し、それぞれについてMarkdown形式の箇条書きで解説する。文中に複数の節がある場合はS/V/O/Cに節ごとの通し番号を付ける(例: S1+V1、S2+V2+O2)。箇条書きの各項目は必ず次の2行構成にすること。
-1行目: 半角ハイフンと半角スペース"- "で始め、続けて該当箇所の英語(原文のまま。省略されている語があれば(word)のようにカッコ付きで補ってよい)を**で囲んで太字にし、その直後に全角括弧で文法的な役割(S1+V1のような文型記号、品詞・節の種類、または「修飾語：〜句」のような具体的な種類)を書く。
+＜文構造分析＞
+入力文を、意味・文法上のまとまり(節・句・接続詞・省略された語を補ったものなど)ごとに分割し、それぞれについて次の形式で解説する。文中に複数の節がある場合はS/V/O/Cに節ごとの通し番号を付ける(例: S1+V1、S2+V2+O2)。各項目は必ず次の2行構成にすること。
+1行目: 半角の中黒"・"で始め、続けて該当箇所の英語(原文のまま。省略されている語があれば(word)のようにカッコ付きで補ってよい)を書き、その直後に半角括弧で文法的な役割(S1+V1のような文型記号、品詞・節の種類、または「修飾語：〜句」のような具体的な種類)を書く。
 2行目: 改行して、字下げや記号は付けずに、その箇所についての文法的な説明(省略されている語があれば明記する、なぜその形になっているか、何を修飾しているか等)を1〜2文で書く。
 
-出力例(入力文: "Since enrolling in our comprehensive motor vehicle insurance four years ago, you have saved an average of $510 per year compared to the cost of policies from leading competitors."):
-①全文和訳
-Since enrolling in our comprehensive motor vehicle insurance four years ago（4年前に当社の総合自動車保険に加入して以来）/ you have saved an average of $510 per year（あなたは年間平均510ドルを節約してきました）/ compared to the cost of policies（保険契約の費用と比べて）/ from leading competitors.（大手競合他社の）
+出力例(入力文: "as we go."):
+■精読ポイント
+as we go.(私たちが進むにつれて)
+＜文構造分析＞
+・as(接続詞)
+「〜につれて」という意味を表す比例や同時進行を表す接続詞です。
+・we go(S1+V1:主節に従属する副詞節)
+私たちが進むという動作を表す第1文型の節であり、as が導く副詞節を構成しています。
 
-②文構造分析
-- **Since enrolling in our comprehensive motor vehicle insurance four years ago**（副詞節：分詞構文）
-  Since は「〜して以来」という意味の接続詞で、動名詞 enrolling を伴って「加入して以来」という時を表す節を作っています。
-- **you have saved**（S + V：現在完了形）
-  have + 過去分詞の現在完了形で、過去から現在まで続く「節約してきた」という結果を表しています。
-- **an average of $510 per year**（O：目的語）
-  saved の目的語で、「年間平均510ドル」という節約額を表します。
-- **compared to the cost of policies**（修飾語：過去分詞構文）
-  compared to 〜で「〜と比較して」という意味を作る過去分詞構文です。
-- **from leading competitors**（修飾語：前置詞句）
-  直前の competitors を修飾し、「大手の」競合他社であることを示しています。`;
+出力例2(入力文: "Since enrolling in our comprehensive motor vehicle insurance four years ago, you have saved an average of $510 per year compared to the cost of policies from leading competitors."):
+■精読ポイント
+Since enrolling in our comprehensive motor vehicle insurance four years ago(4年前に当社の総合自動車保険に加入して以来) / you have saved an average of $510 per year(あなたは年間平均510ドルを節約してきました) / compared to the cost of policies(保険契約の費用と比べて) / from leading competitors.(大手競合他社の)
+＜文構造分析＞
+・Since enrolling in our comprehensive motor vehicle insurance four years ago(副詞節：分詞構文)
+Since は「〜して以来」という意味の接続詞で、動名詞 enrolling を伴って「加入して以来」という時を表す節を作っています。
+・you have saved(S+V:現在完了形)
+have+過去分詞の現在完了形で、過去から現在まで続く「節約してきた」という結果を表しています。
+・an average of $510 per year(O:目的語)
+saved の目的語で、「年間平均510ドル」という節約額を表します。
+・compared to the cost of policies(修飾語：過去分詞構文)
+compared to 〜で「〜と比較して」という意味を作る過去分詞構文です。
+・from leading competitors(修飾語：前置詞句)
+直前の competitors を修飾し、「大手の」競合他社であることを示しています。`;
 
 async function getClauseExplanation(clauseText) {
   return await callGemini(CLAUSE_EXPLAIN_PROMPT_READING, clauseText, { maxOutputTokens: 1200 });
@@ -2525,14 +2533,16 @@ function deleteAttemptEntry(key) {
   localStorage.setItem(ATTEMPTS_LS, JSON.stringify(store));
 }
 
-// 回答履歴のポップアップに表示する「設問本文」。翻訳ウィジェットは解説画面を
-// 開いた時点で自動的に翻訳を取得・キャッシュしているため(cacheKeyBaseは
-// noteKeyと同じ規則)、ここでは新たにAIを呼んだり問題データを読み込み直したり
-// せず、既にlocalStorageにある翻訳キャッシュ(segments)から本文を組み立てる。
-// ボトルネックポイントの強調(青太字)があれば、そのまま再現する。翻訳を一度も
-// 取得していない設問(Part5など翻訳ウィジェットが無いPart、またはAPIキー未設定で
-// 翻訳が失敗したまま)では該当キャッシュが無いため、その場合は空文字を返す
-// (無理にAIを呼び直したりはしない)。
+// 回答履歴のポップアップ・「前回学習した問題」のポップアップに表示する設問本文
+// のHTML。翻訳ウィジェットは解説画面を開いた時点で自動的に翻訳を取得・
+// キャッシュしているため(cacheKeyBaseはnoteKeyと同じ規則)、ここでは新たに
+// AIを呼んだり問題データを読み込み直したりせず、既にlocalStorageにある翻訳
+// キャッシュ(segments)から本文を組み立てる。ボトルネックポイントの強調
+// (青太字)があれば、そのまま再現する。segments側のlineBreakを見て、原文の
+// 改行位置(会話のM:/W:の交代や段落の変わり目など)も<br>で再現する。翻訳を
+// 一度も取得していない設問(Part5など翻訳ウィジェットが無いPart、またはAPI
+// キー未設定で翻訳が失敗したまま)では該当キャッシュが無いため、その場合は
+// 空文字を返す(無理にAIを呼び直したりはしない)。
 function getPassageBodyHtmlForHistory(cacheKeyBase) {
   const marksStore = getBottleneckMarksStore();
   const parts = ['', '-doc0', '-doc1', '-doc2'].map(suffix => {
@@ -2544,7 +2554,10 @@ function getPassageBodyHtmlForHistory(cacheKeyBase) {
     const segments = Array.isArray(data.segments) ? data.segments : [];
     if (!segments.length) return null;
     const marks = (marksStore[cacheKey] && marksStore[cacheKey].marks) || {};
-    return segments.map((seg, i) => buildHighlightedHtml(seg.en.trim(), new Set(marks[i] || []))).join(' ');
+    return segments.map((seg, i) => {
+      const html = buildHighlightedHtml(seg.en.trim(), new Set(marks[i] || []));
+      return html + (seg.lineBreak ? '<br>' : ' ');
+    }).join('').trim();
   }).filter(Boolean);
   return parts.join('<hr>');
 }
@@ -3320,7 +3333,7 @@ async function resolvePreviousStudyItems() {
       if (seen.has(dedupeKey)) continue;
       seen.add(dedupeKey);
       const text = g.conversationText || g.talkText || '';
-      items.push({ label: `${test} P${part} Q${g.questions[0]}`, text, audio: [audio] });
+      items.push({ label: `${test} P${part} Q${g.questions[0]}`, text, audio: [audio], cacheKeyBase: dedupeKey });
     } else if (part === 6 || part === 7) {
       const p = (data.passages || []).find(x => x.questions.includes(number));
       if (!p || !p.audio) continue;
@@ -3328,7 +3341,7 @@ async function resolvePreviousStudyItems() {
       if (seen.has(dedupeKey)) continue;
       seen.add(dedupeKey);
       const text = p.text || (p.documents ? p.documents.map(d => d.text).join(' ') : '');
-      items.push({ label: `${test} P${part} Q${p.questions[0]}`, text, audio: Array.isArray(p.audio) ? p.audio : [p.audio] });
+      items.push({ label: `${test} P${part} Q${p.questions[0]}`, text, audio: Array.isArray(p.audio) ? p.audio : [p.audio], cacheKeyBase: dedupeKey });
     }
   }
   return items;
@@ -3503,8 +3516,11 @@ function hidePrevStudyPopup() {
   prevStudyPopupEl.classList.remove('show');
   prevStudyPinnedEl = null;
 }
-function showPrevStudyPopup(anchorEl, text) {
-  prevStudyPopupEl.textContent = text;
+// htmlはescapeHtml済み(+必要ならボトルネックポイントの<strong>タグ入り)の
+// HTML文字列。プレーンテキストのフォールバック時もここでescapeHtmlしてから
+// 渡すこと(呼び出し側で行う)。
+function showPrevStudyPopup(anchorEl, html) {
+  prevStudyPopupEl.innerHTML = html;
   const rect = anchorEl.getBoundingClientRect();
   prevStudyPopupEl.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 570)) + 'px';
   prevStudyPopupEl.style.top = (rect.bottom + window.scrollY + 6) + 'px';
@@ -3581,12 +3597,17 @@ function buildPreviousStudySection() {
       // 前後の余分な空白だけを整えたものを使う(会話文のM:/W:等の改行を保つため)。
       const flat = (item.text || '').replace(/\s+/g, ' ').trim();
       const fullLine = `${item.label} ${flat}`;
+      // ボトルネックポイントで強調した単語があれば、それを反映したHTML(翻訳
+      // キャッシュのsegmentsから再構成)を優先して使う。無ければ(翻訳を一度も
+      // 取得していない設問など)従来通りプレーンテキストのまま表示する。
+      const highlighted = item.cacheKeyBase ? getPassageBodyHtmlForHistory(item.cacheKeyBase) : '';
       const multiline = (item.text || '').split('\n').map(l => l.trim()).join('\n').replace(/\n{3,}/g, '\n\n').trim();
-      const popupText = `${item.label}\n\n${multiline}`;
+      const bodyHtml = highlighted || escapeHtml(multiline);
+      const popupHtml = `${escapeHtml(item.label)}<br><br>${bodyHtml}`;
       text.textContent = fullLine;
       text.addEventListener('mouseenter', () => {
         if (prevStudyPinnedEl && prevStudyPinnedEl !== text) return;
-        showPrevStudyPopup(text, popupText);
+        showPrevStudyPopup(text, popupHtml);
       });
       text.addEventListener('mouseleave', () => {
         if (prevStudyPinnedEl !== text) hidePrevStudyPopup();
@@ -3595,7 +3616,7 @@ function buildPreviousStudySection() {
         e.stopPropagation();
         if (prevStudyPinnedEl === text) { hidePrevStudyPopup(); return; }
         prevStudyPinnedEl = text;
-        showPrevStudyPopup(text, popupText);
+        showPrevStudyPopup(text, popupHtml);
       });
 
       row.appendChild(playBtn);
