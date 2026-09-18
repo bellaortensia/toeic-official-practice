@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v111';
+const BUILD_VERSION = 'v112';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -512,7 +512,7 @@ const CLAUSE_EXPLAIN_PROMPT_READING = `あなたはTOEIC満点を何度も取得
 ■精読ポイント
 入力された英文全体を、省略・言い換えせず一字一句そのまま使い、意味のまとまり(3〜8語程度のチャンク)ごとに分割する。各チャンクを「英語チャンク(そのチャンクを英語の語順のまま前から訳した直訳)」の形にし、チャンクとチャンクの間は半角スペース+「/」+半角スペースで区切って、改行せずに1行で書く。
 
-＜文構造分析＞
+～文構造分析～
 入力文を、意味・文法上のまとまり(節・句・接続詞・省略された語を補ったものなど)ごとに分割し、それぞれについて次の形式で解説する。文中に複数の節がある場合はS/V/O/Cに節ごとの通し番号を付ける(例: S1+V1、S2+V2+O2)。各項目は必ず次の2行構成にすること。
 1行目: 半角の中黒"・"で始め、続けて該当箇所の英語(原文のまま。省略されている語があれば(word)のようにカッコ付きで補ってよい)を書き、その直後に半角括弧で文法的な役割(S1+V1のような文型記号、品詞・節の種類、または「修飾語：〜句」のような具体的な種類)を書く。
 2行目: 改行して、字下げや記号は付けずに、その箇所についての文法的な説明(省略されている語があれば明記する、なぜその形になっているか、何を修飾しているか等)を1〜2文で書く。
@@ -523,7 +523,7 @@ const CLAUSE_EXPLAIN_PROMPT_READING = `あなたはTOEIC満点を何度も取得
 出力例(入力文: "as we go."):
 ■精読ポイント
 as we go.(私たちが進むにつれて)
-＜文構造分析＞
+～文構造分析～
 ・as(接続詞)
 「〜につれて」という意味を表す比例や同時進行を表す接続詞です。
 ・we go(S1+V1:主節に従属する副詞節)
@@ -532,7 +532,7 @@ as we go.(私たちが進むにつれて)
 出力例2(入力文: "Since enrolling in our comprehensive motor vehicle insurance four years ago, you have saved an average of $510 per year compared to the cost of policies from leading competitors."):
 ■精読ポイント
 Since enrolling in our comprehensive motor vehicle insurance four years ago(4年前に当社の総合自動車保険に加入して以来) / you have saved an average of $510 per year(あなたは年間平均510ドルを節約してきました) / compared to the cost of policies(保険契約の費用と比べて) / from leading competitors.(大手競合他社の)
-＜文構造分析＞
+～文構造分析～
 ・Since enrolling in our comprehensive motor vehicle insurance four years ago(副詞節：分詞構文)
 Since は「〜して以来」という意味の接続詞で、動名詞 enrolling を伴って「加入して以来」という時を表す節を作っています。
 ・you have saved(S+V:現在完了形)
@@ -592,8 +592,12 @@ async function getTermExplanation(term, meaning, contextSentence) {
 // 「用語を解説」等のAI出力1行目)は、その行だけ赤字・太字にする(appendToNotes
 // が別途作る.notes-entry-quoteの■見出しと見た目を揃えるため)。
 // また、簡易的にMarkdownの太字(**text**)と箇条書き(- で始まる行)にも対応する
-// (CLAUSE_EXPLAIN_PROMPT_READINGの②文構造分析用。他のプロンプトはMarkdown記号を
-// 使わない前提なので、通常の解説文をそのまま渡しても影響しない)。
+// (どちらも現状使うプロンプトは無いが、下位互換のため残す)。
+// 「この文を解説」(CLAUSE_EXPLAIN_PROMPT_READING)向けに、"～文構造分析～"の
+// 見出し行と、"・"で始まる項目見出し行(例: "・as(接続詞)")を太字にする。
+// その直後に続く改行後の説明文自体は装飾なしのままにする(項目の見出しだけ
+// 目立たせたいという要望のため)。他のプロンプトはこれらの記法を使わない前提
+// なので、通常の解説文をそのまま渡しても影響しない。
 function formatNoteBody(text) {
   const raw = text || '';
   const nlIdx = raw.indexOf('\n');
@@ -618,15 +622,18 @@ function formatNoteBody(text) {
       if (items) { out.push(`<ul class="note-md-list">${items.join('')}</ul>`); items = null; }
     }
     lines.forEach(line => {
+      const trimmed = line.trim();
       const m = /^\s*-\s+(.*)$/.exec(line);
       if (m) {
         if (!items) items = [];
         items.push(`<li>${processInline(m[1])}</li>`);
-      } else if (line.trim() === '') {
+      } else if (trimmed === '') {
         flushList();
         out.push('');
       } else if (items) {
-        items[items.length - 1] = items[items.length - 1].replace(/<\/li>$/, `<br>${processInline(line.trim())}</li>`);
+        items[items.length - 1] = items[items.length - 1].replace(/<\/li>$/, `<br>${processInline(trimmed)}</li>`);
+      } else if (trimmed === '～文構造分析～' || trimmed.startsWith('・')) {
+        out.push(`<strong>${processInline(line)}</strong>`);
       } else {
         out.push(processInline(line));
       }
