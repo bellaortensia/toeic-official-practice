@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v108';
+const BUILD_VERSION = 'v109';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -984,7 +984,8 @@ const chunkPopupEl = document.createElement('div');
 chunkPopupEl.className = 'chunk-popup';
 document.body.appendChild(chunkPopupEl);
 
-// 「ボトルネックポイント▶」のホバーで右に出す単語一覧サブメニュー。chunkPopupEl
+// 「Listeningボトルネック▶」/「Readingボトルネック▶」のホバーで右に出す単語
+// 一覧サブメニュー。chunkPopupEl
 // 本体とは別要素にし、どちらにマウスがあっても消えないようにする(すぐ隣に
 // 出るとはいえ、間の隙間を通るときにチラつかないよう少し遅延させて消す)。
 const unheardSubmenuEl = document.createElement('div');
@@ -1056,13 +1057,11 @@ function showUnheardSubmenu(triggerEl, displayEn, currentMarks, onApply) {
   const tokens = (displayEn || '').split(/\s+/).filter(Boolean);
   const selected = new Set(currentMarks || []);
   function render() {
-    unheardSubmenuEl.innerHTML =
-      tokens.map((tok, i) => {
-        const clean = stripPunct(tok) || tok;
-        const sel = selected.has(i) ? ' selected' : '';
-        return `<div class="chunk-popup-item chunk-popup-unheard-word${sel}" data-action="unheard-word" data-token-idx="${i}"><strong>${escapeHtml(clean)}</strong></div>`;
-      }).join('') +
-      '<div class="chunk-popup-item chunk-popup-unheard-confirm" data-action="unheard-confirm"><strong>✓ 更新</strong></div>';
+    unheardSubmenuEl.innerHTML = tokens.map((tok, i) => {
+      const clean = stripPunct(tok) || tok;
+      const sel = selected.has(i) ? ' selected' : '';
+      return `<div class="chunk-popup-item chunk-popup-unheard-word${sel}" data-action="unheard-word" data-token-idx="${i}"><strong>${escapeHtml(clean)}</strong></div>`;
+    }).join('');
   }
   render();
   unheardSubmenuEl.onclick = e => {
@@ -1073,17 +1072,12 @@ function showUnheardSubmenu(triggerEl, displayEn, currentMarks, onApply) {
     // クリック」と誤判定され、ポップアップごと閉じてしまっていた。ここで伝播を
     // 止め、documentまでイベントを届かせないようにする。
     e.stopPropagation();
-    const confirmTrigger = e.target.closest('[data-action="unheard-confirm"]');
-    if (confirmTrigger) {
-      onApply(selected);
-      unheardSubmenuEl.classList.remove('show');
-      return;
-    }
     const wordTrigger = e.target.closest('[data-action="unheard-word"]');
     if (!wordTrigger) return;
     const idx = Number(wordTrigger.dataset.tokenIdx);
     if (selected.has(idx)) selected.delete(idx); else selected.add(idx);
     render();
+    onApply(selected); // 確定ボタンは無く、クリックした瞬間に本文へ反映する
   };
   const rect = triggerEl.getBoundingClientRect();
   unheardSubmenuEl.style.left = (rect.right + window.scrollX + 4) + 'px';
@@ -1098,16 +1092,16 @@ document.addEventListener('click', e => {
   }
 });
 
-// showUnheard=false(Part5/6/7のリーディング設問)では「ボトルネックポイント▶」
-// (聞き取れなかった単語)の項目自体を出さない。リーディングには音声が無く、
-// 「聞き取れない」という状況が発生しないため。
+// bottleneckLabelは「Listeningボトルネック」または「Readingボトルネック」
+// (呼び出し側がPart1-4/Part6-7のどちらかで決める)。この項目自体を出したく
+// ない場合(現状はPart5)は呼び出し側でこの関数を使わない。
 // displayEnは、話者ラベルを取り除いた後の実際にEN列へ表示されている英文
 // (renderTranslateColumns側で計算済みのもの)。ボトルネックの単語選択・強調表示の
 // 対象を、実際に画面に見えている文字列と一致させるために使う。
-// onBottleneckChangeは、強調する単語(トークン番号のSet)が確定した時点で呼ばれ、
-// 呼び出し側で保存・再描画を行う。currentMarksは現在このセグメントに設定されて
-// いる強調位置(トークン番号の配列)。
-function showChunkPopup(seg, anchorEl, notesArea, clauseText, showUnheard = true, displayEn = seg.en, currentMarks = [], onBottleneckChange = null) {
+// onBottleneckChangeは、単語の選択状態が変わるたびに呼ばれ(確定ボタンは無く
+// クリックした瞬間に反映する)、呼び出し側で保存・再描画を行う。currentMarksは
+// 現在このセグメントに設定されている強調位置(トークン番号の配列)。
+function showChunkPopup(seg, anchorEl, notesArea, clauseText, bottleneckLabel, displayEn = seg.en, currentMarks = [], onBottleneckChange = null) {
   const terms = seg.keyTerms || [];
   const literalHtml = seg.ja
     ? `<div class="chunk-popup-item chunk-popup-literal" data-action="literal"><strong>${escapeHtml(seg.ja)}</strong></div>`
@@ -1115,8 +1109,8 @@ function showChunkPopup(seg, anchorEl, notesArea, clauseText, showUnheard = true
   const termsHtml = terms.map((t, i) =>
     `<div class="chunk-popup-item chunk-popup-term" data-action="term" data-term-idx="${i}"><strong>${escapeHtml(t.term || '')}</strong><div>${escapeHtml(t.meaning || '')}</div></div>`
   ).join('');
-  const unheardHtml = showUnheard
-    ? '<div class="chunk-popup-item chunk-popup-unheard" data-action="unheard-menu"><strong>ボトルネックポイント▶</strong></div>'
+  const unheardHtml = bottleneckLabel
+    ? `<div class="chunk-popup-item chunk-popup-unheard" data-action="unheard-menu"><strong>${escapeHtml(bottleneckLabel)}▶</strong></div>`
     : '';
   chunkPopupEl.innerHTML = literalHtml + termsHtml + unheardHtml +
     '<div class="chunk-popup-item chunk-popup-explain" data-action="explain"><strong>この文を解説→ノートへ</strong></div>';
@@ -1182,7 +1176,7 @@ function showChunkPopup(seg, anchorEl, notesArea, clauseText, showUnheard = true
 // ・意訳: 文単位、常時表示。チャンク単位で正確に対応する箇所をハイライトするのは
 //   難しいため背景ハイライトはしないが、今EN側でハイライトされているチャンクが
 //   含まれる文だけに下線を引き、ホイール操作と連動させる(常時全文下線にはしない)。
-function renderTranslateColumns(container, data, mode, notesArea, slash, showUnheard = true, cacheKey = null) {
+function renderTranslateColumns(container, data, mode, notesArea, slash, bottleneckLabel, cacheKey = null) {
   container.innerHTML = '';
   const segments = data.segments || [];
   let curSeg = -1;
@@ -1366,15 +1360,16 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, showUnh
     }
     // ボトルネックの単語選択が確定したら、そのチャンクに反映して保存し、EN列の
     // 表示をその場で更新する(ページの再読み込み・再取得なしで見た目に反映)。
-    // targetIdxはこの時点のcurSegを固定で捉える(確定を押すまでの間に別のチャンクへ
-    // 移動していても、開いたときのチャンクを正しく更新できるようにするため)。
+    // targetIdxはこの時点のcurSegを固定で捉える(サブメニューを開いている間に
+    // 別のチャンクへ移動していても、開いたときのチャンクを正しく更新できる
+    // ようにするため)。
     const targetIdx = curSeg;
     const onBottleneckChange = cacheKey ? (selectedIdxSet) => {
       setBottleneckMarksForSegment(cacheKey, targetIdx, [...selectedIdxSet]);
       renderEnSpan(enSpans[targetIdx], seg, enCleanTexts[targetIdx], targetIdx);
     } : null;
     const currentMarks = cacheKey ? getBottleneckMarksForSegment(cacheKey, curSeg) : [];
-    showChunkPopup(seg, enSpans[curSeg], notesArea, clauseText, showUnheard, enCleanTexts[curSeg], currentMarks, onBottleneckChange);
+    showChunkPopup(seg, enSpans[curSeg], notesArea, clauseText, bottleneckLabel, enCleanTexts[curSeg], currentMarks, onBottleneckChange);
     popupOpenSeg = curSeg;
   }
 
@@ -1461,11 +1456,10 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, showUnh
 // 表示する。設問文の選択肢横に付けると「設問文を読み上げているのがこの話者」と
 // 誤解されるため、実際にその話者が話している本文(この関数が表示する原文)の
 // すぐ上に置く。
-// showUnheard=false を渡すと、チャンクのポップアップメニューから「ボトルネック
-// ポイント▶」(聞き取れなかった単語)の項目を省く。Part5/6/7のリーディング設問には
-// 音声が無く「聞き取れない」状況が起こらないため、呼び出し側(renderPart6/renderPart7)
-// から false を渡している。
-function buildTranslatableBlock(text, cacheKey, speakers, showUnheard = true) {
+// bottleneckLabelには呼び出し側が「Listeningボトルネック」(Part3/4)または
+// 「Readingボトルネック」(Part6/7)を渡す。Part5はそもそもこの翻訳ウィジェット
+// (チャンク単位でクリックできる英文表示)自体が無いため対象外。
+function buildTranslatableBlock(text, cacheKey, speakers, bottleneckLabel) {
   const wrap = document.createElement('div');
   wrap.className = 'translate-block';
 
@@ -1560,7 +1554,7 @@ function buildTranslatableBlock(text, cacheKey, speakers, showUnheard = true) {
     restoreNotesIfSaved(notesArea, cacheKey + '-translate-notes');
 
     function renderCurrentMode() {
-      renderTranslateColumns(contentContainer, data, mode, notesArea, slash, showUnheard, cacheKey);
+      renderTranslateColumns(contentContainer, data, mode, notesArea, slash, bottleneckLabel, cacheKey);
     }
 
     modeBtn.onclick = () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); renderCurrentMode(); };
@@ -4645,7 +4639,7 @@ function renderPart3or4() {
       const fullText = g.conversationText || g.talkText;
       if (fullText) {
         translateSlot.style.display = 'block';
-        translateSlot.appendChild(buildTranslatableBlock(fullText, `${state.test}-${state.part}-${g.questions[0]}`, g.speakers));
+        translateSlot.appendChild(buildTranslatableBlock(fullText, `${state.test}-${state.part}-${g.questions[0]}`, g.speakers, 'Listeningボトルネック'));
       }
       wrap.insertBefore(buildNotesWidget(`${state.test}-${state.part}-${g.questions[0]}`), nextBtn);
       nextBtn.disabled = false;
@@ -4966,7 +4960,7 @@ function renderPart6() {
         audioSlot.appendChild(createAudioPlayerWidget(p.audio, { sticky: true }));
       }
       translateSlot.style.display = 'block';
-      translateSlot.appendChild(buildTranslatableBlock(p.text, `${state.test}-6-${p.questions[0]}`, null, false));
+      translateSlot.appendChild(buildTranslatableBlock(p.text, `${state.test}-6-${p.questions[0]}`, null, 'Readingボトルネック'));
     } else {
       p67AdvancePassage(renderPart6);
     }
@@ -5063,7 +5057,7 @@ function renderPart7() {
       }
       translateSlots.forEach(({ slot, doc, di }) => {
         slot.style.display = 'block';
-        slot.appendChild(buildTranslatableBlock(doc.text, `${state.test}-7-${p.questions[0]}-doc${di}`, null, false));
+        slot.appendChild(buildTranslatableBlock(doc.text, `${state.test}-7-${p.questions[0]}-doc${di}`, null, 'Readingボトルネック'));
       });
     } else {
       p67AdvancePassage(renderPart7);
