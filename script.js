@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v110';
+const BUILD_VERSION = 'v111';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -502,10 +502,10 @@ function getCachedNaturalJa(cacheKey) {
 }
 
 // クリックしたチャンクが属する節(clauseText)を対象に、■精読ポイントとして
-// 全文和訳+文構造分析をまとめて生成する。プレーンテキストの見出し・箇条書き
-// (・)のみを使い、Markdown記号(**、- 箇条書き等)は一切使わない。1行目が
-// ■で始まるため、formatNoteBody()側の「最初の行が■なら赤字太字にする」規則で
-// 見出しが自動的に強調表示される。
+// 全文和訳+文構造分析+重要語句をまとめて生成する。プレーンテキストの見出し・
+// 箇条書き(・)のみを使い、Markdown記号(**、- 箇条書き等)は一切使わない。
+// 1行目が■で始まるため、formatNoteBody()側の「最初の行が■なら赤字太字に
+// する」規則で見出しが自動的に強調表示される。
 const CLAUSE_EXPLAIN_PROMPT_READING = `あなたはTOEIC満点を何度も取得し、初心者指導歴20年以上の英語講師です。
 入力される英文(一文または一節)を、必ず次の形式・見出しどおりに日本語で解説してください。この形式以外の前置き・後書きは一切書かないこと。装飾記号(**など)は使わないこと。
 
@@ -516,6 +516,9 @@ const CLAUSE_EXPLAIN_PROMPT_READING = `あなたはTOEIC満点を何度も取得
 入力文を、意味・文法上のまとまり(節・句・接続詞・省略された語を補ったものなど)ごとに分割し、それぞれについて次の形式で解説する。文中に複数の節がある場合はS/V/O/Cに節ごとの通し番号を付ける(例: S1+V1、S2+V2+O2)。各項目は必ず次の2行構成にすること。
 1行目: 半角の中黒"・"で始め、続けて該当箇所の英語(原文のまま。省略されている語があれば(word)のようにカッコ付きで補ってよい)を書き、その直後に半角括弧で文法的な役割(S1+V1のような文型記号、品詞・節の種類、または「修飾語：〜句」のような具体的な種類)を書く。
 2行目: 改行して、字下げや記号は付けずに、その箇所についての文法的な説明(省略されている語があれば明記する、なぜその形になっているか、何を修飾しているか等)を1〜2文で書く。
+
+＜重要単語・熟語・言い回し＞
+入力文中にあるTOEIC頻出の単語・熟語・言い回しを、一字一句原文のまま抜き出し、「用語 意味」の形で／区切りで並べる(2〜3行に折り返してよい)。該当する語句が無ければ、この見出しごと省略してよい(無理に単語を挙げないこと)。
 
 出力例(入力文: "as we go."):
 ■精読ポイント
@@ -539,10 +542,14 @@ saved の目的語で、「年間平均510ドル」という節約額を表し�
 ・compared to the cost of policies(修飾語：過去分詞構文)
 compared to 〜で「〜と比較して」という意味を作る過去分詞構文です。
 ・from leading competitors(修飾語：前置詞句)
-直前の competitors を修飾し、「大手の」競合他社であることを示しています。`;
+直前の competitors を修飾し、「大手の」競合他社であることを示しています。
+＜重要単語・熟語・言い回し＞
+Since ～ing ～して以来／enrolling in～ ～に加入すること／comprehensive 総合的な、補償範囲の広い
+／average of ～ ～の平均／compared to ～ ～と比較して`;
 
 async function getClauseExplanation(clauseText) {
-  return await callGemini(CLAUSE_EXPLAIN_PROMPT_READING, clauseText, { maxOutputTokens: 1200 });
+  // ＜重要単語・熟語・言い回し＞の分だけ出力が増える分、余裕を持たせる。
+  return await callGemini(CLAUSE_EXPLAIN_PROMPT_READING, clauseText, { maxOutputTokens: 1500 });
 }
 
 // 単語ポップアップから「用語を解説」した際に呼ぶ。単語1つの場合だけコアイメージ
