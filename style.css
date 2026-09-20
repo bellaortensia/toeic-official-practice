@@ -718,11 +718,18 @@ audio{
 .landing-nav{margin-top:16px;}
 
 .part-overview-header{
-  position:relative;
   display:flex;
   align-items:center;
   gap:12px;
   margin-bottom:14px;
+}
+/* .part-jump-selectは.practice-header側(中央寄せのnav-clusterと共存するため
+   position:absoluteで左端に固定)を前提にした指定。.part-overview-headerには
+   中央寄せする要素が無く、単純にselectとボタンを横に並べたいだけなので、ここでは
+   通常のflex項目に戻す(absoluteのままだと後続のボタンと重なってしまう)。 */
+.part-overview-header .part-jump-select{
+  position:static;
+  transform:none;
 }
 
 .empty-state-layout{display:flex;gap:20px;align-items:flex-start;}
