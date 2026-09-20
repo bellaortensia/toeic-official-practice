@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v114';
+const BUILD_VERSION = 'v115';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -384,6 +384,7 @@ const TRANSLATE_PROMPT = `あなたは英語学習者向けの解析エンジン
 2) 各チャンクの中にTOEIC頻出の単語・熟語・言い回しがあれば、その語句を一字一句原文のまま抜き出し、keyTermsに追加してください(該当が無いチャンクではkeyTermsを空配列にする)。
 3) 原文中でそのチャンクの直後に改行(\\n)がある場合(会話の話者交代や段落の変わり目、文書の見出し行の区切りなど)は、そのチャンクに "lineBreak": true を付けてください(改行が無ければ省略またはfalseでよい)。
 4) 英文全体を文単位(ピリオド・感嘆符・疑問符などの文末記号まで)に区切り、それぞれの原文(en、一字一句そのまま抜粋)と、自然な日本語の語順・言い回しでの意訳(ja)のペアをnaturalSentencesに入れてください。長すぎない限り1文=1要素とすること。原文中でその文の直後に改行がある場合は、segmentsと同様に"lineBreak": trueを付けてください。
+5) 重要: 原文中に(131)_____のような「数字+アンダースコア」の空欄記号(Part6の穴埋め問題)がある場合、その記号は翻訳せず一字一句そのまま(例: "(131)_____")残すこと。segmentsのjaとnaturalSentencesのjaのどちらでも、その空欄に入る語句を勝手に推測して自然な訳文に埋め込んでしまってはならない(直訳・意訳のどちらであっても、空欄記号自体をそのまま訳文中に残す)。
 出力は必ず次のJSON形式のみを返し、説明文やコードフェンスは一切含めないこと。
 {
   "segments": [
@@ -395,7 +396,7 @@ const TRANSLATE_PROMPT = `あなたは英語学習者向けの解析エンジン
 }
 segmentsの"en"を出現順にそのまま連結すると、空白の増減を除いて原文と完全に一致するようにしてください。naturalSentencesの"en"を出現順にそのまま連結した場合も同様に原文と完全に一致させてください。`;
 
-const TRANSLATE_PROMPT_VERSION = 'v8';
+const TRANSLATE_PROMPT_VERSION = 'v9';
 
 // レビュー文などに引用符("...")を含む原文だと、AIがJSON文字列内でその引用符を
 // エスケープし忘れ(\"にせず"のまま出力し)、JSON.parseが「Expected double-quoted
