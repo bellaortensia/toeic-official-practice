@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v120';
+const BUILD_VERSION = 'v121';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -3126,6 +3126,47 @@ function parseNoteKeyForReview(noteKey) {
   return { baseKey: key, test: m[1], part: Number(m[2]), number: Number(m[3]), docIndex, isTranslateNotes };
 }
 
+// 設問本文は本来、翻訳ウィジェットのキャッシュ(getPassageBodyHtmlForHistory、
+// ボトルネックの青字強調つき)から再現するが、このキャッシュは翻訳ウィジェット
+// を実際に開いた設問にしか無く、しかもTRANSLATE_PROMPT_VERSIONを上げるたびに
+// 失効する。そのため、キャッシュが無い場合はdata/testN/partM.jsonを取得し、
+// 素の問題データから本文を組み立てる(Part1除く。Part1は写真のみで本文が
+// 無いので対象外)。Part2は選択肢しか普段は表示していないが、データ自体には
+// 設問文(question/questionJa)が入っているのでそれを使う。
+async function getFallbackPassageInfo(test, part, number, docIndex) {
+  let data;
+  try { data = await loadPartData(test, part); } catch (e) { return ''; }
+  if (part === 2) {
+    const q = data.questions.find(x => x.number === number);
+    if (!q) return '';
+    const choicesHtml = Object.keys(q.responses).map(l =>
+      `(${l}) ${escapeHtml(q.responses[l])}${q.responsesJa ? '　' + escapeHtml(q.responsesJa[l]) : ''}`).join('<br>');
+    return `<div>${escapeHtml(q.question)}</div>${q.questionJa ? `<div>${escapeHtml(q.questionJa)}</div>` : ''}<div style="margin-top:8px">${choicesHtml}</div>`;
+  }
+  if (part === 5) {
+    const q = data.questions.find(x => x.number === number);
+    if (!q) return '';
+    const choicesHtml = Object.keys(q.choices).map(l => `(${l}) ${escapeHtml(q.choices[l])}`).join('<br>');
+    return `<div>${escapeHtml(q.sentence)}</div><div style="margin-top:8px">${choicesHtml}</div>`;
+  }
+  if (part === 3 || part === 4) {
+    const g = data.groups.find(x => x.questions.includes(number));
+    const text = g && (g.conversationText || g.talkText);
+    return text ? `<div style="white-space:pre-wrap">${escapeHtml(text)}</div>` : '';
+  }
+  if (part === 6) {
+    const p = data.passages.find(x => x.questions.includes(number));
+    return p && p.text ? `<div style="white-space:pre-wrap">${escapeHtml(p.text)}</div>` : '';
+  }
+  if (part === 7) {
+    const p = data.passages.find(x => x.questions.includes(number));
+    if (!p) return '';
+    const docs = (docIndex != null && p.documents[docIndex]) ? [p.documents[docIndex]] : p.documents;
+    return docs.map(d => `<div style="white-space:pre-wrap"><strong>${escapeHtml(d.label || '')}</strong><br>${escapeHtml(d.text)}</div>`).join('<hr>');
+  }
+  return '';
+}
+
 // 日付は、ノート自体には保存時刻を記録していないため、同じノートキーを共有する
 // 設問の回答履歴(lastAt)のうち最新のものを「ノートを書いた(触れた)日付」として
 // 代用する(回答履歴ホバー時のノートポップアップと同じ考え方)。
@@ -3140,15 +3181,28 @@ async function collectReviewableNotes() {
     const lsKey = localStorage.key(i);
     if (!lsKey || lsKey.indexOf(NOTES_LS_PREFIX) !== 0) continue;
     const noteKey = lsKey.slice(NOTES_LS_PREFIX.length);
-    if (noteKey.endsWith('-ai')) continue; // AIへの質問は下でグループごとにまとめて拾う
+    if (noteKey.endsWith('-ai')) {
+      // AIへの質問だけがあり、一般ノート・翻訳ノートが無い設問でも見返せるように
+      // する。個々のAIキーは設問ごとの個別キーなので、履歴からグループの共有
+      // ノートキー(baseKey)が分かればそちらへ統合し、分からなければその設問
+      // 番号単独をページ扱いにする。
+      const m = noteKey.slice(0, -3).match(/^(T[12])-(\d+)-(\d+)$/);
+      if (!m) continue;
+      const histMatch = historyItems.find(it => it.test === m[1] && it.part === Number(m[2]) && it.number === Number(m[3]));
+      const baseKey = histMatch ? histMatch.noteKey : `${m[1]}-${m[2]}-${m[3]}`;
+      const bm = baseKey.match(/^(T[12])-(\d+)-(\d+)$/);
+      if (!bm) continue;
+      const mapKey = `${baseKey}|`;
+      if (!pages.has(mapKey)) pages.set(mapKey, { baseKey, docIndex: null, test: bm[1], part: Number(bm[2]), number: Number(bm[3]) });
+      continue;
+    }
     const parsed = parseNoteKeyForReview(noteKey);
     if (!parsed) continue;
     const mapKey = `${parsed.baseKey}|${parsed.docIndex == null ? '' : parsed.docIndex}`;
     if (!pages.has(mapKey)) pages.set(mapKey, parsed);
   }
 
-  const entries = [];
-  pages.forEach(page => {
+  const entries = await Promise.all(Array.from(pages.values()).map(async page => {
     const { baseKey, docIndex, test, part, number } = page;
     const docSuffix = docIndex == null ? '' : `-doc${docIndex}`;
     const generalNote = docIndex == null ? localStorage.getItem(NOTES_LS_PREFIX + baseKey) : null;
@@ -3162,8 +3216,11 @@ async function collectReviewableNotes() {
       .filter(h => h && stripHtmlToText(h).trim())
       .join('<hr>');
     const hasContent = [generalNote, translateNote, aiNote].some(h => h && stripHtmlToText(h).trim());
-    if (!hasContent) return;
-    const passageHtml = getPassageBodyHtmlForHistory(baseKey + docSuffix);
+    if (!hasContent) return null;
+    let passageHtml = getPassageBodyHtmlForHistory(baseKey + docSuffix);
+    if ((!passageHtml || !passageHtml.trim()) && part !== 1) {
+      passageHtml = await getFallbackPassageInfo(test, part, number, docIndex);
+    }
     const lastAt = matches.reduce((max, it) => Math.max(max, it.lastAt || 0), 0);
     const sections = [
       { label: '設問本文', html: passageHtml },
@@ -3172,10 +3229,11 @@ async function collectReviewableNotes() {
       { label: 'AIへの質問', html: aiNote }
     ].filter(s => s.html && s.html.trim());
     const html = sections.map(s => `<div class="notes-review-section-label">${s.label}</div>${s.html}`).join('<hr>');
-    entries.push({ baseKey, docIndex, test, part, number, lastAt, html });
-  });
-  entries.sort((a, b) => a.lastAt - b.lastAt); // 昇順(古い→新しい)。coach-boxと同じ並び方。
-  return entries;
+    return { baseKey, docIndex, test, part, number, lastAt, html };
+  }));
+  const filtered = entries.filter(Boolean);
+  filtered.sort((a, b) => a.lastAt - b.lastAt); // 昇順(古い→新しい)。coach-boxと同じ並び方。
+  return filtered;
 }
 
 function formatNoteReviewLabel(entry) {
@@ -3199,8 +3257,17 @@ function buildNotesReviewSection() {
   labelRow.appendChild(label);
   labelRow.appendChild(status);
 
-  const sourceLabel = document.createElement('div');
+  const sourceRow = document.createElement('div');
+  sourceRow.className = 'notes-review-source-row';
+  const sourceLabel = document.createElement('span');
   sourceLabel.className = 'notes-review-source';
+  const viewExplainBtn = document.createElement('button');
+  viewExplainBtn.type = 'button';
+  viewExplainBtn.className = 'reveal-btn notes-review-view-btn';
+  viewExplainBtn.textContent = '解説を見る →';
+  viewExplainBtn.style.display = 'none';
+  sourceRow.appendChild(sourceLabel);
+  sourceRow.appendChild(viewExplainBtn);
 
   const content = document.createElement('div');
   content.className = 'notes-review-content';
@@ -3225,7 +3292,7 @@ function buildNotesReviewSection() {
   navRow.appendChild(nextBtn);
 
   box.appendChild(labelRow);
-  box.appendChild(sourceLabel);
+  box.appendChild(sourceRow);
   box.appendChild(content);
   box.appendChild(navRow);
 
@@ -3235,6 +3302,8 @@ function buildNotesReviewSection() {
     viewIdx = idx;
     const entry = entries[idx];
     sourceLabel.textContent = formatNoteReviewLabel(entry);
+    viewExplainBtn.style.display = 'inline-block';
+    viewExplainBtn.onclick = () => jumpToQuestionNumber(entry.test, entry.part, entry.number, true);
     content.innerHTML = entry.html;
     dateLabel.textContent = entry.lastAt ? formatHistoryDate(entry.lastAt) : '日付不明';
     prevBtn.disabled = viewIdx <= 0;

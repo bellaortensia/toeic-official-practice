@@ -1325,12 +1325,19 @@ audio{
   font-family:'JetBrains Mono',monospace;
 }
 
+.notes-review-source-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:6px;
+}
 .notes-review-source{
   font-size:12.5px;
   font-weight:700;
   color:var(--accent-2);
-  margin-bottom:6px;
 }
+.notes-review-view-btn{white-space:nowrap;}
 /* 元は.coach-textarea(min-height:110px)のおよそ2倍(220px)だったが、
    さらに3倍の高さに変更(=660px)。.coach-textareaと同様、右下のつまみで
    ユーザーが手動で伸び縮みできるようにする(resize:vertical)。 */
