@@ -182,8 +182,8 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
   padding:14px 16px;
   margin-bottom:14px;
   white-space:pre-wrap;
-  font-size:14px;
-  line-height:1.75;
+  font-size:18px;
+  line-height:1.9;
 }
 
 .doc-label{
@@ -204,6 +204,36 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
 .question-corner-layout{display:flex;gap:16px;align-items:flex-start;}
 .question-corner-main{flex:1 1 auto;min-width:0;}
 @media (max-width:640px){.question-corner-layout{flex-direction:column;}}
+
+/* Part6/7をPCの広い画面で見るとき専用のレイアウト。本文(パッセージ)をメイン列、
+   設問・選択肢・解説・回答履歴を右のサイドバー列(全体の7分の3幅)に分け、
+   本文が長くてスクロールしてもサイドバーは画面に固定して見えるようにする。
+   幅の狭い画面(900px以下、スマホ・タブレット)では意味がないので縦積みに戻す。 */
+.reading-layout{
+  display:grid;
+  grid-template-columns:4fr 3fr;
+  gap:20px;
+  align-items:start;
+}
+.reading-sidebar{
+  position:sticky;
+  top:var(--sticky-top-h, 80px);
+  max-height:calc(100vh - var(--sticky-top-h, 80px) - 16px);
+  overflow-y:auto;
+  padding-right:2px;
+}
+/* サイドバー内に置く回答履歴は、単体使用時(.question-corner-layout側)の
+   横幅制限(max-width:190px)をここでは外し、サイドバー幅いっぱいに広げる。 */
+.reading-sidebar .group-history-sidebar{
+  flex:none;
+  width:100%;
+  max-width:100%;
+  margin-top:16px;
+}
+@media (max-width:900px){
+  .reading-layout{grid-template-columns:1fr;}
+  .reading-sidebar{position:static;max-height:none;overflow-y:visible;padding-right:0;}
+}
 
 .group-history-sidebar{
   flex:0 0 20%;
@@ -651,7 +681,7 @@ audio{
   border:1px solid var(--line);
   border-radius:8px;
   padding:16px 18px;
-  font-size:15.5px;
+  font-size:18px;
   line-height:1.9;
   white-space:pre-wrap;
   cursor:pointer;

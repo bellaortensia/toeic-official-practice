@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v116';
+const BUILD_VERSION = 'v117';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -4800,7 +4800,24 @@ function p67AdvancePassage(renderFn) {
   }
 }
 
-function p67RenderQuestionBlocks(wrap, items, getBlockLabel, questionNumbers) {
+// Part6/7の画面をPCの広い幅で見るとき、本文(パッセージ)をメイン列に、設問・
+// 選択肢・解説・回答履歴を右のサイドバー列(全体の7分の3幅)にまとめ、本文を
+// スクロールしてもサイドバーは画面に固定されたまま見えるようにする。
+// 狭い画面ではCSS側(@media)でこのレイアウトを縦積みに戻すだけでよいので、
+// JS側では常にこの2カラム構造を組み立てる。
+function buildReadingLayout(mainEl, sidebarChildren) {
+  const layout = document.createElement('div');
+  layout.className = 'reading-layout';
+  mainEl.classList.add('reading-main');
+  const sidebar = document.createElement('div');
+  sidebar.className = 'reading-sidebar';
+  sidebarChildren.forEach(el => sidebar.appendChild(el));
+  layout.appendChild(mainEl);
+  layout.appendChild(sidebar);
+  return layout;
+}
+
+function p67RenderQuestionBlocks(items, getBlockLabel) {
   const blocks = {};
   const blocksContainer = document.createElement('div');
   items.forEach(item => {
@@ -4840,14 +4857,11 @@ function p67RenderQuestionBlocks(wrap, items, getBlockLabel, questionNumbers) {
     blocks[item.number] = { choicesDiv, explainDiv, letters, askAiSlot, pdfSlot };
     blocksContainer.appendChild(block);
   });
-  wrap.appendChild(wrapWithGroupHistorySidebar(blocksContainer, state.test, questionNumbers || items.map(it => it.number)));
-
   const nextBtnRef = document.createElement('button');
   nextBtnRef.textContent = '次へ';
   nextBtnRef.className = 'grade-btn';
   nextBtnRef.disabled = true;
-  wrap.appendChild(nextBtnRef);
-  return { blocks, nextBtn: nextBtnRef };
+  return { blocks, blocksContainer, nextBtn: nextBtnRef };
 }
 
 async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, cacheKeyBuilder, attemptKey) {
@@ -4936,11 +4950,11 @@ function renderPart6() {
     return;
   }
 
-  const wrap = document.createElement('div');
+  const main = document.createElement('div');
   const label = document.createElement('div');
   label.className = 'passage-topic';
   label.textContent = p.topic || '';
-  wrap.appendChild(label);
+  main.appendChild(label);
   const doc = document.createElement('div');
   doc.className = 'doc-box';
   if (p.textImage) {
@@ -4949,17 +4963,18 @@ function renderPart6() {
   } else {
     doc.textContent = p.text;
   }
-  wrap.appendChild(doc);
+  main.appendChild(doc);
 
   const audioSlot = document.createElement('div');
   audioSlot.style.display = 'none';
-  wrap.appendChild(audioSlot);
+  main.appendChild(audioSlot);
 
   const translateSlot = document.createElement('div');
   translateSlot.style.display = 'none';
-  wrap.appendChild(translateSlot);
+  main.appendChild(translateSlot);
 
-  const { blocks, nextBtn } = p67RenderQuestionBlocks(wrap, p.items, item => `(${item.number})`, p.questions);
+  const { blocks, blocksContainer, nextBtn } = p67RenderQuestionBlocks(p.items, item => `(${item.number})`);
+  const layout = buildReadingLayout(main, [blocksContainer, nextBtn, buildGroupHistorySidebar(state.test, p.questions)]);
   const revealed = { done: false };
   nextBtn.addEventListener('click', async () => {
     if (!revealed.done) {
@@ -4982,7 +4997,7 @@ function renderPart6() {
   });
 
   practiceBodyEl.innerHTML = '';
-  practiceBodyEl.appendChild(wrap);
+  practiceBodyEl.appendChild(layout);
 
   if (pendingAutoReveal) {
     pendingAutoReveal = false;
@@ -5017,11 +5032,11 @@ function renderPart7() {
     return;
   }
 
-  const wrap = document.createElement('div');
+  const main = document.createElement('div');
   const label = document.createElement('div');
   label.className = 'passage-topic';
   label.textContent = p.topic || '';
-  wrap.appendChild(label);
+  main.appendChild(label);
   // 複数文書のとき、画像と翻訳枠が縦に交互(画像→翻訳→画像→翻訳...)にならないよう、
   // 先に全文書の画像をまとめて並べ、翻訳枠はその後にまとめて並べる。
   p.documents.forEach(doc => {
@@ -5039,22 +5054,23 @@ function renderPart7() {
       txt.textContent = doc.text;
       docDiv.appendChild(txt);
     }
-    wrap.appendChild(docDiv);
+    main.appendChild(docDiv);
   });
 
   const audioSlot = document.createElement('div');
   audioSlot.style.display = 'none';
-  wrap.appendChild(audioSlot);
+  main.appendChild(audioSlot);
 
   const translateSlots = [];
   p.documents.forEach((doc, di) => {
     const slot = document.createElement('div');
     slot.style.display = 'none';
-    wrap.appendChild(slot);
+    main.appendChild(slot);
     translateSlots.push({ slot, doc, di });
   });
 
-  const { blocks, nextBtn } = p67RenderQuestionBlocks(wrap, p.items, item => `${item.number}. ${item.text}`, p.questions);
+  const { blocks, blocksContainer, nextBtn } = p67RenderQuestionBlocks(p.items, item => `${item.number}. ${item.text}`);
+  const layout = buildReadingLayout(main, [blocksContainer, nextBtn, buildGroupHistorySidebar(state.test, p.questions)]);
   const revealed = { done: false };
   nextBtn.addEventListener('click', async () => {
     if (!revealed.done) {
@@ -5080,7 +5096,7 @@ function renderPart7() {
   });
 
   practiceBodyEl.innerHTML = '';
-  practiceBodyEl.appendChild(wrap);
+  practiceBodyEl.appendChild(layout);
 
   if (pendingAutoReveal) {
     pendingAutoReveal = false;
