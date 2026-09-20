@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v117';
+const BUILD_VERSION = 'v118';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -3105,6 +3105,130 @@ async function loadOrGenerateCoachMessage(textareaEl, statusEl) {
   statusEl.textContent = '';
 }
 
+// ---------- トップ画面「ノートを見返す」コーナー(専属コーチメッセージの下) ----------
+// ノートの保存場所は2種類ある: (a)選択肢の下の一般ノート欄(buildNotesWidget、
+// キーは"T1-3-45"のような素の形)と、(b)英文/和訳欄の下の翻訳ノート欄
+// (buildTranslatableBlock、キーは末尾に"-translate-notes"、Part7はさらに
+// "-doc0"のような文書番号が付く)。どちらも見返しコーナーの対象に含める。
+// AIへの質問欄(末尾"-ai")はノートではなく質問履歴なのでここでは除外する。
+function parseNoteKeyForReview(noteKey) {
+  let key = noteKey;
+  const TN_SUFFIX = '-translate-notes';
+  const isTranslateNotes = key.endsWith(TN_SUFFIX);
+  if (isTranslateNotes) key = key.slice(0, -TN_SUFFIX.length);
+  let docIndex = null;
+  const docMatch = key.match(/^(.*)-doc(\d+)$/);
+  if (docMatch) { key = docMatch[1]; docIndex = Number(docMatch[2]); }
+  const m = key.match(/^(T[12])-(\d+)-(\d+)$/);
+  if (!m) return null;
+  return { baseKey: key, test: m[1], part: Number(m[2]), number: Number(m[3]), docIndex, isTranslateNotes };
+}
+
+// 日付は、ノート自体には保存時刻を記録していないため、同じノートキーを共有する
+// 設問の回答履歴(lastAt)のうち最新のものを「ノートを書いた(触れた)日付」として
+// 代用する(回答履歴ホバー時のノートポップアップと同じ考え方)。
+async function collectReviewableNotes() {
+  await getSheetNotesCache();
+  const historyItems = buildAnswerHistoryList();
+  const entries = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const lsKey = localStorage.key(i);
+    if (!lsKey || lsKey.indexOf(NOTES_LS_PREFIX) !== 0) continue;
+    const noteKey = lsKey.slice(NOTES_LS_PREFIX.length);
+    if (noteKey.endsWith('-ai')) continue;
+    const html = localStorage.getItem(lsKey);
+    if (!html || !stripHtmlToText(html).trim()) continue;
+    const parsed = parseNoteKeyForReview(noteKey);
+    if (!parsed) continue;
+    const lastAt = historyItems
+      .filter(it => it.noteKey === parsed.baseKey)
+      .reduce((max, it) => Math.max(max, it.lastAt || 0), 0);
+    entries.push({ noteKey, html, lastAt, ...parsed });
+  }
+  entries.sort((a, b) => a.lastAt - b.lastAt); // 昇順(古い→新しい)。coach-boxと同じ並び方。
+  return entries;
+}
+
+function formatNoteReviewLabel(entry) {
+  const testLabel = entry.test === 'T1' ? 'TEST1' : 'TEST2';
+  const docLabel = entry.docIndex != null ? `(文書${entry.docIndex + 1})` : '';
+  return `${testLabel} Part${entry.part} Q${entry.number}${docLabel}`;
+}
+
+function buildNotesReviewSection() {
+  const box = document.createElement('div');
+  box.className = 'coach-box notes-review-box';
+
+  const label = document.createElement('div');
+  label.className = 'coach-label';
+  label.textContent = '📝 ノートを見返す';
+  const status = document.createElement('span');
+  status.className = 'coach-status';
+  status.textContent = '読み込み中...';
+  const labelRow = document.createElement('div');
+  labelRow.className = 'coach-label-row';
+  labelRow.appendChild(label);
+  labelRow.appendChild(status);
+
+  const sourceLabel = document.createElement('div');
+  sourceLabel.className = 'notes-review-source';
+
+  const content = document.createElement('div');
+  content.className = 'notes-review-content';
+  content.textContent = '読み込み中...';
+
+  const navRow = document.createElement('div');
+  navRow.className = 'coach-nav';
+  const prevBtn = document.createElement('button');
+  prevBtn.type = 'button';
+  prevBtn.className = 'coach-nav-btn coach-nav-prev';
+  prevBtn.textContent = '← 前のページ';
+  prevBtn.disabled = true;
+  const dateLabel = document.createElement('span');
+  dateLabel.className = 'coach-nav-date';
+  const nextBtn = document.createElement('button');
+  nextBtn.type = 'button';
+  nextBtn.className = 'coach-nav-btn coach-nav-next';
+  nextBtn.textContent = '次のページ →';
+  nextBtn.disabled = true;
+  navRow.appendChild(prevBtn);
+  navRow.appendChild(dateLabel);
+  navRow.appendChild(nextBtn);
+
+  box.appendChild(labelRow);
+  box.appendChild(sourceLabel);
+  box.appendChild(content);
+  box.appendChild(navRow);
+
+  let entries = [];
+  let viewIdx = 0;
+  function showAt(idx) {
+    viewIdx = idx;
+    const entry = entries[idx];
+    sourceLabel.textContent = formatNoteReviewLabel(entry);
+    content.innerHTML = entry.html;
+    dateLabel.textContent = entry.lastAt ? formatHistoryDate(entry.lastAt) : '日付不明';
+    prevBtn.disabled = viewIdx <= 0;
+    nextBtn.disabled = viewIdx >= entries.length - 1;
+  }
+  prevBtn.addEventListener('click', () => { if (viewIdx > 0) showAt(viewIdx - 1); });
+  nextBtn.addEventListener('click', () => { if (viewIdx < entries.length - 1) showAt(viewIdx + 1); });
+
+  collectReviewableNotes().then(list => {
+    entries = list;
+    status.textContent = '';
+    if (!entries.length) {
+      sourceLabel.textContent = '';
+      content.textContent = 'まだノートがありません。';
+      dateLabel.textContent = '';
+      return;
+    }
+    showAt(entries.length - 1); // 最新から表示
+  });
+
+  return box;
+}
+
 function buildCoachBox() {
   const box = document.createElement('div');
   box.className = 'coach-box';
@@ -3297,6 +3421,7 @@ function renderStatsDashboard(weekOffset = 0) {
   container.appendChild(top);
 
   container.appendChild(buildCoachBox());
+  container.appendChild(buildNotesReviewSection());
   container.appendChild(buildPreviousStudySection());
 }
 

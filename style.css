@@ -1165,7 +1165,7 @@ audio{
   margin-bottom:10px;
 }
 .stat-card-value{
-  font-family:'JetBrains Mono',monospace;
+  font-family:'Noto Sans JP',sans-serif;
   font-size:30px;
   font-weight:700;
   color:var(--accent-2);
@@ -1323,6 +1323,29 @@ audio{
   font-size:12.5px;
   color:var(--text-soft);
   font-family:'JetBrains Mono',monospace;
+}
+
+.notes-review-source{
+  font-size:12.5px;
+  font-weight:700;
+  color:var(--accent-2);
+  margin-bottom:6px;
+}
+/* コーチメッセージ欄(.coach-textarea、min-height:110px)のおよそ2倍の高さ。
+   長いノートでも枠の高さは変わらず内部だけスクロールするようにする。 */
+.notes-review-content{
+  width:100%;
+  box-sizing:border-box;
+  min-height:220px;
+  max-height:220px;
+  overflow-y:auto;
+  font-size:14.5px;
+  line-height:1.7;
+  color:var(--text);
+  background:var(--paper);
+  border:1px solid var(--line);
+  border-radius:8px;
+  padding:12px 14px;
 }
 
 .prev-study-box{
