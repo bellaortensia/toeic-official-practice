@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v118';
+const BUILD_VERSION = 'v119';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -3109,8 +3109,10 @@ async function loadOrGenerateCoachMessage(textareaEl, statusEl) {
 // ノートの保存場所は2種類ある: (a)選択肢の下の一般ノート欄(buildNotesWidget、
 // キーは"T1-3-45"のような素の形)と、(b)英文/和訳欄の下の翻訳ノート欄
 // (buildTranslatableBlock、キーは末尾に"-translate-notes"、Part7はさらに
-// "-doc0"のような文書番号が付く)。どちらも見返しコーナーの対象に含める。
-// AIへの質問欄(末尾"-ai")はノートではなく質問履歴なのでここでは除外する。
+// "-doc0"のような文書番号が付く)。同じ設問グループについて両方あることも
+// あるため、1ページ=1グループ(Part7は1文書)として、設問本文・一般ノート・
+// 翻訳ノート・AIへの質問への回答をひとまとめに表示する(回答履歴ホバー時の
+// ノートポップアップ(buildHistoryRow)と同じ組み立て方)。
 function parseNoteKeyForReview(noteKey) {
   let key = noteKey;
   const TN_SUFFIX = '-translate-notes';
@@ -3130,21 +3132,48 @@ function parseNoteKeyForReview(noteKey) {
 async function collectReviewableNotes() {
   await getSheetNotesCache();
   const historyItems = buildAnswerHistoryList();
-  const entries = [];
+
+  // まず、ノートが存在しうる「ページ」(baseKey + 文書番号)を、一般ノート欄と
+  // 翻訳ノート欄の両方のキーから重複無く洗い出す。
+  const pages = new Map();
   for (let i = 0; i < localStorage.length; i++) {
     const lsKey = localStorage.key(i);
     if (!lsKey || lsKey.indexOf(NOTES_LS_PREFIX) !== 0) continue;
     const noteKey = lsKey.slice(NOTES_LS_PREFIX.length);
-    if (noteKey.endsWith('-ai')) continue;
-    const html = localStorage.getItem(lsKey);
-    if (!html || !stripHtmlToText(html).trim()) continue;
+    if (noteKey.endsWith('-ai')) continue; // AIへの質問は下でグループごとにまとめて拾う
     const parsed = parseNoteKeyForReview(noteKey);
     if (!parsed) continue;
-    const lastAt = historyItems
-      .filter(it => it.noteKey === parsed.baseKey)
-      .reduce((max, it) => Math.max(max, it.lastAt || 0), 0);
-    entries.push({ noteKey, html, lastAt, ...parsed });
+    const mapKey = `${parsed.baseKey}|${parsed.docIndex == null ? '' : parsed.docIndex}`;
+    if (!pages.has(mapKey)) pages.set(mapKey, parsed);
   }
+
+  const entries = [];
+  pages.forEach(page => {
+    const { baseKey, docIndex, test, part, number } = page;
+    const docSuffix = docIndex == null ? '' : `-doc${docIndex}`;
+    const generalNote = docIndex == null ? localStorage.getItem(NOTES_LS_PREFIX + baseKey) : null;
+    const translateNote = localStorage.getItem(NOTES_LS_PREFIX + baseKey + docSuffix + '-translate-notes');
+    const matches = historyItems.filter(it => it.noteKey === baseKey);
+    // AIへの質問は設問ごとの個別キーで保存されているため、このグループに属する
+    // 設問番号(履歴から分かる分。無ければbaseKey自身の番号のみ)すべてを確認する。
+    const questionNumbers = matches.length ? [...new Set(matches.map(it => it.number))] : [number];
+    const aiNote = questionNumbers
+      .map(n => localStorage.getItem(NOTES_LS_PREFIX + `${test}-${part}-${n}-ai`))
+      .filter(h => h && stripHtmlToText(h).trim())
+      .join('<hr>');
+    const hasContent = [generalNote, translateNote, aiNote].some(h => h && stripHtmlToText(h).trim());
+    if (!hasContent) return;
+    const passageHtml = getPassageBodyHtmlForHistory(baseKey + docSuffix);
+    const lastAt = matches.reduce((max, it) => Math.max(max, it.lastAt || 0), 0);
+    const sections = [
+      { label: '設問本文', html: passageHtml },
+      { label: 'ノート', html: generalNote },
+      { label: '翻訳ウィジェットのノート', html: translateNote },
+      { label: 'AIへの質問', html: aiNote }
+    ].filter(s => s.html && s.html.trim());
+    const html = sections.map(s => `<div class="notes-review-section-label">${s.label}</div>${s.html}`).join('<hr>');
+    entries.push({ baseKey, docIndex, test, part, number, lastAt, html });
+  });
   entries.sort((a, b) => a.lastAt - b.lastAt); // 昇順(古い→新しい)。coach-boxと同じ並び方。
   return entries;
 }
@@ -3279,7 +3308,8 @@ function buildCoachBox() {
   function showAt(idx) {
     viewIdx = idx;
     const dateKey = dates[viewIdx];
-    dateLabel.textContent = dateKey;
+    const [y, mo, d] = dateKey.split('-').map(Number);
+    dateLabel.textContent = formatHistoryDate(new Date(y, mo - 1, d).getTime());
     prevBtn.disabled = viewIdx <= 0;
     nextBtn.disabled = viewIdx >= dates.length - 1;
     if (dateKey === todayKey) {
