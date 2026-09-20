@@ -718,6 +718,7 @@ audio{
 .landing-nav{margin-top:16px;}
 
 .part-overview-header{
+  position:relative;
   display:flex;
   align-items:center;
   gap:12px;
