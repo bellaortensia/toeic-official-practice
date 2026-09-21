@@ -134,8 +134,15 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
   word-break:break-all;
 }
 
+/* Part一覧に戻るドロップダウン・前後移動・ストップウォッチの行。ユーザーが
+   スクロールしても常時操作できるよう、上部固定ヘッダー(.sticky-top)の
+   直下にsticky固定する。position:stickyでも.part-jump-select(position:
+   absolute)の基準として機能する。 */
 .practice-header{
-  position:relative;
+  position:sticky;
+  top:var(--sticky-top-h, 80px);
+  z-index:30;
+  background:var(--paper-2);
   display:flex;justify-content:center;align-items:center;margin-bottom:14px;
   padding-bottom:14px;border-bottom:1px solid var(--line);
 }
@@ -186,6 +193,19 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
   line-height:1.9;
 }
 
+/* Part3/4で、解答前(本文非公開)のあいだメイン列に表示するプレースホルダー。
+   .doc-boxと同じ見た目・高さ感にして、解答後に翻訳ブロックへ差し替わっても
+   レイアウトの幅比率が変わらないようにする。 */
+.reading-placeholder{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:160px;
+  color:var(--text-soft);
+  font-size:15px;
+  text-align:center;
+}
+
 .doc-label{
   font-family:'Shippori Mincho',serif;
   font-weight:700;
@@ -201,11 +221,8 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
 }
 .q-block:first-child{border-top:none;padding-top:0;margin-top:0;}
 
-.question-corner-layout{display:flex;gap:16px;align-items:flex-start;}
-.question-corner-main{flex:1 1 auto;min-width:0;}
-@media (max-width:640px){.question-corner-layout{flex-direction:column;}}
-
-/* Part6/7をPCの広い画面で見るとき専用のレイアウト。本文(パッセージ)をメイン列、
+/* Part3/4/6/7をPCの広い画面で見るとき専用のレイアウト。本文(パッセージ、
+   Part3/4は解答前は「音声を聞いてください」のプレースホルダー)をメイン列、
    設問・選択肢・解説・回答履歴を右のサイドバー列(全体の7分の3幅)に分け、
    本文が長くてスクロールしてもサイドバーは画面に固定して見えるようにする。
    幅の狭い画面(900px以下、スマホ・タブレット)では意味がないので縦積みに戻す。 */
@@ -217,13 +234,13 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
 }
 .reading-sidebar{
   position:sticky;
-  top:var(--sticky-top-h, 80px);
-  max-height:calc(100vh - var(--sticky-top-h, 80px) - 16px);
+  top:var(--audio-sticky-top-h, 130px);
+  max-height:calc(100vh - var(--audio-sticky-top-h, 130px) - 16px);
   overflow-y:auto;
   padding-right:2px;
 }
-/* サイドバー内に置く回答履歴は、単体使用時(.question-corner-layout側)の
-   横幅制限(max-width:190px)をここでは外し、サイドバー幅いっぱいに広げる。 */
+/* サイドバー内に置く回答履歴は、単体使用時(横幅制限max-width:190px)を
+   ここでは外し、サイドバー幅いっぱいに広げる。 */
 .reading-sidebar .group-history-sidebar{
   flex:none;
   width:100%;
@@ -598,7 +615,7 @@ audio{
 }
 .audio-player-sticky{
   position:sticky;
-  top:var(--sticky-top-h, 80px);
+  top:var(--audio-sticky-top-h, 130px);
   z-index:20;
   box-shadow:0 4px 10px rgba(0,0,0,.1);
 }

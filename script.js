@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v122';
+const BUILD_VERSION = 'v123';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -1235,48 +1235,6 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
     return text.slice(m[0].length);
   }
 
-  const enSpans = [];
-  const jaSpans = []; // 直訳モードのみ使用
-  // 各セグメントの、話者ラベルを取り除いた後の実際の表示英文(ボトルネック単語の
-  // 選択・強調のトークン番号を、画面表示と一致させるために使う)。
-  const enCleanTexts = [];
-  let curEnLine = createTranscriptLine(enCol);
-  let curJaLine = mode === 'literal' ? createTranscriptLine(jaCol) : null;
-
-  function renderEnSpan(enSpan, seg, cleanEn, segIdx) {
-    const trailing = seg.lineBreak ? ' ' : (slash ? ' / ' : ' ');
-    const marks = cacheKey ? getBottleneckMarksForSegment(cacheKey, segIdx) : [];
-    enSpan.innerHTML = buildHighlightedHtml(cleanEn, new Set(marks)) + escapeHtml(trailing);
-  }
-
-  segments.forEach((seg, i) => {
-    const enSpan = document.createElement('span');
-    enSpan.className = 'chunk-seg';
-    enSpan.dataset.seg = i;
-    // スラッシュモードがONのときだけ、改行の直前を除いて毎回「/」を明示的に挟む
-    // (スラッシュリーディング表示用)。OFFのときはスペース区切りのみにする。
-    // seg.en自体に前後の余分な空白が入っていることがあるため、まずtrimしてから
-    // 付け足す(そうしないとチャンクの継ぎ目でスペースが二重になることがある)。
-    const cleanEn = extractLineLabel(curEnLine, seg.en.trim());
-    enCleanTexts.push(cleanEn);
-    renderEnSpan(enSpan, seg, cleanEn, i);
-    curEnLine.body.appendChild(enSpan);
-    enSpans.push(enSpan);
-    if (mode === 'literal') {
-      const jaSpan = document.createElement('span');
-      jaSpan.className = 'chunk-seg';
-      jaSpan.dataset.seg = i;
-      const cleanJa = extractLineLabel(curJaLine, seg.ja.trim());
-      jaSpan.textContent = cleanJa + ' ';
-      curJaLine.body.appendChild(jaSpan);
-      jaSpans.push(jaSpan);
-    }
-    if (seg.lineBreak) {
-      curEnLine = createTranscriptLine(enCol);
-      if (mode === 'literal') curJaLine = createTranscriptLine(jaCol);
-    }
-  });
-
   // 文単位のデータ(naturalSentences)は、意訳モードのJA表示だけでなく、直訳モード
   // でも「この文を解説」機能(クリックしたチャンクが属する文全体を解説する)のために
   // 必要なので、モードに関わらず常に対応表(segToSentenceIdx)を作っておく。
@@ -1289,6 +1247,62 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
     if (idx === -1) idx = sentences.findIndex(s => seg.start < s.end);
     if (idx === -1) idx = sentences.length - 1;
     return idx;
+  });
+  // チャンク単位の分割(segments)は3〜8語区切りのため、AIが話者交代等の改行を
+  // またぐチャンクを作ってしまうと、reconcileLineBreaks側では改行の直前で
+  // 終わるチャンクが存在せず、EN側だけ改行が付かないことがあった(JA側の
+  // 意訳(naturalSentences)は文単位で改行位置を検出しやすく、正しく改行される
+  // ことが多い)。そのズレを防ぐため、あるチャンクがその文の最後のチャンクで、
+  // かつその文自体にlineBreak:trueが付いている場合は、チャンク側にも改行を
+  // 適用する(意訳側の改行検出結果をチャンク側にも反映させる)。
+  const segEffectiveLineBreak = segments.map((seg, i) => {
+    if (seg.lineBreak) return true;
+    const sentIdx = segToSentenceIdx[i];
+    if (sentIdx === -1 || !sentences[sentIdx] || !sentences[sentIdx].lineBreak) return false;
+    return i === segments.length - 1 || segToSentenceIdx[i + 1] !== sentIdx;
+  });
+
+  const enSpans = [];
+  const jaSpans = []; // 直訳モードのみ使用
+  // 各セグメントの、話者ラベルを取り除いた後の実際の表示英文(ボトルネック単語の
+  // 選択・強調のトークン番号を、画面表示と一致させるために使う)。
+  const enCleanTexts = [];
+  let curEnLine = createTranscriptLine(enCol);
+  let curJaLine = mode === 'literal' ? createTranscriptLine(jaCol) : null;
+
+  function renderEnSpan(enSpan, seg, lineBreak, cleanEn, segIdx) {
+    const trailing = lineBreak ? ' ' : (slash ? ' / ' : ' ');
+    const marks = cacheKey ? getBottleneckMarksForSegment(cacheKey, segIdx) : [];
+    enSpan.innerHTML = buildHighlightedHtml(cleanEn, new Set(marks)) + escapeHtml(trailing);
+  }
+
+  segments.forEach((seg, i) => {
+    const lineBreak = segEffectiveLineBreak[i];
+    const enSpan = document.createElement('span');
+    enSpan.className = 'chunk-seg';
+    enSpan.dataset.seg = i;
+    // スラッシュモードがONのときだけ、改行の直前を除いて毎回「/」を明示的に挟む
+    // (スラッシュリーディング表示用)。OFFのときはスペース区切りのみにする。
+    // seg.en自体に前後の余分な空白が入っていることがあるため、まずtrimしてから
+    // 付け足す(そうしないとチャンクの継ぎ目でスペースが二重になることがある)。
+    const cleanEn = extractLineLabel(curEnLine, seg.en.trim());
+    enCleanTexts.push(cleanEn);
+    renderEnSpan(enSpan, seg, lineBreak, cleanEn, i);
+    curEnLine.body.appendChild(enSpan);
+    enSpans.push(enSpan);
+    if (mode === 'literal') {
+      const jaSpan = document.createElement('span');
+      jaSpan.className = 'chunk-seg';
+      jaSpan.dataset.seg = i;
+      const cleanJa = extractLineLabel(curJaLine, seg.ja.trim());
+      jaSpan.textContent = cleanJa + ' ';
+      curJaLine.body.appendChild(jaSpan);
+      jaSpans.push(jaSpan);
+    }
+    if (lineBreak) {
+      curEnLine = createTranscriptLine(enCol);
+      if (mode === 'literal') curJaLine = createTranscriptLine(jaCol);
+    }
   });
 
   const naturalJaSpans = [];
@@ -2192,13 +2206,28 @@ const partOverviewBodyEl = document.getElementById('partOverviewBody');
 const progressLabelEl = document.getElementById('progress-label');
 const appModeSelectEl = document.getElementById('appModeSelect');
 
-// ---------- 上部固定ヘッダーの高さをCSS変数に反映(Part2/3/4の音声プレーヤーを
-// その直下にstickyで貼り付けるため、実際の高さを都度measureする) ----------
+// ---------- 上部固定ヘッダー・Part操作行の高さをCSS変数に反映 ----------
+// .sticky-top(サイト共通の上部ヘッダー)の直下に.practice-header(Part切替
+// ドロップダウン・前後移動・ストップウォッチ)をsticky固定し、その2つ分の
+// 高さの下にさらに音声プレーヤー(.audio-player-sticky)・本文サイドバー
+// (.reading-sidebar)をsticky固定する。どちらも実際の高さは可変(設定
+// アコーディオンの開閉、画面幅によるnav-clusterの折り返し等)なので、
+// 都度measureしてCSS変数に反映する。
+// --sticky-top-h: .sticky-topのみの高さ(.practice-header自身のtopに使う)。
+// --audio-sticky-top-h: .sticky-top+.practice-headerの合計(音声プレーヤー・
+// サイドバーのtopに使う)。
 
 const stickyTopEl = document.querySelector('.sticky-top');
+const practiceHeaderEl = document.querySelector('.practice-header');
 function updateStickyTopHeight() {
   if (!stickyTopEl) return;
-  document.documentElement.style.setProperty('--sticky-top-h', stickyTopEl.offsetHeight + 'px');
+  const topH = stickyTopEl.offsetHeight;
+  document.documentElement.style.setProperty('--sticky-top-h', topH + 'px');
+  // 練習画面が非表示(display:none)のときはoffsetHeightが0になるので、
+  // それをそのまま合計に含めてしまわないようoffsetParentで表示中か判定する。
+  const headerVisible = practiceHeaderEl && practiceHeaderEl.offsetParent !== null;
+  const headerH = headerVisible ? practiceHeaderEl.offsetHeight : 0;
+  document.documentElement.style.setProperty('--audio-sticky-top-h', (topH + headerH) + 'px');
 }
 updateStickyTopHeight();
 window.addEventListener('resize', updateStickyTopHeight);
@@ -2207,8 +2236,10 @@ window.addEventListener('resize', updateStickyTopHeight);
 // アコーディオンを閉じるとヘッダーが縮むが、それだけではresizeは発火しない)。
 // その場合--sticky-top-hが古いままだと音声プレーヤーのstickyがずれて画面外に
 // 隠れてしまうため、ResizeObserverで高さの変化そのものを監視して常に追従させる。
-if (stickyTopEl && window.ResizeObserver) {
-  new ResizeObserver(updateStickyTopHeight).observe(stickyTopEl);
+if (window.ResizeObserver) {
+  const stickyHeightObserver = new ResizeObserver(updateStickyTopHeight);
+  if (stickyTopEl) stickyHeightObserver.observe(stickyTopEl);
+  if (practiceHeaderEl) stickyHeightObserver.observe(practiceHeaderEl);
 }
 
 // ---------- ストップウォッチ(問題画面の上部ナビ行の右端。設問が変わるたびリセットして自動計測開始) ----------
@@ -2395,18 +2426,6 @@ function buildGroupHistorySidebar(test, questionNumbers) {
     box.appendChild(row);
   });
   return box;
-}
-
-// blocksContainer(設問コーナー本体)の右にbuildGroupHistorySidebar()を並べた
-// 2カラムのラッパーを作って返す。呼び出し側は、今までwrapへ直接ブロックを
-// appendしていた代わりに、この関数が返す要素をwrapへappendする。
-function wrapWithGroupHistorySidebar(blocksContainer, test, questionNumbers) {
-  const row = document.createElement('div');
-  row.className = 'question-corner-layout';
-  blocksContainer.classList.add('question-corner-main');
-  row.appendChild(blocksContainer);
-  row.appendChild(buildGroupHistorySidebar(test, questionNumbers));
-  return row;
 }
 
 // 履歴欄の項目にマウスオーバーしたとき、その設問(が属するパッセージ)のノートが
@@ -4783,22 +4802,36 @@ function renderPart3or4() {
   audioLabel.textContent = `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`;
   wrap.appendChild(audioLabel);
   wrap.appendChild(createAudioPlayerWidget([g.audioConversation || g.audioTalk, g.audioQuestions], { autoplay: true, sticky: true }));
+
+  // Part7と同様、本文(この段階では未公開なので「音声を聞いてください」の
+  // プレースホルダー)をメイン列、設問・選択肢・解説・回答履歴を右のサイド
+  // バー列に分ける。図表(「図を見て」問題用)は解答前から見える必要がある
+  // ため、プレースホルダーとは別にメイン列の先頭に常時表示する。
+  const main = document.createElement('div');
   if (g.graphicImage) {
     const img = document.createElement('img');
     img.src = g.graphicImage;
     img.alt = '図表';
     img.className = 'question-photo';
-    wrap.appendChild(img);
+    main.appendChild(img);
   } else if (g.graphic) {
     const gfx = document.createElement('p');
     gfx.className = 'audio-label';
     gfx.textContent = '図表: ' + g.graphic;
-    wrap.appendChild(gfx);
+    main.appendChild(gfx);
   }
+
+  const placeholder = document.createElement('div');
+  placeholder.className = 'doc-box reading-placeholder';
+  placeholder.textContent = '🔊 音声を聞いてください';
+  main.appendChild(placeholder);
 
   const translateSlot = document.createElement('div');
   translateSlot.style.display = 'none';
-  wrap.appendChild(translateSlot);
+  main.appendChild(translateSlot);
+
+  const notesSlot = document.createElement('div');
+  main.appendChild(notesSlot);
 
   const blocks = {};
   const blocksContainer = document.createElement('div');
@@ -4839,12 +4872,13 @@ function renderPart3or4() {
     blocks[item.number] = { choicesDiv, explainDiv, letters, askAiSlot, pdfSlot };
     blocksContainer.appendChild(block);
   });
-  wrap.appendChild(wrapWithGroupHistorySidebar(blocksContainer, state.test, g.questions));
 
   const nextBtn = document.createElement('button');
   nextBtn.textContent = '次へ';
   nextBtn.className = 'grade-btn';
   nextBtn.disabled = true;
+  const layout = buildReadingLayout(main, [blocksContainer, nextBtn, buildGroupHistorySidebar(state.test, g.questions)]);
+
   const revealed = { done: false };
   nextBtn.addEventListener('click', async () => {
     if (!revealed.done) {
@@ -4877,12 +4911,13 @@ function renderPart3or4() {
       g.items.forEach(item => {
         incrementAttempt(`${state.test}-${state.part}-${item.number}`, p34.selections[item.number] === item.answer, `${state.test}-${state.part}-${g.questions[0]}`);
       });
+      placeholder.remove();
       const fullText = g.conversationText || g.talkText;
       if (fullText) {
         translateSlot.style.display = 'block';
         translateSlot.appendChild(buildTranslatableBlock(fullText, `${state.test}-${state.part}-${g.questions[0]}`, g.speakers, 'Listeningボトルネック'));
       }
-      wrap.insertBefore(buildNotesWidget(`${state.test}-${state.part}-${g.questions[0]}`), nextBtn);
+      notesSlot.appendChild(buildNotesWidget(`${state.test}-${state.part}-${g.questions[0]}`));
       nextBtn.disabled = false;
       nextBtn.textContent = '次へ';
     } else {
@@ -4896,8 +4931,8 @@ function renderPart3or4() {
       renderPart3or4();
     }
   });
-  wrap.appendChild(nextBtn);
 
+  wrap.appendChild(layout);
   practiceBodyEl.innerHTML = '';
   practiceBodyEl.appendChild(wrap);
 
