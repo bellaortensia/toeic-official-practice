@@ -3,10 +3,15 @@ const CLIENT_SECRET = 'd1QAC50V41mR9NAhquGi9l5p12fYqlHS';
 const REDIRECT_URI = 'https://bellaortensia.github.io/toeic-official-practice/';
 const AUDIO_FOLDER_ID = '409318407954';
 
+// マウスホバー・細かいポインタ操作ができる端末(PC)かどうか。翻訳文のチャンクを
+// クリックしたときの挙動をPCとスマホ等のタッチ端末で変える(下記IS_TOUCH_DEVICE
+// 利用箇所を参照)ために使う。
+const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
+
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v124';
+const BUILD_VERSION = 'v125';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -889,6 +894,110 @@ async function askAiAboutQuestion(questionContext, userQuestion, history) {
   return await callGemini(ASK_AI_PROMPT, input, { maxOutputTokens: 800 });
 }
 
+// ---------- 翻訳ウィジェット(ノート欄)の「AIに質問する」欄 ----------
+// 上のASK_AI_PROMPT/askAiAboutQuestionは「設問とその解説」を前提にした文面
+// だが、こちらは設問単位ではなく英文(会話・トーク・読解パッセージ)そのもの
+// についての質問なので、文面だけ変えた別プロンプトを使う。文脈を踏まえて
+// 答える・簡潔にプレーンテキストで答える、という基本方針は同じ。
+const ASK_AI_PROMPT_PASSAGE = `あなたはTOEIC対策の講師です。以下の英文(会話・トークまたは読解パッセージの原文)を踏まえて、学習者からの追加の質問に日本語で分かりやすく答えてください。
+【これまでのやり取り】が含まれている場合は、必ずその文脈を踏まえて回答すること。「それ」「さっきの」「なぜ」のような指示語・省略を含む質問は、直前のやり取りの内容を指している可能性が高いので、会話の流れを無視して単独の質問として答えないこと。
+装飾やMarkdown記号(**など)は使わず、プレーンテキストで簡潔に答えてください。`;
+
+async function askAiAboutPassage(passageText, userQuestion, history) {
+  let input = `【英文】\n${passageText}\n\n`;
+  const recent = (history || []).slice(-8);
+  if (recent.length) {
+    input += '【これまでのやり取り】\n' +
+      recent.map((h, i) => `Q${i + 1}. ${h.q}\nA${i + 1}. ${h.a}`).join('\n\n') +
+      '\n\n';
+  }
+  input += `【学習者からの新しい質問】\n${userQuestion}`;
+  return await callGemini(ASK_AI_PROMPT_PASSAGE, input, { maxOutputTokens: 800 });
+}
+
+// 翻訳ウィジェットのノート欄(notesArea)の末尾に、質問(赤字太字)と回答
+// (黒字)を追記する。buildAskAiWidgetの回答欄と違い、専用の別ボックスは
+// 持たず、既存のノート欄にそのまま書き足す(ノートの自動保存の仕組みに
+// 相乗りできるので、この関数側で保存を意識する必要が無い)。
+function appendAskAiEntryToNotes(notesArea, question, answerText) {
+  const qDiv = document.createElement('div');
+  const strong = document.createElement('strong');
+  strong.style.color = '#c1503f';
+  strong.textContent = 'Q. ' + question;
+  qDiv.appendChild(strong);
+  notesArea.appendChild(qDiv);
+  const aDiv = document.createElement('div');
+  aDiv.textContent = answerText;
+  notesArea.appendChild(aDiv);
+  return aDiv;
+}
+
+// 翻訳ウィジェットのノート欄の下に置く「AIに質問する」入力欄。passageTextは
+// 会話・トークまたは読解パッセージの原文全体、historyは呼び出し側
+// (buildTranslatableBlock)が保持する配列で、モード切り替え(直訳⇄意訳等)で
+// ノート欄一式が作り直されてもやり取りの文脈が失われないようにする。
+function buildPassageAskAiRow(notesArea, passageText, history) {
+  const row = document.createElement('div');
+  row.className = 'ask-ai-row ask-ai-wrap';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'ask-ai-input';
+  input.placeholder = '例: この文はなぜ現在完了形なんですか？';
+  const btn = document.createElement('button');
+  btn.className = 'mode-toggle-btn';
+  btn.textContent = '質問する';
+  const retryBtn = document.createElement('button');
+  retryBtn.type = 'button';
+  retryBtn.className = 'mode-toggle-btn ask-ai-retry-btn';
+  retryBtn.textContent = '🔄 再取得';
+  retryBtn.style.display = 'none';
+  row.appendChild(input);
+  row.appendChild(btn);
+  row.appendChild(retryBtn);
+
+  let lastFailedQuestion = null;
+  let lastFailedDiv = null;
+
+  async function runQuestion(q, aDiv) {
+    btn.disabled = true;
+    btn.textContent = '質問中...';
+    try {
+      const answer = await askAiAboutPassage(passageText, q, history);
+      aDiv.textContent = answer;
+      history.push({ q, a: answer });
+      lastFailedQuestion = null;
+      lastFailedDiv = null;
+      retryBtn.style.display = 'none';
+    } catch (e) {
+      aDiv.textContent = '回答の取得に失敗しました: ' + e.message;
+      lastFailedQuestion = q;
+      lastFailedDiv = aDiv;
+      retryBtn.style.display = 'inline-block';
+    }
+    btn.disabled = false;
+    btn.textContent = '質問する';
+  }
+
+  async function ask() {
+    const q = input.value.trim();
+    if (!q) return;
+    input.value = '';
+    retryBtn.style.display = 'none';
+    await runQuestion(q, appendAskAiEntryToNotes(notesArea, q, '回答を生成中...'));
+  }
+  btn.addEventListener('click', ask);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') ask(); });
+  retryBtn.addEventListener('click', () => {
+    if (!lastFailedQuestion || !lastFailedDiv) return;
+    const q = lastFailedQuestion, aDiv = lastFailedDiv;
+    aDiv.textContent = '回答を生成中...';
+    retryBtn.style.display = 'none';
+    runQuestion(q, aDiv);
+  });
+
+  return row;
+}
+
 // questionContextは、その設問の問題文・選択肢・正解などを含むプレーンテキスト
 // (getRichExplanationに渡しているquestionTextと同じもので良い)。noteKeyを渡すと、
 // 質問・回答の履歴を(その設問のノートと同じ仕組みで)localStorage/スプレッドシートに
@@ -1444,9 +1553,13 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
   // 文単位で別の対応表を使う)は対象外で、今まで通りEN側の現在位置のまま開閉する。
   // wideWrap1箇所に付ければ(バブリングで)EN列・JA列・その間の余白すべてを
   // カバーできるので、enCol/jaColに個別で付けるのはやめて二重発火を避ける。
+  // PC(マウス操作)では、クリックした場所へハイライトが飛ぶと英文をドラッグ
+  // 選択してコピーしたいときに邪魔になるため、ジャンプはタッチ端末限定にする。
+  // ポップアップの開閉(revealCurrent)自体は、PCでも現在ハイライト中のチャンクを
+  // クリックすれば今まで通り開閉できるよう残す。
   function handleColClick(e) {
     const segEl = e.target.closest('.chunk-seg');
-    if (segEl && segEl.dataset.seg != null) {
+    if (IS_TOUCH_DEVICE && segEl && segEl.dataset.seg != null) {
       const idx = Number(segEl.dataset.seg);
       if (!Number.isNaN(idx)) setSeg(idx);
     }
@@ -1491,6 +1604,11 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
 function buildTranslatableBlock(text, cacheKey, speakers, bottleneckLabel) {
   const wrap = document.createElement('div');
   wrap.className = 'translate-block';
+
+  // ノート欄下の「AIに質問する」の会話履歴。renderChunkView()は直訳⇄意訳/
+  // ワイド・トールモードの切り替えのたびにノート欄一式を作り直すため、
+  // その関数の外(このスコープ)に置いてモード切り替えをまたいで保持する。
+  const askAiHistory = [];
 
   // 常設の操作バー: 翻訳を再取得 / ワイドモード / トールモード / 意訳⇄直訳切り替え。
   // データ取得が終わるまでは再取得・表示切り替え系のボタンを無効化しておく。
@@ -1581,6 +1699,9 @@ function buildTranslatableBlock(text, cacheKey, speakers, bottleneckLabel) {
     // saveAllVisibleNotes()が呼ばれると、後からDOM順で保存された方がもう一方を
     // 上書きしてしまい、一般ノート欄に書いた内容が消えてしまうバグがあった。
     restoreNotesIfSaved(notesArea, cacheKey + '-translate-notes');
+    // ノート欄のさらに下に「AIに質問する」欄を置く。回答はノート欄自体の末尾に
+    // 追記され(赤字太字の質問+黒字の回答)、ノートの自動保存にそのまま乗る。
+    box.appendChild(buildPassageAskAiRow(notesArea, text, askAiHistory));
 
     function renderCurrentMode() {
       renderTranslateColumns(contentContainer, data, mode, notesArea, slash, bottleneckLabel, cacheKey);
