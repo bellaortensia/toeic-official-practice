@@ -11,7 +11,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v125';
+const BUILD_VERSION = 'v126';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -5035,10 +5035,15 @@ function renderPart3or4() {
       placeholder.remove();
       const fullText = g.conversationText || g.talkText;
       if (fullText) {
+        // 翻訳ウィジェット自身のノート欄(単語クリックでの書き込み・AIへの質問の
+        // 回答も含む)があるので、一般ノート欄(buildNotesWidget)は重複になる。
+        // fullTextが無い(データ不備等の)ときだけ、ノートを書く場所が無くなら
+        // ないようフォールバックとして一般ノート欄を出す。
         translateSlot.style.display = 'block';
         translateSlot.appendChild(buildTranslatableBlock(fullText, `${state.test}-${state.part}-${g.questions[0]}`, g.speakers, 'Listeningボトルネック'));
+      } else {
+        notesSlot.appendChild(buildNotesWidget(`${state.test}-${state.part}-${g.questions[0]}`));
       }
-      notesSlot.appendChild(buildNotesWidget(`${state.test}-${state.part}-${g.questions[0]}`));
       nextBtn.disabled = false;
       nextBtn.textContent = '次へ';
     } else {
