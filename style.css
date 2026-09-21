@@ -214,6 +214,22 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
   margin-bottom:6px;
 }
 
+/* Part6/7の本文見出し行。解説画面(解答後)でだけ現れる「本文を閉じる」
+   トグルボタンをラベルと横並びにする。 */
+.doc-header-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.doc-header-row .doc-label,
+.doc-header-row .passage-topic{margin-bottom:0;}
+.doc-collapse-btn{
+  white-space:nowrap;
+  font-size:12px;
+  padding:4px 10px;
+}
+
 .q-block{
   border-top:1px solid var(--line);
   padding-top:16px;
@@ -228,7 +244,7 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
    幅の狭い画面(900px以下、スマホ・タブレット)では意味がないので縦積みに戻す。 */
 .reading-layout{
   display:grid;
-  grid-template-columns:4fr 3fr;
+  grid-template-columns:6.4fr 3.6fr;
   gap:20px;
   align-items:start;
 }

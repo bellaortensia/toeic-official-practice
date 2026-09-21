@@ -6,7 +6,7 @@ const AUDIO_FOLDER_ID = '409318407954';
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v123';
+const BUILD_VERSION = 'v124';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -5212,10 +5212,21 @@ function renderPart6() {
   }
 
   const main = document.createElement('div');
+  const headerRow = document.createElement('div');
+  headerRow.className = 'doc-header-row';
   const label = document.createElement('div');
   label.className = 'passage-topic';
   label.textContent = p.topic || '';
-  main.appendChild(label);
+  headerRow.appendChild(label);
+  // 本文を閉じるトグルは解説画面(解答後)でのみ使う。解答前は本文が必須なので
+  // 隠しておき、p67RevealAndExplain後にcollapseBtn.style.displayを戻して表示する。
+  const collapseBtn = document.createElement('button');
+  collapseBtn.type = 'button';
+  collapseBtn.className = 'doc-collapse-btn reveal-btn';
+  collapseBtn.textContent = '▼ 閉じる';
+  collapseBtn.style.display = 'none';
+  headerRow.appendChild(collapseBtn);
+  main.appendChild(headerRow);
   const doc = document.createElement('div');
   doc.className = 'doc-box';
   if (p.textImage) {
@@ -5225,6 +5236,11 @@ function renderPart6() {
     doc.textContent = p.text;
   }
   main.appendChild(doc);
+  collapseBtn.addEventListener('click', () => {
+    const collapsed = doc.style.display === 'none';
+    doc.style.display = collapsed ? '' : 'none';
+    collapseBtn.textContent = collapsed ? '▼ 閉じる' : '▶ 開く';
+  });
 
   const audioSlot = document.createElement('div');
   audioSlot.style.display = 'none';
@@ -5252,6 +5268,7 @@ function renderPart6() {
       }
       translateSlot.style.display = 'block';
       translateSlot.appendChild(buildTranslatableBlock(p.text, `${state.test}-6-${p.questions[0]}`, null, 'Readingボトルネック'));
+      collapseBtn.style.display = 'inline-block';
     } else {
       p67AdvancePassage(renderPart6);
     }
@@ -5300,21 +5317,41 @@ function renderPart7() {
   main.appendChild(label);
   // 複数文書のとき、画像と翻訳枠が縦に交互(画像→翻訳→画像→翻訳...)にならないよう、
   // 先に全文書の画像をまとめて並べ、翻訳枠はその後にまとめて並べる。
+  // 各文書の本文を閉じるトグルは解説画面(解答後)でのみ使う。解答前は本文が
+  // 必須なので隠しておき、解答後にまとめて表示する(docCollapseBtns)。
+  const docCollapseBtns = [];
   p.documents.forEach(doc => {
     const docDiv = document.createElement('div');
     docDiv.className = 'doc-box';
+    const headerRow = document.createElement('div');
+    headerRow.className = 'doc-header-row';
     const lbl = document.createElement('div');
     lbl.className = 'doc-label';
     lbl.textContent = doc.label;
-    docDiv.appendChild(lbl);
+    headerRow.appendChild(lbl);
+    const collapseBtn = document.createElement('button');
+    collapseBtn.type = 'button';
+    collapseBtn.className = 'doc-collapse-btn reveal-btn';
+    collapseBtn.textContent = '▼ 閉じる';
+    collapseBtn.style.display = 'none';
+    headerRow.appendChild(collapseBtn);
+    docDiv.appendChild(headerRow);
+    const contentWrap = document.createElement('div');
     if (doc.image) {
       docDiv.classList.add('has-photo');
-      docDiv.appendChild(buildPassageImageWithTextToggle(doc.image, doc.label || '文書', doc.text));
+      contentWrap.appendChild(buildPassageImageWithTextToggle(doc.image, doc.label || '文書', doc.text));
     } else {
       const txt = document.createElement('div');
       txt.textContent = doc.text;
-      docDiv.appendChild(txt);
+      contentWrap.appendChild(txt);
     }
+    docDiv.appendChild(contentWrap);
+    collapseBtn.addEventListener('click', () => {
+      const collapsed = contentWrap.style.display === 'none';
+      contentWrap.style.display = collapsed ? '' : 'none';
+      collapseBtn.textContent = collapsed ? '▼ 閉じる' : '▶ 開く';
+    });
+    docCollapseBtns.push(collapseBtn);
     main.appendChild(docDiv);
   });
 
@@ -5351,6 +5388,7 @@ function renderPart7() {
         slot.style.display = 'block';
         slot.appendChild(buildTranslatableBlock(doc.text, `${state.test}-7-${p.questions[0]}-doc${di}`, null, 'Readingボトルネック'));
       });
+      docCollapseBtns.forEach(b => { b.style.display = 'inline-block'; });
     } else {
       p67AdvancePassage(renderPart7);
     }
