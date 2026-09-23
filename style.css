@@ -396,6 +396,12 @@ button:disabled{opacity:.4;cursor:default;filter:none;}
   white-space:pre-wrap;
   color:#1c453d;
 }
+/* 不正解だったときは、選択肢の.choice.wrongと同じ配色(薄いピンク/赤)にする。 */
+.explain-box.explain-box-wrong{
+  background:#fdeaea;
+  border-left-color:var(--danger);
+  color:#5c2320;
+}
 
 .reveal-btn{
   background:none;color:var(--accent-2);border:1px solid var(--accent-2);

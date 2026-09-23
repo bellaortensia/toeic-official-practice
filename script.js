@@ -11,7 +11,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v127';
+const BUILD_VERSION = 'v128';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -4843,6 +4843,7 @@ function renderPart1or2() {
       });
       const jaTexts = isPart1 ? q.statementsJa : q.responsesJa;
       explainDiv.innerHTML = buildP12ExplainHtml(q, isPart1, choiceTexts, jaTexts, letters, p12.selected);
+      explainDiv.classList.toggle('explain-box-wrong', p12.selected !== q.answer);
       explainDiv.style.display = 'block';
       const noteKey = `${state.test}-${state.part}-${q.number}`;
       notesSlot.appendChild(buildNotesWidget(noteKey));
@@ -5016,6 +5017,7 @@ function renderPart3or4() {
           else if (letters[i] === p34.selections[item.number]) b.classList.add('wrong');
         });
         explainDiv.style.display = 'block';
+        explainDiv.classList.toggle('explain-box-wrong', !isCorrect);
         explainDiv.textContent = (isCorrect ? '正解です!\n\n' : '不正解です。\n\n') + '解説を生成中...';
       });
       const transcriptText = g.conversationText || g.talkText;
@@ -5135,6 +5137,7 @@ function renderPart5() {
         else if (letters[i] === selections[q.number]) b.classList.add('wrong');
       });
       explainDiv.style.display = 'block';
+      explainDiv.classList.toggle('explain-box-wrong', selections[q.number] !== q.answer);
       explainDiv.textContent = '解説を生成中...';
     });
     gradeBtn.remove();
@@ -5264,6 +5267,7 @@ async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, 
       else if (letters[i] === p67.selections[item.number]) b.classList.add('wrong');
     });
     explainDiv.style.display = 'block';
+    explainDiv.classList.toggle('explain-box-wrong', !isCorrect);
     explainDiv.textContent = (isCorrect ? '正解です!\n\n' : '不正解です。\n\n') + '解説を生成中...';
   });
   for (const item of items) {
