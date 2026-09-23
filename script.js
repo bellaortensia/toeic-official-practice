@@ -11,7 +11,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v129';
+const BUILD_VERSION = 'v130';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -1129,6 +1129,23 @@ function stripPunct(word) {
   return word.replace(/^[^A-Za-z0-9']+|[^A-Za-z0-9']+$/g, '');
 }
 
+// displayEnをshowUnheardSubmenuと同じ規則(空白区切り・記号除去・大小無視)で
+// トークン化し、termと連続一致する箇所のトークン番号を返す(先頭の一致のみ、
+// 複数語の熟語にも対応)。見つからなければ空配列。
+function findTermTokenIndices(displayEn, term) {
+  const tokens = (displayEn || '').split(/\s+/).filter(Boolean).map(tok => stripPunct(tok).toLowerCase());
+  const termWords = (term || '').trim().split(/\s+/).filter(Boolean).map(w => stripPunct(w).toLowerCase());
+  if (!termWords.length) return [];
+  for (let i = 0; i <= tokens.length - termWords.length; i++) {
+    let match = true;
+    for (let j = 0; j < termWords.length; j++) {
+      if (tokens[i + j] !== termWords[j]) { match = false; break; }
+    }
+    if (match) return termWords.map((_, j) => i + j);
+  }
+  return [];
+}
+
 // textを空白で区切り、bottleneckIdxSetに含まれるインデックスの単語(記号込みの
 // 元の表記のまま)だけを<strong class="unheard-highlight">で囲んだHTMLを作る。
 // 空白そのものは連続していてもそのまま保持する(見た目の間隔を変えないため)。
@@ -1265,6 +1282,15 @@ function showChunkPopup(seg, anchorEl, notesArea, clauseText, bottleneckLabel, d
         appendToNotes(notesArea, null, explanation);
         strongEl.textContent = originalLabel;
         termTrigger.classList.add('added');
+        // ノートに意味を書き写した単語・熟語は、ボトルネック単語選択メニューを
+        // 別途開いて選び直さなくても自動的に青太字になるようにする。
+        if (onBottleneckChange) {
+          const idxs = findTermTokenIndices(displayEn, t.term).filter(i => !currentMarks.includes(i));
+          if (idxs.length) {
+            idxs.forEach(i => currentMarks.push(i));
+            onBottleneckChange(new Set(currentMarks));
+          }
+        }
       } catch (err) {
         strongEl.textContent = originalLabel + '(解説の取得に失敗しました)';
         termTrigger.dataset.loading = '0';
