@@ -8,11 +8,11 @@
       "audio": "127 特典 T1 Part 7 Q147-148.mp3",
       "topic": "sign",
       "documents": [
-        { "label": "sign", "image": "images/test3/part7/q147-148.jpg", "text": "Parking\n\nParking behind Bonavista Municipal Building is reserved for city vehicles and employees with a valid parking permit. Visitors should use the public parking garage located at 700 Ash Street. All other vehicles parked in this area without a permit will be towed at the owner's expense.\n\nMinimum fine $100.00" }
+        { "label": "sign", "image": "images/test3/part7/q147-148.jpg", "text": "Parking in this area is reserved for vehicles displaying a current permit sticker on their windshields. Stickers may be obtained at the Willistown municipal building. Unauthorized vehicles may be towed away at vehicle owners' expense.\n\nMinimum fine $100.00" }
       ],
       "items": [
-        { "number": 147, "text": "What is indicated about the parking area behind the Bonavista Municipal Building?", "choices": {"A":"It is reserved for certain vehicles.","B":"It is currently under repair.","C":"It requires a daily fee.","D":"It is open only on weekends."}, "answer": "A" },
-        { "number": 148, "text": "According to the sign, what will happen to unauthorized vehicles?", "choices": {"A":"They will be fined by the city.","B":"They will be removed.","C":"They will be reported to the police.","D":"They will be given a warning notice."}, "answer": "B" }
+        { "number": 147, "text": "What is the purpose of the sign?", "choices": {"A":"To provide driving directions","B":"To explain parking regulations","C":"To alert drivers to planned repair work","D":"To announce a parking fee increase"}, "answer": "B" },
+        { "number": 148, "text": "What is stated about unauthorized vehicles?", "choices": {"A":"They might be removed.","B":"They will be monitored.","C":"They can be parked for an hourly fee.","D":"They must display a rear-window sticker."}, "answer": "A" }
       ]
     },
     {
@@ -20,12 +20,12 @@
       "audio": "128 特典 T1 Part 7 Q149-151.mp3",
       "topic": "form",
       "documents": [
-        { "label": "form", "image": "images/test3/part7/q149-151.jpg", "text": "International Culture Fest Volunteer Form\n\nName: Sunny Abdoo\nPhone number: 555-0148\nE-mail: sabdoo@onboardmail.com\n\nAvailability (please check all that apply):\nFriday, June 2, 4:00 P.M.-9:00 P.M. ☑\nSaturday, June 3, 9:00 A.M.-5:00 P.M. ☑\nSaturday, June 3, 5:00 P.M.-10:00 P.M. ☐\nSunday, June 4, 9:00 A.M.-5:00 P.M. ☑\n\nPreferred volunteer role (please select one): Registration table ☑ Setup/cleanup crew ☐ Information booth ☐ Parking attendant ☐\n\nAdditional comments: I am only available in the morning and early afternoon on Sunday, June 4, as I have another commitment starting at 3:00 P.M. that day." }
+        { "label": "form", "image": "images/test3/part7/q149-151.jpg", "text": "International Culture Fest Volunteer Form\n\nName: Sunny Abdoo\nAddress: 484 Wyckoff Street, Rockville, Maryland 20847\nE-mail address: sabdoo@trmail.com\n\nThank you for your interest in volunteering at the International Culture Fest in Rockville on April 25. Sign up below for the activities you are interested in. All volunteers are granted a free meal ticket to use at any of our food vendors after their shift is over. You will receive confirmation of your shift assignment by April 1. Volunteers are required to attend an orientation session on April 9 or April 10.\n\nShift roles:\n☐ Setup: Put up tents and concession stands\n☐ Parking attendants: Direct traffic and assist with parking\n☐ On-site ticket sales: Sell tickets at the ticket sales booth\n☒ Information crew: Direct attendees to their destinations. Distribute map and performance schedule\n☐ Concession crew: Sell food and beverages\n☐ Cleanup: Help take down tents and concession stands\n\nShift times:\n☐ 8:00 A.M.-12:00 P.M.\n☒ 12:00 P.M.-4:00 P.M.\n☐ 4:00 P.M.-8:00 P.M.\n\nAdditional comments: I am only available to attend the first orientation session." }
       ],
       "items": [
-        { "number": 149, "text": "What is suggested about Mr. Abdoo?", "choices": {"A":"He has volunteered at the festival before.","B":"He will be unavailable on Friday evening.","C":"He is not available all day on June 4.","D":"He prefers to work outdoors."}, "answer": "C" },
-        { "number": 150, "text": "What most likely will Mr. Abdoo do at the festival?", "choices": {"A":"Set up equipment","B":"Direct parking","C":"Answer visitors' questions","D":"Register participants"}, "answer": "D" },
-        { "number": 151, "text": "What is indicated about the festival?", "choices": {"A":"It will be held indoors.","B":"It takes place over three days.","C":"It requires an entrance fee.","D":"It is an annual event."}, "answer": "B" }
+        { "number": 149, "text": "What is suggested about the International Culture Fest?", "choices": {"A":"It is an annual event.","B":"It begins in the afternoon.","C":"It offers volunteers a meal voucher.","D":"It is held indoors."}, "answer": "C" },
+        { "number": 150, "text": "What will Mr. Abdoo most likely do at the event?", "choices": {"A":"Hand out maps and schedules","B":"Help performers with equipment","C":"Direct traffic in the parking area","D":"Sell tickets at the ticket booth"}, "answer": "A" },
+        { "number": 151, "text": "When will Mr. Abdoo most likely attend an orientation session?", "choices": {"A":"On April 1","B":"On April 9","C":"On April 10","D":"On April 25"}, "answer": "B" }
       ]
     },
     {
@@ -36,8 +36,8 @@
         { "label": "form", "image": "images/test3/part7/q152-153.jpg", "text": "Farris Company\nExpense Report Form\n\nName: Samaira Wilson\nSupervisor's name: Jeanette Park\nDate: 15 November\nDepartment: Research and Development\nID: 9360658\nPosition: Product Developer\nReason for travel: Meeting clients to discuss new products in nanotechnology\nReceipts attached: Yes\n\nExpense | Description | Date | Amount\nTrain | Return train ticket | 13 November | £132.00\nLunch | Client meeting | 13 November | £60.00\nDinner | Meal at hotel | 13 November | £25.00\nHotel | One night in a hotel | 13 November | £400.67\nLunch | Client meeting | 14 November | £58.00\nTotal expenses | | | £675.67\n\nExpense reports and accompanying receipts must be submitted within seven days of the last transaction date. Employees will be informed of the status of their claim within seven days of submitting the form." }
       ],
       "items": [
-        { "number": 152, "text": "What department does Ms. Wilson most likely work in?", "choices": {"A":"Sales","B":"Marketing","C":"Human Resources","D":"Research and Development"}, "answer": "D" },
-        { "number": 153, "text": "By what date must Ms. Wilson submit her expense report?", "choices": {"A":"14 November","B":"15 November","C":"20 November","D":"21 November"}, "answer": "D" }
+        { "number": 152, "text": "What does the form indicate about Ms. Wilson's trip?", "choices": {"A":"It started on November 14.","B":"It was scheduled by Ms. Park.","C":"It included two flights.","D":"It required an overnight stay."}, "answer": "D" },
+        { "number": 153, "text": "What is suggested about Ms. Wilson?", "choices": {"A":"She works at a hotel.","B":"She forgot to attach her receipts.","C":"She submitted her form on time.","D":"She will be reimbursed in seven days."}, "answer": "C" }
       ]
     },
     {
@@ -45,11 +45,11 @@
       "audio": "130 特典 T1 Part 7 Q154-155.mp3",
       "topic": "text-message chain",
       "documents": [
-        { "label": "text-message chain", "image": "images/test3/part7/q154-155.jpg", "text": "Ian Tsukase [9:32 A.M.]\nHi Renata, are you still able to cover my shift at the front desk this afternoon?\n\nRenata Alves [9:35 A.M.]\nYes, I can. What time does it start?\n\nIan Tsukase [9:36 A.M.]\nIt starts at 1:00 and goes until closing. I have a dentist appointment I forgot about.\n\nRenata Alves [9:40 A.M.]\nNo problem. I'll be there by 1:00. Just so you know, I haven't been trained on the new booking software yet.\n\nIan Tsukase [9:42 A.M.]\nThat's fine, Camila will be working the desk with you and she can help if you get stuck." }
+        { "label": "text-message chain", "image": "images/test3/part7/q154-155.jpg", "text": "Ian Tsukase [9:32 A.M.]\nGood morning. I want to update you on tomorrow's training session for our new servers here at the restaurant. The trainer from the corporate office will be here at 10:15 A.M. Eleven of the twelve hires will be here, but one has a conflict.\n\nAnouk Claasen [9:33 A.M.]\nRight. Fiona Leffley mentioned during her interview that she was going to be out of the country this week. I think she was a good choice. She lacks experience, but she is friendly and hardworking.\n\nIan Tsukase [9:35 A.M.]\nThen, the trainer should come back next week.\n\nAnouk Claasen [9:36 A.M.]\nNo need. We can record the most important parts and send them to Ms. Leffley. And then, she can shadow one of our more experienced servers for a few shifts.\n\nIan Tsukase [9:37 A.M.]\nOK. I'll check with the serving team to see who can work with her next week." }
       ],
       "items": [
-        { "number": 154, "text": "Why does Mr. Tsukase need Ms. Alves' help?", "choices": {"A":"He is going on vacation.","B":"He has a medical appointment.","C":"He is training a new employee.","D":"He needs to attend a meeting."}, "answer": "B" },
-        { "number": 155, "text": "At 9:42 A.M., what does Mr. Tsukase most likely mean when he writes, \"That's fine\"?", "choices": {"A":"Ms. Alves does not need to arrive early.","B":"Ms. Alves does not need to know the software well.","C":"Ms. Alves should ask Camila for a different shift.","D":"Ms. Alves should reschedule her training."}, "answer": "B" }
+        { "number": 154, "text": "What is indicated about Ms. Leffley?", "choices": {"A":"She will attend a meeting at the corporate office.","B":"She will begin a new job soon.","C":"She is an experienced server.","D":"She rescheduled an interview."}, "answer": "B" },
+        { "number": 155, "text": "At 9:35 A.M., what does Mr. Tsukase most likely mean when he writes, \"Then, the trainer should come back next week\"?", "choices": {"A":"He has learned that the trainer is currently unavailable.","B":"He wants to accommodate Ms. Leffley's schedule.","C":"He thinks some materials are not ready for use.","D":"He will be on vacation later this week."}, "answer": "B" }
       ]
     },
     {
@@ -57,12 +57,12 @@
       "audio": "131 特典 T1 Part 7 Q156-158.mp3",
       "topic": "e-mail",
       "documents": [
-        { "label": "e-mail", "image": "images/test3/part7/q156-158.jpg", "text": "To: All sales representatives\nFrom: Pooja Nair\nSubject: New sample kits\nDate: March 3\n\nHello everyone,\n\nAs you know, we have been redesigning our window blinds sample kits to make them lighter and easier to carry to client appointments. — [1] —. The new kits will be ready for pickup at the warehouse starting March 10. — [2] —.\n\nPlease note that the old sample kits should be returned to the warehouse by March 15 so they can be recycled. — [3] —. If you have any questions about the new kits, please contact me directly. — [4] —.\n\nThank you,\nPooja Nair\nSales Manager, Custom Blinds" }
+        { "label": "e-mail", "image": "images/test3/part7/q156-158.jpg", "text": "To: All sales representatives\nFrom: Pooja Mitra\nDate: November 6\nSubject: New business cards\n\nHello,\n\nWe need to replace all the business cards used by our sales representatives. Normally we only replace them at the end of the fiscal year, but we have adopted a new corporate logo after our recent merger with Central Fabrication Ltd. — [1] —.\n\nPlease check your current cards to see if any updates are needed in your office location, official title, or other information. — [2] —. If so, please e-mail Ms. Fujita in the graphic design department and let her know what additional updates are needed. — [3] —.\n\nBe sure to contact Ms. Fujita no later than Friday, November 10. — [4] —.\n\nPooja Mitra\nSales Manager, Custom Blinds" }
       ],
       "items": [
-        { "number": 156, "text": "What is the purpose of the e-mail?", "choices": {"A":"To announce a new product line","B":"To inform staff about updated sample kits","C":"To request feedback on a design","D":"To schedule a training session"}, "answer": "B" },
-        { "number": 157, "text": "According to the e-mail, what should employees do by March 15?", "choices": {"A":"Submit a sales report","B":"Order new supplies","C":"Return their old kits","D":"Register for training"}, "answer": "C" },
-        { "number": 158, "text": "In which of the positions marked [1], [2], [3], and [4] does the following sentence best belong?\n\"You can pick yours up anytime after that date.\"", "choices": {"A":"[1]","B":"[2]","C":"[3]","D":"[4]"}, "answer": "B" }
+        { "number": 156, "text": "Why do sales representatives need new business cards?", "choices": {"A":"Their company has relocated.","B":"Their company has changed its logo.","C":"Their company has a new Web site address.","D":"Their company is using new job titles for employees."}, "answer": "B" },
+        { "number": 157, "text": "What does Ms. Mitra ask sales representatives to do by November 10?", "choices": {"A":"Report their most recent sales figures","B":"Return their current business cards to the graphic design department","C":"Tell Ms. Fujita about any required changes to their cards","D":"Arrange a personal meeting with Ms. Fujita"}, "answer": "C" },
+        { "number": 158, "text": "In which of the positions marked [1], [2], [3], and [4] does the following sentence best belong?\n\"Therefore, we will begin printing new cards next Monday.\"", "choices": {"A":"[1]","B":"[2]","C":"[3]","D":"[4]"}, "answer": "A" }
       ]
     },
     {
@@ -70,11 +70,11 @@
       "audio": "132 特典 T1 Part 7 Q159-160.mp3",
       "topic": "notice",
       "documents": [
-        { "label": "notice", "image": "images/test3/part7/q159-160.jpg", "text": "NOTICE\n\nThe hiking trails at Cedar Ridge Park will be closed for maintenance from June 5 to June 12. During this time, park staff will be repairing sections of trail damaged by recent flooding. The park's picnic areas, playground, and visitor center will remain open throughout this period. We apologize for any inconvenience and appreciate your patience as we work to keep the trails safe for hikers. The trails typically see heavy use on weekends." }
+        { "label": "notice", "image": "images/test3/part7/q159-160.jpg", "text": "NOTICE\n\nPer a new local ordinance, Creekview Road will be closed to motor vehicle transit between Poplar and Cherry Streets from 6 A.M. to 9 P.M. on Saturdays and Sundays starting next month. The two-mile stretch of road will remain open to pedestrians and nonmotorized vehicles. The policy goes into effect on April 4 and will continue indefinitely.\n\nThis ordinance comes from the Fairview local council, headed by Ellis Birmingham, and represents efforts by the council to promote community wellness. Creekview Road runs alongside the protected parkland of the Fairview Creek Gorge, which is known for its impressive views of Grand Valley. The forthcoming change will allow park visitors, including joggers, cyclists, and hikers, to spread out beyond the park's trails and safely utilize the full roadway during the weekends." }
       ],
       "items": [
-        { "number": 159, "text": "Why will the trails be closed?", "choices": {"A":"To install new signage","B":"To plant new trees","C":"To repair flood damage","D":"To hold a special event"}, "answer": "C" },
-        { "number": 160, "text": "What is indicated about Cedar Ridge Park?", "choices": {"A":"It will be completely closed in June.","B":"It has a visitor center.","C":"It charges an entrance fee.","D":"It is open only on weekends."}, "answer": "B" }
+        { "number": 159, "text": "What is the purpose of the Creekview Road closure?", "choices": {"A":"To protect local wildlife","B":"To allow for needed repairs","C":"To encourage walking and cycling","D":"To prepare for an upcoming sports event"}, "answer": "C" },
+        { "number": 160, "text": "What is indicated about Fairview Creek Gorge?", "choices": {"A":"It will open to the public on April 4.","B":"It holds events on the weekends.","C":"It was named by Mr. Birmingham.","D":"It overlooks Grand Valley."}, "answer": "D" }
       ]
     },
     {
@@ -82,12 +82,12 @@
       "audio": "133 特典 T1 Part 7 Q161-163.mp3",
       "topic": "article",
       "documents": [
-        { "label": "article", "image": "images/test3/part7/q161-163.jpg", "text": "My Handy Chef Acquired by Lunch Hut\n\nLast week, Lunch Hut, a chain of quick-service restaurants known for its made-to-order sandwiches, announced the acquisition of My Handy Chef, a company that produces kitchen gadgets for chopping vegetables and assembling sandwiches by hand. With the acquisition of My Handy Chef, Lunch Hut's leadership team hopes to speed up food preparation at its restaurants while maintaining the quality customers expect. My Handy Chef founder Otto Pfeiffer will join Lunch Hut as an innovation strategist, bringing his product-design experience to the company's kitchens." }
+        { "label": "article", "image": "images/test3/part7/q161-163.jpg", "text": "Sandwich Franchise Acquires Technology Company\n\nGROVE CITY (February 27)—Lunch Hut, the national restaurant franchise known for serving farm-to-table sandwiches, has acquired My Handy Chef, a technology company that manufactures a line of robots that can perform basic kitchen tasks. My Handy Chef cofounder Ryan Boone has joined Lunch Hut's corporate office as an innovation strategist, bringing with him a team of talented engineers and designers.\n\nThe robots are skilled in mixing ingredients for sauces and spreads as well as peeling and chopping vegetables.\n\nWith the acquisition of My Handy Chef, Lunch Hut's leadership team is excited to make progress toward automating the production of such signature dishes as their famous Pasta with Farm Greens Pesto and Spicy Egg Salad.\n\n\"At its best, technology facilitates smoother human interactions, and I believe this development will help us to do an even better job of attending to our customers' needs,\" said Eva Griffin, Lunch Hut's longtime CEO. Lunch Hut has always been known for the personable service of its staff members, who assemble each custom sandwich order by hand." }
       ],
       "items": [
-        { "number": 161, "text": "What is indicated about Lunch Hut?", "choices": {"A":"It is a new company.","B":"It sells kitchen gadgets.","C":"It specializes in sandwiches.","D":"It operates internationally."}, "answer": "C" },
-        { "number": 162, "text": "What does Lunch Hut hope to achieve with the acquisition?", "choices": {"A":"Lower ingredient costs","B":"Faster food preparation","C":"A larger delivery area","D":"A wider menu selection"}, "answer": "B" },
-        { "number": 163, "text": "What will Mr. Pfeiffer most likely do at Lunch Hut?", "choices": {"A":"Contribute his design expertise","B":"Manage a group of restaurants","C":"Train new employees","D":"Oversee the accounting department"}, "answer": "A" }
+        { "number": 161, "text": "What has Lunch Hut recently done?", "choices": {"A":"It has opened new locations.","B":"It has begun producing kitchen appliances.","C":"It has purchased Mr. Boone's company.","D":"It has removed dishes from the menu."}, "answer": "C" },
+        { "number": 162, "text": "What task will most likely be completed by a robot?", "choices": {"A":"Serving customers","B":"Mixing sauces","C":"Taking orders","D":"Grilling vegetables"}, "answer": "B" },
+        { "number": 163, "text": "The phrase \"attending to\" in paragraph 4, line 4, is closest in meaning to", "choices": {"A":"addressing","B":"accompanying","C":"being present at","D":"taking part in"}, "answer": "A" }
       ]
     },
     {

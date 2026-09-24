@@ -11,10 +11,10 @@ const REDIRECT_URI = 'https://bellaortensia.github.io/toeic-official-practice/';
 //   問題集11と12は音声ファイル名が(サンプル問題・トラック番号とも)ほぼ同一のため、
 //   同じBoxフォルダに混在させると衝突するので、問題集ごとにフォルダを分けている。
 const TESTS = [
-  { code: 'T1', folder: 'test1', label: 'Work11-test1', audioFolderId: '409318407954' },
-  { code: 'T2', folder: 'test2', label: 'Work11-test2', audioFolderId: '409318407954' },
-  { code: 'T3', folder: 'test3', label: 'Work12-test1', audioFolderId: '420847557338' },
-  { code: 'T4', folder: 'test4', label: 'Work12-test2', audioFolderId: '420847557338' }
+  { code: 'T1', folder: 'test1', label: 'Work11-test1', shortLabel: 'W1-T1', audioFolderId: '409318407954' },
+  { code: 'T2', folder: 'test2', label: 'Work11-test2', shortLabel: 'W1-T2', audioFolderId: '409318407954' },
+  { code: 'T3', folder: 'test3', label: 'Work12-test1', shortLabel: 'W2-T1', audioFolderId: '420847557338' },
+  { code: 'T4', folder: 'test4', label: 'Work12-test2', shortLabel: 'W2-T2', audioFolderId: '420847557338' }
 ];
 function getTestConfig(code) {
   return TESTS.find(t => t.code === code) || TESTS[0];
@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v132';
+const BUILD_VERSION = 'v133';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -2765,7 +2765,7 @@ function buildHistoryRow(item) {
     row.className = 'history-item';
     const label = document.createElement('span');
     label.className = 'history-item-label';
-    label.textContent = `${item.test} P${item.part} Q${item.number}`;
+    label.textContent = `${getTestConfig(item.test).shortLabel} P${item.part} Q${item.number}`;
     const dateEl = document.createElement('span');
     dateEl.className = 'history-item-date';
     dateEl.textContent = formatHistoryDate(item.lastAt);
@@ -3739,14 +3739,14 @@ async function resolvePreviousStudyItems() {
       if (seen.has(dedupeKey)) continue;
       seen.add(dedupeKey);
       const text = part === 2 ? (q.question || '') : Object.values(q.statements || {}).join(' / ');
-      items.push({ label: `${test} P${part} Q${number}`, text, audio: [q.audio], audioFolderId: getTestConfig(test).audioFolderId });
+      items.push({ label: `${getTestConfig(test).shortLabel} P${part} Q${number}`, text, audio: [q.audio], audioFolderId: getTestConfig(test).audioFolderId });
     } else if (part === 5) {
       const q = (data.questions || []).find(x => x.number === number);
       if (!q || !q.audio) continue;
       const dedupeKey = `${test}-5-${number}`;
       if (seen.has(dedupeKey)) continue;
       seen.add(dedupeKey);
-      items.push({ label: `${test} P5 Q${number}`, text: q.sentence || '', audio: [q.audio], audioFolderId: getTestConfig(test).audioFolderId });
+      items.push({ label: `${getTestConfig(test).shortLabel} P5 Q${number}`, text: q.sentence || '', audio: [q.audio], audioFolderId: getTestConfig(test).audioFolderId });
     } else if (part === 3 || part === 4) {
       const g = (data.groups || []).find(x => x.questions.includes(number));
       if (!g) continue;
@@ -3756,7 +3756,7 @@ async function resolvePreviousStudyItems() {
       if (seen.has(dedupeKey)) continue;
       seen.add(dedupeKey);
       const text = g.conversationText || g.talkText || '';
-      items.push({ label: `${test} P${part} Q${g.questions[0]}`, text, audio: [audio], audioFolderId: getTestConfig(test).audioFolderId, cacheKeyBase: dedupeKey });
+      items.push({ label: `${getTestConfig(test).shortLabel} P${part} Q${g.questions[0]}`, text, audio: [audio], audioFolderId: getTestConfig(test).audioFolderId, cacheKeyBase: dedupeKey });
     } else if (part === 6 || part === 7) {
       const p = (data.passages || []).find(x => x.questions.includes(number));
       if (!p || !p.audio) continue;
@@ -3764,7 +3764,7 @@ async function resolvePreviousStudyItems() {
       if (seen.has(dedupeKey)) continue;
       seen.add(dedupeKey);
       const text = p.text || (p.documents ? p.documents.map(d => d.text).join(' ') : '');
-      items.push({ label: `${test} P${part} Q${p.questions[0]}`, text, audio: Array.isArray(p.audio) ? p.audio : [p.audio], audioFolderId: getTestConfig(test).audioFolderId, cacheKeyBase: dedupeKey });
+      items.push({ label: `${getTestConfig(test).shortLabel} P${part} Q${p.questions[0]}`, text, audio: Array.isArray(p.audio) ? p.audio : [p.audio], audioFolderId: getTestConfig(test).audioFolderId, cacheKeyBase: dedupeKey });
     }
   }
   return items;
