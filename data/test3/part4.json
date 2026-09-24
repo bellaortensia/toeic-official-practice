@@ -1,0 +1,132 @@
+{
+  "test": "T3",
+  "part": 4,
+  "type": "talk",
+  "note": "talkTextは別冊解答・解説から書き起こしたトーク全文。",
+  "groups": [
+    {
+      "questions": [71, 72, 73],
+      "audioTalk": "073 T1 Part 4 Q71-73 トーク.mp3",
+      "audioQuestions": "074 T1 Part 4 Q71-73 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"}],
+      "talkText": "We have some exciting news! Next month, our local Pine Valley Supermarket will join the national Apex family of grocers. This means incredible new benefits for you, our loyal customers. In our all-new mobile application, you'll find dozens of digital coupons each week. You can also shop from the convenience of your own home with our enhanced delivery service. Receive half off the delivery fee on any order over one hundred dollars!",
+      "items": [
+        { "number": 71, "text": "What will happen next month?", "choices": {"A":"A business merger will take place.","B":"A store will be renovated.","C":"A grand opening will occur.","D":"A product will be discontinued."}, "answer": "A" },
+        { "number": 72, "text": "According to the speaker, what will customers find in a mobile application?", "choices": {"A":"A rewards card","B":"Some coupons","C":"Some recipes","D":"Store hours"}, "answer": "B" },
+        { "number": 73, "text": "What does the speaker say about a delivery service?", "choices": {"A":"It allows customers to earn bonus points.","B":"It will be temporarily unavailable.","C":"A discount is available for it.","D":"A minimum purchase must be made to use it."}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [74, 75, 76],
+      "audioTalk": "075 T1 Part 4 Q74-76 トーク.mp3",
+      "audioQuestions": "076 T1 Part 4 Q74-76 設問.mp3",
+      "speakers": [{"nat":"gb","gender":"W"}],
+      "talkText": "Before we end our meeting today, I have two updates that'll affect our library. First, the parking area's being resurfaced on Sunday. Although we'll be closed, we'll post signs letting patrons know they can access the book return box by using the walkway on the east side of the building. Also, we met our fund-raising goal to modernize our building's technology systems! I can't list all the benefits, but new computers will start arriving Monday. More exciting updates will follow.",
+      "items": [
+        { "number": 74, "text": "Where does the speaker work?", "choices": {"A":"At a library","B":"At a hospital","C":"At a city hall","D":"At a bookstore"}, "answer": "A" },
+        { "number": 75, "text": "Why will signs be posted?", "choices": {"A":"To identify some special discounts","B":"To point out a temporary change","C":"To announce a fund-raising event","D":"To celebrate employee achievements"}, "answer": "B" },
+        { "number": 76, "text": "Why does the speaker say, \"new computers will start arriving Monday\"?", "choices": {"A":"To correct a date","B":"To provide a reminder","C":"To give an example","D":"To assign a task"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [77, 78, 79],
+      "audioTalk": "077 T1 Part 4 Q77-79 トーク.mp3",
+      "audioQuestions": "078 T1 Part 4 Q77-79 設問.mp3",
+      "speakers": [{"nat":"us","gender":"W"}],
+      "talkText": "Everyone—thanks for your help moving the leftover summer and fall items to the back of the store. OK. The shipment of winter wear—coats, sweaters, and hats—should arrive soon. The truck driver just texted me. Can anyone help unload the truck? ... Thanks for volunteering, Tariq and Rodrigo. I appreciate it! Oh, and did anyone see that today's newspaper advertisement says seasonal sale is tomorrow? Well, that sales promotion is next week. Be sure to tell customers about it if they ask you. I'm sure it's going to cause some confusion.",
+      "items": [
+        { "number": 77, "text": "Where do the listeners most likely work?", "choices": {"A":"At an electronics store","B":"At a clothing store","C":"At a grocery store","D":"At a furniture store"}, "answer": "B" },
+        { "number": 78, "text": "What do Tariq and Rodrigo volunteer to do?", "choices": {"A":"Assist some customers","B":"Demonstrate some merchandise","C":"Pack some boxes","D":"Unload a truck"}, "answer": "D" },
+        { "number": 79, "text": "What does the speaker imply when she says, \"that sales promotion is next week\"?", "choices": {"A":"She is surprised by a business decision.","B":"She will wait to purchase some items.","C":"An advertisement contained an error.","D":"Some preparations must be completed soon."}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [80, 81, 82],
+      "audioTalk": "079 T1 Part 4 Q80-82 トーク.mp3",
+      "audioQuestions": "080 T1 Part 4 Q80-82 設問.mp3",
+      "speakers": [{"nat":"au","gender":"M"}],
+      "talkText": "Are you looking for a fun family getaway this summer? Come join us at Robinson's Resort, home of the largest water park on the east coast. We just completed renovating the entire park, and there are now six outdoor pools and nine new waterslides to enjoy! After a day full of fun in the sun, unwind in the comfort of rooms with a wood-cabin aesthetic feel as though you are far from the city. Call 555-0179 now to book a weekend your family will never forget!",
+      "items": [
+        { "number": 80, "text": "What is the advertisement mainly about?", "choices": {"A":"A riverfront cabin","B":"A water park resort","C":"A fitness center","D":"A lakeside campground"}, "answer": "B" },
+        { "number": 81, "text": "What does the speaker say was recently completed?", "choices": {"A":"A business merger","B":"A renovation project","C":"A sports tournament","D":"A convention event"}, "answer": "B" },
+        { "number": 82, "text": "What should the listeners do to make a reservation?", "choices": {"A":"Contact a travel agent","B":"Visit a Web site","C":"E-mail the manager","D":"Make a phone call"}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [83, 84, 85],
+      "audioTalk": "081 T1 Part 4 Q83-85 トーク.mp3",
+      "audioQuestions": "082 T1 Part 4 Q83-85 設問.mp3",
+      "speakers": [{"nat":"us","gender":"W"}],
+      "talkText": "This is Fernanda Alvarez reporting live from Sweet Snack Cupcakes. Today marks the store's one-year anniversary, and everyone is invited to come down to the shop and celebrate the occasion. Throughout the weekend, there will be plenty of activities for visitors of all ages. I highly recommend seeing the baking demonstrations! Also, everyone can receive a complimentary cup of coffee or soft drink with the purchase of any cupcake from now through Sunday.",
+      "items": [
+        { "number": 83, "text": "Where is the speaker reporting from?", "choices": {"A":"A government building","B":"A culinary school","C":"A retail business","D":"A conference center"}, "answer": "C" },
+        { "number": 84, "text": "What does the speaker recommend?", "choices": {"A":"Talking to a business owner","B":"Meeting the town mayor","C":"Tasting free samples","D":"Watching some demonstrations"}, "answer": "D" },
+        { "number": 85, "text": "What can the listeners receive this weekend?", "choices": {"A":"A free beverage","B":"A gift bag","C":"A T-shirt","D":"A cookbook"}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [86, 87, 88],
+      "audioTalk": "083 T1 Part 4 Q86-88 トーク.mp3",
+      "audioQuestions": "084 T1 Part 4 Q86-88 設問.mp3",
+      "speakers": [{"nat":"gb","gender":"W"}],
+      "talkText": "Attention Central Station customers and MTS riders! This is a reminder that all next week we'll be operating under a special schedule. This will include extra trains and bus routes to accommodate increased passenger traffic. We anticipate thousands of people will be visiting the city to celebrate 100 years since Plattville was founded. Trains may be especially busy in the area around the city center and the historic district. To ensure that your commute will not be disrupted, visit our Web site for the most up-to-date schedule and traffic information. Thank you and enjoy the ride!",
+      "items": [
+        { "number": 86, "text": "Where is the announcement taking place?", "choices": {"A":"At a transportation center","B":"At a convention center","C":"At a parade venue","D":"At a government office"}, "answer": "A" },
+        { "number": 87, "text": "What type of event does the speaker mention?", "choices": {"A":"A musical concert","B":"A sporting contest","C":"A city celebration","D":"A special election"}, "answer": "C" },
+        { "number": 88, "text": "According to the speaker, what is available on a Web site?", "choices": {"A":"Customer reviews","B":"Scheduling information","C":"The history of a building","D":"A map of the area"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [89, 90, 91],
+      "audioTalk": "085 T1 Part 4 Q89-91 トーク.mp3",
+      "audioQuestions": "086 T1 Part 4 Q89-91 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"}],
+      "talkText": "Andersonville Office Superstore is happy to announce a new service! More people have begun working from home recently, so we're now offering free home delivery to our corporate clients. Your employees can expect to receive the same high-quality supplies and fast, dependable service that they've always had, but now at the convenience of their own doorstep. How's that for an improvement? To register for this new service, contact a sales representative. They'll guarantee that any corporate discount is applied to all orders.",
+      "items": [
+        { "number": 89, "text": "What type of business is being advertised?", "choices": {"A":"An office supply store","B":"A moving company","C":"An engineering firm","D":"A transportation company"}, "answer": "A" },
+        { "number": 90, "text": "What improvement does the speaker mention?", "choices": {"A":"Some items will be made of higher-quality material.","B":"Some vehicles will be better for the environment.","C":"A service will help clients save money.","D":"A service will become more convenient."}, "answer": "D" },
+        { "number": 91, "text": "According to the speaker, what will a sales representative do?", "choices": {"A":"Send an e-mail","B":"Apply some discounts","C":"Schedule a delivery","D":"Demonstrate a product"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [92, 93, 94],
+      "audioTalk": "087 T1 Part 4 Q92-94 トーク.mp3",
+      "audioQuestions": "088 T1 Part 4 Q92-94 設問.mp3",
+      "speakers": [{"nat":"au","gender":"M"}],
+      "talkText": "Hi, Ms. Stewart. This is Pedro. I take care of Mr. Molina's scheduling. I'm calling because Mr. Molina was scheduled to return from an international business trip on Friday and then meet with you the following day. The thing is, though, his trip has been extended by one day. Please give me a call back or stop by my office so we can discuss other options. I'll be at my desk the rest of the afternoon.",
+      "items": [
+        { "number": 92, "text": "Who most likely is the speaker?", "choices": {"A":"A salesperson","B":"A business owner","C":"A product developer","D":"An executive assistant"}, "answer": "D" },
+        { "number": 93, "text": "What does the speaker imply when he says, \"his trip has been extended by one day\"?", "choices": {"A":"A refund should be requested.","B":"A negotiation has been successful.","C":"A meeting must be postponed.","D":"A delivery should be rerouted."}, "answer": "C" },
+        { "number": 94, "text": "Where will the speaker be during the afternoon?", "choices": {"A":"At his desk","B":"At a conference center","C":"At a restaurant","D":"At a store"}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [95, 96, 97],
+      "audioTalk": "089 T1 Part 4 Q95-97 トーク.mp3",
+      "audioQuestions": "090 T1 Part 4 Q95-97 設問.mp3",
+      "graphic": "Development Schedule table: Preview May 18, Testing June 12, Feedback July 29, Launch August 30",
+      "graphicImage": "images/test3/part4/q95-97.jpg",
+      "speakers": [{"nat":"us","gender":"W"}],
+      "talkText": "I called this meeting to update you on the timeline to deliver the Auto-Check software we've been developing for our client Super Speed Automotive. Next week, a representative from Super Speed will visit our office to see a preview and ask questions. Super Speed wants to ensure the software includes all the requested functionalities. By the middle of June, a select number of Super Speed employees will begin using a beta version, and they will report their experience by the end of July. Finally, we will work on software repairs to address any issues that the client encountered throughout August and roll out the final product at the end of August.",
+      "items": [
+        { "number": 95, "text": "Why did the speaker set up the meeting?", "choices": {"A":"To negotiate a schedule","B":"To demonstrate a prototype","C":"To introduce new employees","D":"To provide an update"}, "answer": "D" },
+        { "number": 96, "text": "Look at the graphic. According to the speaker, on which date will the client visit the office?", "choices": {"A":"May 18","B":"June 12","C":"July 29","D":"August 30"}, "answer": "A" },
+        { "number": 97, "text": "According to the speaker, what will the listeners do during the month of August?", "choices": {"A":"Add functions","B":"Repair problems","C":"Generate ideas","D":"Fulfill orders"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [98, 99, 100],
+      "audioTalk": "091 T1 Part 4 Q98-100 トーク.mp3",
+      "audioQuestions": "092 T1 Part 4 Q98-100 設問.mp3",
+      "graphic": "Task / Assigned To table: Create awards - Susana, Purchase prizes - Pablo, Schedule event - Carmen, Coordinate social media - Hector",
+      "graphicImage": "images/test3/part4/q98-100.jpg",
+      "speakers": [{"nat":"gb","gender":"W"}],
+      "talkText": "Everyone, as we get closer to the sales department's annual awards ceremony, I've assigned tasks for the awards committee to work on. As the sales director, I'll personally create the awards and decide which members of the team will be recognized. The task of purchasing prizes has always been difficult, so let me know if you need additional advice. Also, as part of receiving approval to hold this event, our department was allocated some supplemental funding. We'll use this funding to purchase catering for the event and buy the prizes.",
+      "items": [
+        { "number": 98, "text": "What is the speaker's role in the company?", "choices": {"A":"Marketing specialist","B":"Product developer","C":"Sales director","D":"Shipping manager"}, "answer": "C" },
+        { "number": 99, "text": "Look at the graphic. Who will complete a difficult task?", "choices": {"A":"Susana","B":"Pablo","C":"Carmen","D":"Hector"}, "answer": "B" },
+        { "number": 100, "text": "According to the speaker, what did the department recently receive?", "choices": {"A":"Positive customer feedback","B":"Requests for a product demonstration","C":"New computer equipment","D":"Additional funding"}, "answer": "D" }
+      ]
+    }
+  ]
+}

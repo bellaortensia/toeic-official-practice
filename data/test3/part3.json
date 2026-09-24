@@ -1,0 +1,170 @@
+{
+  "test": "T3",
+  "part": 3,
+  "type": "conversation",
+  "note": "conversationTextは別冊解答・解説から書き起こした会話全文。",
+  "groups": [
+    {
+      "questions": [32, 33, 34],
+      "audioConversation": "046 T1 Part 3 Q32-34 会話.mp3",
+      "audioQuestions": "047 T1 Part 3 Q32-34 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"us","gender":"W"}],
+      "conversationText": "M: Hi, Lola. This morning I noticed that one of the freezers isn't working. Can you explain how to submit a service request, since you're an experienced manager?\nW: Sure. Is it a dairy-section freezer again? If I remember correctly, one of the ice cream freezers wasn't working properly last month.\nM: No, it's actually one in the meat department this time. I can move the items from the broken freezer to one in the back of the store.\nW: Yes, please do that. I'm going to get the phone number for Jacob's Repair. That's the first information we need for the service request.",
+      "items": [
+        { "number": 32, "text": "What is the woman's job?", "choices": {"A":"Sales associate","B":"Maintenance worker","C":"Delivery driver","D":"Manager"}, "answer": "D" },
+        { "number": 33, "text": "What does the store most likely sell?", "choices": {"A":"Furniture","B":"Groceries","C":"Appliances","D":"Hardware"}, "answer": "B" },
+        { "number": 34, "text": "What will the woman do next?", "choices": {"A":"Cancel a meeting","B":"Change an address","C":"Find a phone number","D":"Order some parts"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [35, 36, 37],
+      "audioConversation": "048 T1 Part 3 Q35-37 会話.mp3",
+      "audioQuestions": "049 T1 Part 3 Q35-37 設問.mp3",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"ca","gender":"M"}],
+      "conversationText": "W: Robertson Appliances. How can I help you?\nM: Hi. My name's Bradley Mitchell. I'm calling because I have a phone interview for the sales manager position.\nW: Thank you for calling. You are right on time. Why don't you start by telling me about yourself?\nM: Well, I have some relevant experience. I spent two years in sales for a power tool manufacturer.\nW: That's great! Next month, we'll be launching a line of kitchen appliances. Do you have any experience promoting new products?\nM: Yes! In fact, I received a bonus for selling over 50 power drills in the first two weeks they were available. I was expected to sell only 30.",
+      "items": [
+        { "number": 35, "text": "Why is the man calling the woman's company?", "choices": {"A":"To make an appointment","B":"To discuss a problem","C":"To place an order","D":"To interview for a job"}, "answer": "D" },
+        { "number": 36, "text": "What will the woman's company do next month?", "choices": {"A":"Introduce a new line of products","B":"Offer a discount","C":"Celebrate an anniversary","D":"Open a new location"}, "answer": "A" },
+        { "number": 37, "text": "Why did the man receive a bonus?", "choices": {"A":"For completing a project early","B":"For exceeding a sales goal","C":"For making a customer referral","D":"For promoting safety"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [38, 39, 40],
+      "audioConversation": "050 T1 Part 3 Q38-40 会話.mp3",
+      "audioQuestions": "051 T1 Part 3 Q38-40 設問.mp3",
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"us","gender":"M"},{"nat":"ca","gender":"M"}],
+      "conversationText": "W: Hi. I'm Jessica Phillips, the technician from Ridgeview Mechanical Services. You called about a problem with one of your machines.\nM1: Yes, our largest washing machine broke down. As you can see, we have more orders coming in, and we are quickly getting behind schedule. Our customers expect their laundry to be done by the end of the day.\nW: I understand. I'll fix it as quickly as I can. Where is it?\nM1: It's in the back. Hey, Masashi, please show Ms. Phillips where the washer is.\nM2: Sure, it's right back here. I think it's a problem with the wiring—it doesn't seem like the machine is getting any power.",
+      "items": [
+        { "number": 38, "text": "What most likely is the woman's job?", "choices": {"A":"Safety inspector","B":"Repair technician","C":"Administrative assistant","D":"Sales representative"}, "answer": "B" },
+        { "number": 39, "text": "Where are the speakers?", "choices": {"A":"In a convenience store","B":"In a hardware store","C":"In a factory","D":"In a laundromat"}, "answer": "D" },
+        { "number": 40, "text": "What problem does Masashi mention?", "choices": {"A":"A customer made a complaint.","B":"An employee missed a shift.","C":"Some wiring may be faulty.","D":"A payment is late."}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [41, 42, 43],
+      "audioConversation": "052 T1 Part 3 Q41-43 会話.mp3",
+      "audioQuestions": "053 T1 Part 3 Q41-43 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"us","gender":"W"}],
+      "conversationText": "M: Shannon, I received notice from Blue Field Management that we'll have a building inspection in two weeks. Can you let our company's department leads on the fourth, fifth, and sixth floors know an inspector is coming so they're ready?\nW: Certainly. Would you like me to include the inspection procedures in the e-mail?\nM: Yes. Make sure that information goes out to the new employees who may be a point of contact. We haven't gone through this process in a while.\nW: I'll send out the message now.",
+      "items": [
+        { "number": 41, "text": "What does the man say will happen in two weeks?", "choices": {"A":"A contract will be updated.","B":"A shareholder meeting will take place.","C":"A building will be inspected.","D":"A second round of interviews will be held."}, "answer": "C" },
+        { "number": 42, "text": "What will new employees receive?", "choices": {"A":"Client contacts","B":"Procedural information","C":"Peer mentoring","D":"Free lunch"}, "answer": "B" },
+        { "number": 43, "text": "What will the woman do next?", "choices": {"A":"Call an employee","B":"Send an e-mail","C":"Mail a letter","D":"Make copies"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [44, 45, 46],
+      "audioConversation": "054 T1 Part 3 Q44-46 会話.mp3",
+      "audioQuestions": "055 T1 Part 3 Q44-46 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],
+      "conversationText": "M: Greetings, Ms. Flores. It's great to meet you. Have you ever been treated by a physical therapist, or is this your first time?\nW: It's my first time. You were highly recommended by one of my friends who was having some back pain.\nM: Wonderful! Many of my patients are referrals. Anyhow, first I'd like to begin by learning more about your symptoms and what you've done to manage them so far. Then we'll do some light stretching and range-of-motion exercises.",
+      "items": [
+        { "number": 44, "text": "Where does the conversation most likely take place?", "choices": {"A":"In a convenience store","B":"In a bookstore","C":"In a medical office","D":"In a law office"}, "answer": "C" },
+        { "number": 45, "text": "How did the woman learn about the man's business?", "choices": {"A":"Through a client","B":"Through a friend","C":"Through an advertisement","D":"Through some online reviews"}, "answer": "B" },
+        { "number": 46, "text": "What will the man probably do next?", "choices": {"A":"Ask some questions","B":"Make a telephone call","C":"Speak with a manager","D":"Look at a Web site"}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [47, 48, 49],
+      "audioConversation": "056 T1 Part 3 Q47-49 会話.mp3",
+      "audioQuestions": "057 T1 Part 3 Q47-49 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"us","gender":"W"}],
+      "conversationText": "M: Sushma, I'm working on a marketing project now. I'm creating an e-mail about the upcoming seasonal sale on our laptops, tablet computers, and smartphones for our existing customers.\nW: And you'd like feedback on the e-mail?\nM: No. But I've run into a different problem. I can't access the customer database from my computer.\nW: You know, Narumi had a similar problem yesterday.\nM: Hmm—I'll see if she's around.\nW: Oh, a few minutes ago she asked me if I wanted to join her for lunch in the break room. She may be there.\nM: Great. Thanks for letting me know.",
+      "items": [
+        { "number": 47, "text": "What does the man say he is working on?", "choices": {"A":"A marketing project","B":"A customer refund","C":"A software update","D":"A commercial script"}, "answer": "A" },
+        { "number": 48, "text": "What does the woman imply when she says, \"Narumi had a similar problem yesterday\"?", "choices": {"A":"Narumi needs additional training.","B":"Narumi can assist the man.","C":"An Internet provider should be replaced.","D":"A work report is incorrect."}, "answer": "B" },
+        { "number": 49, "text": "Where will the man most likely go next?", "choices": {"A":"To a storage area","B":"To a supervisor's office","C":"To the break room","D":"To the cafeteria"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [50, 51, 52],
+      "audioConversation": "058 T1 Part 3 Q50-52 会話.mp3",
+      "audioQuestions": "059 T1 Part 3 Q50-52 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],
+      "conversationText": "M: Hi, Yuping. It's Brian at the construction site for the Becker home. Do you have an update from the lumber supplier?\nW: Yes. Our order won't be there for another week.\nM: Hmm. We can't continue construction until the lumber's here. This puts us behind schedule by quite a bit.\nW: Well, they're not planning to move in until early next year.\nM: Oh, OK. Well, we have several workers here today with nothing to do. I'm going to call some other project managers to see what other sites need help today.",
+      "items": [
+        { "number": 50, "text": "What does the man ask the woman for?", "choices": {"A":"A product number","B":"An employee's schedule","C":"A client's contact information","D":"An update on an order"}, "answer": "D" },
+        { "number": 51, "text": "Why does the woman say, \"they're not planning to move in until early next year\"?", "choices": {"A":"To reassure the man","B":"To ask for the man's opinion","C":"To describe the location of a business","D":"To reject a change in plans"}, "answer": "A" },
+        { "number": 52, "text": "Why will the man make some phone calls?", "choices": {"A":"To check on the status of some items","B":"To request an extension on a project","C":"To find new tasks for employees","D":"To ask questions about an assignment"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [53, 54, 55],
+      "audioConversation": "060 T1 Part 3 Q53-55 会話.mp3",
+      "audioQuestions": "061 T1 Part 3 Q53-55 設問.mp3",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"ca","gender":"M"}],
+      "conversationText": "W: Welcome. There's about a 30-minute wait for a table in the dining area right now, but I can take your name and phone number in case something opens earlier.\nM: Thanks! How long have you been open? I visited this neighborhood a while ago, but I don't think this was open then.\nW: That's right! We're brand-new to the downtown neighborhood. Many people have been surprised we have a second location. Our original location is on the waterfront.\nM: Yeah, I've only been to the waterfront location. Do you have any special promotions right now?\nW: Yes! If you dine with us often, then sign up for our rewards program so you can earn points toward free meals!",
+      "items": [
+        { "number": 53, "text": "Where is the conversation most likely taking place?", "choices": {"A":"At a convenience store","B":"At a theater","C":"At a bookstore","D":"At a restaurant"}, "answer": "D" },
+        { "number": 54, "text": "According to the woman, why are people surprised?", "choices": {"A":"An item is unavailable.","B":"A new location has been opened.","C":"A show has been canceled.","D":"A parking lot is full."}, "answer": "B" },
+        { "number": 55, "text": "How can the man take advantage of a special promotion?", "choices": {"A":"By writing a positive review","B":"By signing up for a customer survey","C":"By registering for a rewards program","D":"By ordering multiple items"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [56, 57, 58],
+      "audioConversation": "062 T1 Part 3 Q56-58 会話.mp3",
+      "audioQuestions": "063 T1 Part 3 Q56-58 設問.mp3",
+      "speakers": [{"nat":"us","gender":"W"},{"nat":"ca","gender":"M"}],
+      "conversationText": "W: Matthew, I have an idea to help our accounting firm.\nM: What's that?\nW: We should investigate using an AI—or artificial intelligence—software program.\nM: I've heard about AI. But how could it help us?\nW: Well, AI can quickly process information from a large volume of financial documents like customer invoices or financial statements. It could also make data entry less time-consuming.\nM: Won't it be difficult to learn to use though?\nW: We could find an outside consultant to help with training. Let me start looking into that now.",
+      "items": [
+        { "number": 56, "text": "Who most likely are the speakers?", "choices": {"A":"Accountants","B":"Web designers","C":"Librarians","D":"Sound engineers"}, "answer": "A" },
+        { "number": 57, "text": "What does the woman propose doing?", "choices": {"A":"Replacing some computers","B":"Creating an online schedule","C":"Revising a company policy","D":"Using some new software"}, "answer": "D" },
+        { "number": 58, "text": "What does the woman say she will do?", "choices": {"A":"Research outside consultants","B":"Organize a training session","C":"Purchase a computer program","D":"Speak with some staff members"}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [59, 60, 61],
+      "audioConversation": "064 T1 Part 3 Q59-61 会話.mp3",
+      "audioQuestions": "065 T1 Part 3 Q59-61 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"},{"nat":"us","gender":"W"}],
+      "conversationText": "M: Welcome to the Zenith Company. How can I help you?\nW1: My name's Melissa Ross. I have a reservation for a compact-size car. Here's my ID card.\nM: I'm sorry, but it looks like we don't have any compact vehicles available at this time. How about upgrading to standard size?\nW1: Sure—but will I have to pay extra for that?\nM: I don't think so. Let me just check with my supervisor. Samantha, can we process this upgrade at no additional charge?\nW2: That'll be fine. Just enter code one-zero-three when the computer system prompts you for a reason.",
+      "items": [
+        { "number": 59, "text": "Why is Melissa Ross speaking with the man?", "choices": {"A":"To pick up a rental car","B":"To get driving directions","C":"To cancel a room reservation","D":"To discuss a recent trip"}, "answer": "A" },
+        { "number": 60, "text": "What does the man ask Melissa Ross to do?", "choices": {"A":"Provide her credit card information","B":"Confirm her address","C":"Consider an upgrade","D":"Fill out a form"}, "answer": "C" },
+        { "number": 61, "text": "What does Samantha say the man should do?", "choices": {"A":"Use a different computer","B":"Check a Web site","C":"Provide a refund","D":"Enter a code"}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [62, 63, 64],
+      "audioConversation": "066 T1 Part 3 Q62-64 会話.mp3",
+      "audioQuestions": "067 T1 Part 3 Q62-64 設問.mp3",
+      "graphic": "Apex Solutions—Directory table: First floor Suites 1-3, Second floor Suites 4-6, Third floor Suites 7-10, Fourth floor Suites 11-12",
+      "graphicImage": "images/test3/part3/q62-64.jpg",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],
+      "conversationText": "W: I'm Farida Haddad from Berges Safety Services. Today I'll check the fire extinguishers, sprinklers, and smoke detectors in the building.\nM: Welcome, Ms. Haddad. Do you have an appointment?\nW: Yes, we arranged today's visit with the property owner.\nM: OK. Please wear this ID badge while you're in the building.\nW: Got it. Is there a good place for me to start where I won't get in anyone's way?\nM: The groups that use suites four and five are currently out on a retreat.\nW: I'll head there now.",
+      "items": [
+        { "number": 62, "text": "What is the purpose of the woman's visit?", "choices": {"A":"To deliver a package","B":"To perform an inspection","C":"To make some repairs","D":"To clean some offices"}, "answer": "B" },
+        { "number": 63, "text": "What does the man give the woman?", "choices": {"A":"An identification badge","B":"A building map","C":"A copy of a report","D":"A room key"}, "answer": "A" },
+        { "number": 64, "text": "Look at the graphic. Which floor will the woman go to first?", "choices": {"A":"The first floor","B":"The second floor","C":"The third floor","D":"The fourth floor"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [65, 66, 67],
+      "audioConversation": "068 T1 Part 3 Q65-67 会話.mp3",
+      "audioQuestions": "069 T1 Part 3 Q65-67 設問.mp3",
+      "graphic": "Map of Grounds: Building 4, Building 3, Pool, Building 5, Main Office, Building 2, Building 1",
+      "graphicImage": "images/test3/part3/q65-67.jpg",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"us","gender":"W"}],
+      "conversationText": "M: Hi. I'm Andrey with Millwall Pest Control.\nW: I'm glad you're here. A resident in one of the buildings I manage—number four—reported ants, and I'd like all the apartments there treated.\nM: Do the residents know to expect someone?\nW: Yes, they were notified by e-mail that treatment would occur today before 5:00 P.M. I'd also like to have another building near the pool treated—the one right next to building four.\nM: Oh, but that wasn't included in the original estimate.\nW: No, it wasn't. So please add that to the bill.",
+      "items": [
+        { "number": 65, "text": "Who most likely is the woman?", "choices": {"A":"A hotel clerk","B":"A property manager","C":"An office assistant","D":"An apartment resident"}, "answer": "B" },
+        { "number": 66, "text": "According to the woman, what was sent by e-mail?", "choices": {"A":"A contract","B":"A notice","C":"A pool policy","D":"A party invitation"}, "answer": "B" },
+        { "number": 67, "text": "Look at the graphic. What additional building will be treated?", "choices": {"A":"Building 1","B":"Building 2","C":"Building 3","D":"Building 5"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [68, 69, 70],
+      "audioConversation": "070 T1 Part 3 Q68-70 会話.mp3",
+      "audioQuestions": "071 T1 Part 3 Q68-70 設問.mp3",
+      "graphic": "The Fresh Fish Factory menu: Appetizers - Clam Chowder $3.99, Shrimp Platter $9.99; Main Dishes - Chef's Special $12.99, Catch of the Day $19.99",
+      "graphicImage": "images/test3/part3/q68-70.jpg",
+      "speakers": [{"nat":"au","gender":"M"},{"nat":"gb","gender":"W"}],
+      "conversationText": "M: Natalie, why do we have so many boxes of cod fish in the refrigerator?\nW: Our supplier sent us twice our regular order by mistake. Since he could not take it back, he gave it to us for free.\nM: What are we going to do with it?\nW: Don't worry. I have a special recipe I can make that I'm sure our customers will love.\nM: OK. Let's call the new dish the Chef's Special. Tell our servers that it is a limited-time menu item with a reduced price. If people like it, we can add it to the menu in the future.",
+      "items": [
+        { "number": 68, "text": "What does the man ask the woman to confirm?", "choices": {"A":"Why customers dislike a menu item","B":"Whether the amount of an item is correct","C":"Where a delivery should be stored","D":"When an employee will arrive"}, "answer": "B" },
+        { "number": 69, "text": "What most likely is the woman's job?", "choices": {"A":"Server","B":"Dishwasher","C":"Manager","D":"Chef"}, "answer": "D" },
+        { "number": 70, "text": "Look at the graphic. How much will the new dish cost?", "choices": {"A":"$3.99","B":"$9.99","C":"$12.99","D":"$19.99"}, "answer": "C" }
+      ]
+    }
+  ]
+}

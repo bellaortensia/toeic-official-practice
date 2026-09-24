@@ -1,0 +1,59 @@
+{
+  "test": "T3",
+  "part": 6,
+  "type": "text_completion",
+  "passages": [
+    {
+      "questions": [131, 132, 133, 134],
+      "audio": "123 特典 T1 Part 6 Q131-134.mp3",
+      "topic": "article",
+      "textImage": "images/test3/part6/q131-134.jpg",
+      "text": "WATERTOWN (January 10)—Watertown's riverside location and rich history have made it one of the most popular travel destinations in the region. Tourism continues to grow as visitors discover our city's increasingly wide (131)_____ of sights and attractions. As a result, Watertown's transportation office has announced that a new visitor center will be constructed on Tenth Avenue (132)_____ the growing number of tourists. (133)_____\n\nThe center's gift shop will sell many unique souvenirs. These will include candy made (134)_____ Watertown residents as well as other locally crafted products, such as apparel and artwork.",
+      "items": [
+        { "number": 131, "choices": {"A":"various","B":"variety","C":"varying","D":"varied"}, "answer": "B" },
+        { "number": 132, "choices": {"A":"serves","B":"service","C":"to serve","D":"has served"}, "answer": "C" },
+        { "number": 133, "choices": {"A":"The visitor center will be closed on Mondays.","B":"Some parking meters in town are out of order.","C":"There are several cozy coffee shops on Tenth Avenue.","D":"The project should be complete by the end of March."}, "answer": "D" },
+        { "number": 134, "choices": {"A":"by","B":"in","C":"owing to","D":"due to"}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [135, 136, 137, 138],
+      "audio": "124 特典 T1 Part 6 Q135-138.mp3",
+      "topic": "e-mail",
+      "textImage": "images/test3/part6/q135-138.jpg",
+      "text": "To: All staff\nFrom: Cara Rothwell, CEO\nDate: February 17\nSubject: Standing desks\n\nWe are happy to announce that we (135)_____ to provide all our employees with standing desks. Research has demonstrated that these desks enable users to move more, boost concentration, and increase overall productivity. (136)_____.\n\n(137)_____ of the desks will begin in first-floor offices on March 1. We will (138)_____ proceed to the second floor. The work is scheduled to be completed by March 5.",
+      "items": [
+        { "number": 135, "choices": {"A":"are decided","B":"have decided","C":"must decide","D":"will decide"}, "answer": "B" },
+        { "number": 136, "choices": {"A":"We want staff to be healthier and more active at work.","B":"More research on these desks needs to be conducted.","C":"Employees have access to many healthcare options.","D":"Standing desks are more expensive than we anticipated."}, "answer": "A" },
+        { "number": 137, "choices": {"A":"Inspection","B":"Destruction","C":"Preservation","D":"Installation"}, "answer": "D" },
+        { "number": 138, "choices": {"A":"often","B":"yet","C":"then","D":"still"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [139, 140, 141, 142],
+      "audio": "125 特典 T1 Part 6 Q139-142.mp3",
+      "topic": "review",
+      "textImage": "images/test3/part6/q139-142.jpg",
+      "text": "Review of Healthy Basket App by Lidia Barrios, Lifestyles editor\n\nI recently discovered a new app to assist anyone with a (139)_____ schedule who wants to eat well. The Healthy Basket app provides complete nutritional information (140)_____ a host of food products. You can easily check a product's salt or carbohydrate content or see if it contains potential allergens. The app allows you to look up most food products sold in the region. (141)_____ It even indicates all the nearby supermarkets that carry each item. I highly recommend using it the next time you go (142)_____.",
+      "items": [
+        { "number": 139, "choices": {"A":"busy","B":"busying","C":"busily","D":"busiest"}, "answer": "A" },
+        { "number": 140, "choices": {"A":"onto","B":"about","C":"before","D":"along"}, "answer": "B" },
+        { "number": 141, "choices": {"A":"Fresh ingredients are important.","B":"I will review other apps in the future.","C":"You will find the directions on the label.","D":"Every popular brand is included."}, "answer": "D" },
+        { "number": 142, "choices": {"A":"shopping","B":"fishing","C":"dancing","D":"walking"}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [143, 144, 145, 146],
+      "audio": "126 特典 T1 Part 6 Q143-146.mp3",
+      "topic": "e-mail",
+      "textImage": "images/test3/part6/q143-146.jpg",
+      "text": "To: Avani Mittal <amittal@mittalphotography.ca>\nFrom: Camille Richard <crichard@brightlyboundstationery.ca>\nDate: 12 August\nSubject: Scheduling a photo shoot\n\nDear Ms. Mittal,\n\nBrightly Bound Stationery is launching a line of notebooks, cards, and calendars in November. We want to hire a photographer who can capture the (143)_____ and minimalist look we seek. (144)_____.\n\nWe would like to hold a photo shoot sometime in September. Can you provide us with your (145)_____ for a half-day photo shoot? We prefer to start as early in the day as possible. (146)_____, please include a cost estimate for your services.\n\nWe look forward to hearing from you.\n\nCamille Richard\nOwner, Brightly Bound Stationery",
+      "items": [
+        { "number": 143, "choices": {"A":"cleanliness","B":"clean","C":"cleaner","D":"cleaning"}, "answer": "B" },
+        { "number": 144, "choices": {"A":"Thank you for contributing your artwork to the series.","B":"Our previous collection of notebooks sold out quickly.","C":"Some of our best photographers prefer to work in the evenings.","D":"The photos should show the simplicity and elegance of our products."}, "answer": "D" },
+        { "number": 145, "choices": {"A":"availability","B":"location","C":"decision","D":"necessity"}, "answer": "A" },
+        { "number": 146, "choices": {"A":"In addition","B":"Nevertheless","C":"In sum","D":"For example"}, "answer": "A" }
+      ]
+    }
+  ]
+}
