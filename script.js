@@ -1,7 +1,24 @@
 const CLIENT_ID = 'z86hx1zqjrt28urcj8mz487fyg5wl76t';
 const CLIENT_SECRET = 'd1QAC50V41mR9NAhquGi9l5p12fYqlHS';
 const REDIRECT_URI = 'https://bellaortensia.github.io/toeic-official-practice/';
-const AUDIO_FOLDER_ID = '409318407954';
+
+// 「テスト」(公式問題集ごとのTEST1/TEST2)の一覧。
+// code: 内部識別子。localStorageの保存キー(回答履歴・ノート等)に使われているため、
+//   既存のT1/T2は今後も変更しないこと(変更すると過去の学習記録が読めなくなる)。
+// folder: data/・images/以下のフォルダ名(例: data/test1/part1.json)。
+// label: 画面上の表示名(プルダウン・ランディング画面・ノート一覧など全箇所で使う)。
+// audioFolderId: 音声ファイルが入っているBoxフォルダのID。問題集ごとに1つ。
+//   問題集11と12は音声ファイル名が(サンプル問題・トラック番号とも)ほぼ同一のため、
+//   同じBoxフォルダに混在させると衝突するので、問題集ごとにフォルダを分けている。
+const TESTS = [
+  { code: 'T1', folder: 'test1', label: 'Work11-test1', audioFolderId: '409318407954' },
+  { code: 'T2', folder: 'test2', label: 'Work11-test2', audioFolderId: '409318407954' },
+  { code: 'T3', folder: 'test3', label: 'Work12-test1', audioFolderId: '420847557338' },
+  { code: 'T4', folder: 'test4', label: 'Work12-test2', audioFolderId: '420847557338' }
+];
+function getTestConfig(code) {
+  return TESTS.find(t => t.code === code) || TESTS[0];
+}
 
 // マウスホバー・細かいポインタ操作ができる端末(PC)かどうか。翻訳文のチャンクを
 // クリックしたときの挙動をPCとスマホ等のタッチ端末で変える(下記IS_TOUCH_DEVICE
@@ -11,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v131';
+const BUILD_VERSION = 'v132';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -1946,9 +1963,11 @@ async function handleRedirect() {
 
 // ---------- 音声再生(Box) ----------
 
-let audioIndexCache = null;
-async function getAudioIndex() {
-  if (audioIndexCache) return audioIndexCache;
+// 問題集(Boxフォルダ)ごとに一覧をキャッシュする。問題集11と12でファイル名が
+// 衝突するため、フォルダIDをキーにして別々に保持する。
+const audioIndexCacheByFolder = {};
+async function getAudioIndex(folderId) {
+  if (audioIndexCacheByFolder[folderId]) return audioIndexCacheByFolder[folderId];
   const token = await getValidAccessToken();
   const map = {};
   let offset = 0;
@@ -1958,12 +1977,12 @@ async function getAudioIndex() {
     // 何らかの理由でtotal_countが正しく取得できずループが終わらない場合の保険。
     if (guard > 50) throw new Error('音声ファイル一覧の取得回数が上限を超えました');
     const res = await fetch(
-      `https://api.box.com/2.0/folders/${AUDIO_FOLDER_ID}/items?fields=name&limit=200&offset=${offset}`,
+      `https://api.box.com/2.0/folders/${folderId}/items?fields=name&limit=200&offset=${offset}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
     if (!res.ok) {
       const bodyText = await res.text().catch(() => '');
-      throw new Error(`音声ファイル一覧の取得に失敗しました(フォルダID:${AUDIO_FOLDER_ID} / HTTP ${res.status}) ${bodyText.slice(0, 500)}`);
+      throw new Error(`音声ファイル一覧の取得に失敗しました(フォルダID:${folderId} / HTTP ${res.status}) ${bodyText.slice(0, 500)}`);
     }
     const data = await res.json();
     if (!data.entries || data.entries.length === 0) break;
@@ -1977,7 +1996,7 @@ async function getAudioIndex() {
   if (Object.keys(map).length === 0) {
     throw new Error('音声ファイル一覧が0件でした(Box側のフォルダへのアクセス権をご確認ください)');
   }
-  audioIndexCache = map;
+  audioIndexCacheByFolder[folderId] = map;
   return map;
 }
 
@@ -1992,10 +2011,13 @@ const audioUrlCache = {};
 // 429)だけリトライ対象にする。
 const AUDIO_FETCH_MAX_ATTEMPTS = 3;
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-async function getAudioUrl(filename) {
+// folderIdは省略時、問題集11のフォルダを使う(既存の呼び出し元との後方互換用)。
+async function getAudioUrl(filename, folderId) {
+  if (!folderId) folderId = TESTS[0].audioFolderId;
   lastAudioError = '';
-  if (audioUrlCache[filename]) return audioUrlCache[filename];
-  const index = await getAudioIndex();
+  const cacheKey = folderId + '|' + filename;
+  if (audioUrlCache[cacheKey]) return audioUrlCache[cacheKey];
+  const index = await getAudioIndex(folderId);
   const id = index[filename];
   if (!id) { lastAudioError = `音声ファイルが見つかりませんでした(${filename})。(一覧の総数: ${Object.keys(index).length}件)`; return null; }
 
@@ -2013,7 +2035,7 @@ async function getAudioUrl(filename) {
       } else {
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
-        audioUrlCache[filename] = url;
+        audioUrlCache[cacheKey] = url;
         return url;
       }
     } catch (e) {
@@ -2204,7 +2226,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
     if (i >= list.length) { currentAudio = null; resetUI(); return; }
     toggleBtn.disabled = true;
     errorEl.style.display = 'none';
-    const url = await getAudioUrl(list[i]);
+    const url = await getAudioUrl(list[i], getTestConfig(state.test).audioFolderId);
     toggleBtn.disabled = false;
     if (!url) {
       errorEl.textContent = '⚠ ' + (lastAudioError || '音声の読み込みに失敗しました。');
@@ -2264,7 +2286,7 @@ async function loadPartData(test, part) {
   // data/*.jsonはscript.js/index.htmlと違いキャッシュ回避のクエリが付いておらず、
   // 問題文データを修正しても古い内容がブラウザ/CDNにキャッシュされたまま残る
   // ことがあった。BUILD_VERSIONを付けて、デプロイのたびに確実に取り直す。
-  const res = await fetch(`data/${test === 'T1' ? 'test1' : 'test2'}/part${part}.json?v=${BUILD_VERSION}`);
+  const res = await fetch(`data/${getTestConfig(test).folder}/part${part}.json?v=${BUILD_VERSION}`);
   const json = await res.json();
   dataCache[key] = json;
   return json;
@@ -2278,7 +2300,7 @@ const pdfExplainMapCache = {};
 async function loadPdfExplainMap(test) {
   if (pdfExplainMapCache[test]) return pdfExplainMapCache[test];
   try {
-    const res = await fetch(`data/${test === 'T1' ? 'test1' : 'test2'}/pdfExplain.json?v=${BUILD_VERSION}`);
+    const res = await fetch(`data/${getTestConfig(test).folder}/pdfExplain.json?v=${BUILD_VERSION}`);
     if (!res.ok) return null;
     const json = await res.json();
     pdfExplainMapCache[test] = json;
@@ -2492,9 +2514,9 @@ function recordCorrectness(key, isCorrect, noteKey) {
 //    パッセージ単位(先頭設問番号)の挑戦回数カウンタなので、ここでは対象外にする。
 //  - "T1-6-45-correct" のように末尾に-correctが付くキー: Part6/7の設問ごとの正誤記録。
 function parseAttemptKey(key) {
-  const correctMatch = key.match(/^(T[12])-(\d)-(\d+)-correct$/);
+  const correctMatch = key.match(/^(T\d+)-(\d)-(\d+)-correct$/);
   if (correctMatch) return { test: correctMatch[1], part: Number(correctMatch[2]), number: Number(correctMatch[3]), perQuestion: true };
-  const plainMatch = key.match(/^(T[12])-(\d)-(\d+)$/);
+  const plainMatch = key.match(/^(T\d+)-(\d)-(\d+)$/);
   if (plainMatch) return { test: plainMatch[1], part: Number(plainMatch[2]), number: Number(plainMatch[3]), perQuestion: Number(plainMatch[2]) <= 5 };
   return null;
 }
@@ -3289,7 +3311,7 @@ function parseNoteKeyForReview(noteKey) {
   let docIndex = null;
   const docMatch = key.match(/^(.*)-doc(\d+)$/);
   if (docMatch) { key = docMatch[1]; docIndex = Number(docMatch[2]); }
-  const m = key.match(/^(T[12])-(\d+)-(\d+)$/);
+  const m = key.match(/^(T\d+)-(\d+)-(\d+)$/);
   if (!m) return null;
   return { baseKey: key, test: m[1], part: Number(m[2]), number: Number(m[3]), docIndex, isTranslateNotes };
 }
@@ -3354,11 +3376,11 @@ async function collectReviewableNotes() {
       // する。個々のAIキーは設問ごとの個別キーなので、履歴からグループの共有
       // ノートキー(baseKey)が分かればそちらへ統合し、分からなければその設問
       // 番号単独をページ扱いにする。
-      const m = noteKey.slice(0, -3).match(/^(T[12])-(\d+)-(\d+)$/);
+      const m = noteKey.slice(0, -3).match(/^(T\d+)-(\d+)-(\d+)$/);
       if (!m) continue;
       const histMatch = historyItems.find(it => it.test === m[1] && it.part === Number(m[2]) && it.number === Number(m[3]));
       const baseKey = histMatch ? histMatch.noteKey : `${m[1]}-${m[2]}-${m[3]}`;
-      const bm = baseKey.match(/^(T[12])-(\d+)-(\d+)$/);
+      const bm = baseKey.match(/^(T\d+)-(\d+)-(\d+)$/);
       if (!bm) continue;
       const mapKey = `${baseKey}|`;
       if (!pages.has(mapKey)) pages.set(mapKey, { baseKey, docIndex: null, test: bm[1], part: Number(bm[2]), number: Number(bm[3]) });
@@ -3405,7 +3427,7 @@ async function collectReviewableNotes() {
 }
 
 function formatNoteReviewLabel(entry) {
-  const testLabel = entry.test === 'T1' ? 'TEST1' : 'TEST2';
+  const testLabel = getTestConfig(entry.test).label;
   const docLabel = entry.docIndex != null ? `(文書${entry.docIndex + 1})` : '';
   return `${testLabel} Part${entry.part} Q${entry.number}${docLabel}`;
 }
@@ -3717,14 +3739,14 @@ async function resolvePreviousStudyItems() {
       if (seen.has(dedupeKey)) continue;
       seen.add(dedupeKey);
       const text = part === 2 ? (q.question || '') : Object.values(q.statements || {}).join(' / ');
-      items.push({ label: `${test} P${part} Q${number}`, text, audio: [q.audio] });
+      items.push({ label: `${test} P${part} Q${number}`, text, audio: [q.audio], audioFolderId: getTestConfig(test).audioFolderId });
     } else if (part === 5) {
       const q = (data.questions || []).find(x => x.number === number);
       if (!q || !q.audio) continue;
       const dedupeKey = `${test}-5-${number}`;
       if (seen.has(dedupeKey)) continue;
       seen.add(dedupeKey);
-      items.push({ label: `${test} P5 Q${number}`, text: q.sentence || '', audio: [q.audio] });
+      items.push({ label: `${test} P5 Q${number}`, text: q.sentence || '', audio: [q.audio], audioFolderId: getTestConfig(test).audioFolderId });
     } else if (part === 3 || part === 4) {
       const g = (data.groups || []).find(x => x.questions.includes(number));
       if (!g) continue;
@@ -3734,7 +3756,7 @@ async function resolvePreviousStudyItems() {
       if (seen.has(dedupeKey)) continue;
       seen.add(dedupeKey);
       const text = g.conversationText || g.talkText || '';
-      items.push({ label: `${test} P${part} Q${g.questions[0]}`, text, audio: [audio], cacheKeyBase: dedupeKey });
+      items.push({ label: `${test} P${part} Q${g.questions[0]}`, text, audio: [audio], audioFolderId: getTestConfig(test).audioFolderId, cacheKeyBase: dedupeKey });
     } else if (part === 6 || part === 7) {
       const p = (data.passages || []).find(x => x.questions.includes(number));
       if (!p || !p.audio) continue;
@@ -3742,7 +3764,7 @@ async function resolvePreviousStudyItems() {
       if (seen.has(dedupeKey)) continue;
       seen.add(dedupeKey);
       const text = p.text || (p.documents ? p.documents.map(d => d.text).join(' ') : '');
-      items.push({ label: `${test} P${part} Q${p.questions[0]}`, text, audio: Array.isArray(p.audio) ? p.audio : [p.audio], cacheKeyBase: dedupeKey });
+      items.push({ label: `${test} P${part} Q${p.questions[0]}`, text, audio: Array.isArray(p.audio) ? p.audio : [p.audio], audioFolderId: getTestConfig(test).audioFolderId, cacheKeyBase: dedupeKey });
     }
   }
   return items;
@@ -3778,7 +3800,11 @@ function setupStudyMediaSession() {
 // onErrorは取得・再生に失敗した場合に理由付きで呼ばれる。
 // 呼び出し前に必ず stopAllAudio() を呼ぶこと(ここでは呼ばない。呼ぶと togglePlayback
 // が直前にセットした activePlayCtrl を巻き戻してしまい、ボタン表示が変わらなくなる)。
-async function playStudySequence(filenames, loop, onEnd, onError, onReady) {
+// tracksは文字列(ファイル名。問題集11のフォルダとみなす)、または
+// {file, audioFolderId}のオブジェクトの配列を受け付ける(前回学習した問題は
+// 問題集11・12が混在しうるため、ファイル名だけでは参照先のBoxフォルダを
+// 一意に決められないことがある)。
+async function playStudySequence(tracks, loop, onEnd, onError, onReady) {
   studySequencePlaying = true;
 
   // タップ操作に再生を紐付けるため、通信を挟む前にこの場で一度play()しておく空要素。
@@ -3793,8 +3819,10 @@ async function playStudySequence(filenames, loop, onEnd, onError, onReady) {
   // 復帰」という瞬間そのものが無くなる。
   let buffers;
   try {
-    buffers = await Promise.all(filenames.map(async f => {
-      const url = await getAudioUrl(f);
+    buffers = await Promise.all(tracks.map(async t => {
+      const file = typeof t === 'string' ? t : t.file;
+      const folderId = typeof t === 'string' ? undefined : t.audioFolderId;
+      const url = await getAudioUrl(file, folderId);
       if (!url) return null;
       try {
         const res = await fetch(url); // object URLからバイト列を取り出すだけ(外部通信は発生しない)
@@ -3972,11 +4000,11 @@ function buildPreviousStudySection() {
       listEl.innerHTML = '<p class="prev-study-empty">前回学習分の音声データがありません。</p>';
       return;
     }
-    const allFilenames = items.flatMap(it => it.audio);
+    const allTracks = items.flatMap(it => it.audio.map(f => ({ file: f, audioFolderId: it.audioFolderId })));
     allBtn.disabled = false;
     allBtn.addEventListener('click', () => {
       errorEl.style.display = 'none';
-      togglePlayback(allBtn, allFilenames, true, '▶ まとめて再生', '■ 停止', showPlaybackError);
+      togglePlayback(allBtn, allTracks, true, '▶ まとめて再生', '■ 停止', showPlaybackError);
     });
 
     items.forEach(item => {
@@ -3988,7 +4016,8 @@ function buildPreviousStudySection() {
       playBtn.textContent = '▶';
       playBtn.addEventListener('click', () => {
         errorEl.style.display = 'none';
-        togglePlayback(playBtn, item.audio, false, '▶', '■', showPlaybackError);
+        const tracks = item.audio.map(f => ({ file: f, audioFolderId: item.audioFolderId }));
+        togglePlayback(playBtn, tracks, false, '▶', '■', showPlaybackError);
       });
 
       const text = document.createElement('span');
@@ -4147,7 +4176,11 @@ async function jumpToQuestionNumber(test, part, number, autoReveal) {
 async function jumpToNextPart() {
   let nextPart = state.part + 1;
   let nextTest = state.test;
-  if (nextPart > 7) { nextPart = 1; nextTest = state.test === 'T1' ? 'T2' : null; }
+  if (nextPart > 7) {
+    nextPart = 1;
+    const curIdx = TESTS.findIndex(t => t.code === state.test);
+    nextTest = (curIdx >= 0 && curIdx + 1 < TESTS.length) ? TESTS[curIdx + 1].code : null;
+  }
   if (!nextTest) {
     practiceBodyEl.innerHTML = '<p>お疲れ様でした。すべてのPartが終了しました。</p>';
     return;
@@ -4316,12 +4349,12 @@ const partOverviewStartBtn = document.getElementById('partOverviewStartBtn');
 function buildLandingNav() {
   const container = document.getElementById('landingNav');
   if (!container) return;
-  ['T1', 'T2'].forEach(test => {
+  TESTS.forEach(({ code: test, label }) => {
     const testDetails = document.createElement('details');
     testDetails.className = 'landing-test';
     testDetails.open = true;
     const testSummary = document.createElement('summary');
-    testSummary.textContent = test === 'T1' ? 'TEST 1' : 'TEST 2';
+    testSummary.textContent = label;
     testDetails.appendChild(testSummary);
 
     const partsDiv = document.createElement('div');
@@ -4457,11 +4490,11 @@ footerNextBtn.addEventListener('click', () => goToAdjacentUnit(1));
 // 選ぶといきなり1問目を始めるのではなく、その節の問題一覧(挑戦回数付き)を
 // 表示するpart-overview画面へ移動する。
 function populatePartSelect(selectEl) {
-  ['T1', 'T2'].forEach(test => {
+  TESTS.forEach(({ code: test, label }) => {
     for (let part = 1; part <= 7; part++) {
       const opt = document.createElement('option');
       opt.value = `${test}-${part}`;
-      opt.textContent = `${test === 'T1' ? 'test1' : 'test2'} part${part}`;
+      opt.textContent = `${label} part${part}`;
       selectEl.appendChild(opt);
     }
   });
@@ -4555,7 +4588,7 @@ function renderDictation(items, onComplete) {
     stopAudio();
     playBtn.disabled = true;
     playBtn.textContent = '読み込み中...';
-    const url = await getAudioUrl(items[idx].audio);
+    const url = await getAudioUrl(items[idx].audio, getTestConfig(state.test).audioFolderId);
     playBtn.disabled = false;
     playBtn.textContent = '▶ 音声を再生 (Spaceキーでも再生できます)';
     if (url) { currentAudio = new Audio(url); globalAudio.current = currentAudio; currentAudio.play(); }
@@ -4697,7 +4730,7 @@ function renderShadowing(items, onComplete) {
     if (!items[idx].audio) return;
     stopAudio();
     toggleBtn.disabled = true;
-    const url = await getAudioUrl(items[idx].audio);
+    const url = await getAudioUrl(items[idx].audio, getTestConfig(state.test).audioFolderId);
     toggleBtn.disabled = false;
     if (!url) return;
     currentAudio = new Audio(url);

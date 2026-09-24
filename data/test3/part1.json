@@ -1,0 +1,50 @@
+{
+  "test": "T3",
+  "part": 1,
+  "type": "photograph",
+  "note": "音声で読まれる4つの文は本紙に印刷されていないため、statements/statementsJaは別冊解答・解説(p.9-10)から書き起こしたもの。",
+  "questions": [
+    {
+      "number": 1, "audio": "013 T1 Part 1 Q1.mp3", "answer": "A", "image": "images/test3/part1/q1.jpg",
+      "speaker": {"nat":"gb","gender":"W"},
+      "statements": {"A":"The woman is wiping down some outdoor furniture.","B":"The woman is working under an open umbrella.","C":"The woman is sweeping the patio in front of a restaurant.","D":"The woman is dining at a sidewalk café."},
+      "statementsJa": {"A":"女性は屋外の家具をきれいに拭いている。","B":"女性は開いたパラソルの下で作業している。","C":"女性はレストランの前のテラスを掃いている。","D":"女性は歩道のカフェで食事をしている。"},
+      "explanation": "女性は屋外にある椅子の拭き掃除をしている。wipe down ~「~をきれいに拭く」、outdoor「屋外の」、furniture「家具」。\n(B) 女性が掃除している席の奥にはumbrella「パラソル」が写っているが、閉じられた状態である。\n(C) 女性はpatio「テラス」のような所にいるが、掃き掃除をしてはいない。sweep「~を掃く」。\n(D) 料理は写っておらず、女性は食事中ではない。dine「食事をする」、sidewalk café「歩道のカフェ」。"
+    },
+    {
+      "number": 2, "audio": "014 T1 Part 1 Q2.mp3", "answer": "D", "image": "images/test3/part1/q2.jpg",
+      "speaker": {"nat":"ca","gender":"M"},
+      "statements": {"A":"He's fixing a display case.","B":"He's putting an item into a shopping basket.","C":"He's entering a cafeteria.","D":"He's reaching for a beverage."},
+      "statementsJa": {"A":"彼は陳列棚を修理している。","B":"彼は品物を買い物かごに入れているところである。","C":"彼はカフェテリアに入っていくところである。","D":"彼は飲み物を取ろうと手を伸ばしている。"},
+      "explanation": "男性は陳列棚にあるbeverage「飲み物」の方へ右手を伸ばしている。reach for ~「~を取ろうと手を伸ばす」。\n(A) 男性は陳列棚の前にいるが、それを修理してはいない。fix「~を修理する」、display「陳列」。\n(B) 男性はitem「品物」を取ろうとしているが、shopping basket「買い物かご」は持っていない。\n(C) 写真がカフェテリア内の一区画だとしても、男性はそこに入っていくところではない。enter「~に入る」。"
+    },
+    {
+      "number": 3, "audio": "015 T1 Part 1 Q3.mp3", "answer": "A", "image": "images/test3/part1/q3.jpg",
+      "speaker": {"nat":"au","gender":"M"},
+      "statements": {"A":"Some signs are posted in a wooded area.","B":"A metal bench is covered with fallen leaves.","C":"A pile of logs has been stacked next to a firepit.","D":"Some tents have been set up in a forest clearing."},
+      "statementsJa": {"A":"樹木が茂った場所で、幾つかの掲示物が張り出されている。","B":"金属製のベンチが落ち葉で覆われている。","C":"丸太の山が炉の隣に積み上げられている。","D":"森の中の空き地に、幾つかのテントが張られている。"},
+      "explanation": "樹木が茂った場所に掲示板があり、そこに複数のsign「掲示物」が張り出されている。post「~を掲示する、~(掲示物など)を張る」、wooded「樹木が生い茂る」。\n(B) ベンチは写っているが、落ち葉で覆われてはいない。be covered with ~「~で覆われている」。\n(C) 積まれたlog「丸太」やfirepit「炉」は写っていない。pile「山、積み重ね」、stack「~を積み上げる」。\n(D) テントは写っていない。clearing「空き地」。"
+    },
+    {
+      "number": 4, "audio": "016 T1 Part 1 Q4.mp3", "answer": "B", "image": "images/test3/part1/q4.jpg",
+      "speaker": {"nat":"ca","gender":"M"},
+      "statements": {"A":"Some people are watching a bicycle race.","B":"A bicycle has been parked near a tree.","C":"A gardener is planting flowers along a path.","D":"Some people are laying a picnic blanket on the grass."},
+      "statementsJa": {"A":"人々が自転車レースを見ている。","B":"自転車が木のそばに駐輪されている。","C":"庭師が遊歩道沿いに花を植えている。","D":"人々が芝生の上にピクニック用の毛布を敷いている。"},
+      "explanation": "木のそばに、1台の自転車が駐輪されている。〈have[has] been+過去分詞〉は「~された状態である」という意味。park「~を駐車・駐輪する」。\n(A) 座って話している様子の人々は写っているが、自転車レースは行われていない。\n(C) path「遊歩道」沿いに花はあるが、花を植えている庭師は写っていない。gardener「庭師」、plant「~を植える」。\n(D) 人々は皆椅子に腰掛けており、grass「芝生」の上に毛布は見当たらない。lay「~を敷く」。"
+    },
+    {
+      "number": 5, "audio": "017 T1 Part 1 Q5.mp3", "answer": "D", "image": "images/test3/part1/q5.jpg",
+      "speaker": {"nat":"gb","gender":"W"},
+      "statements": {"A":"One of the people is untangling some wires.","B":"One of the people is watering a plant.","C":"One of the people is taking notes on a whiteboard.","D":"One of the people is wearing eyeglasses."},
+      "statementsJa": {"A":"人々のうちの1人はケーブルのもつれをほどいている。","B":"人々のうちの1人は植物に水をやっている。","C":"人々のうちの1人はホワイトボードにメモを取っている。","D":"人々のうちの1人は眼鏡をかけている。"},
+      "explanation": "手前の女性がeyeglasses「眼鏡」をかけている。wear「~を着用している」。\n(A) wire「(通信用などの)ケーブル」らしきものは写っていない。untangle「~のもつれをほどく」。\n(B) テーブルの上に植物が置かれているが、誰も水やりをしているところではない。water「~に水をやる」。\n(C) ホワイトボードは見当たらない。take notes「メモを取る」。"
+    },
+    {
+      "number": 6, "audio": "018 T1 Part 1 Q6.mp3", "answer": "C", "image": "images/test3/part1/q6.jpg",
+      "speaker": {"nat":"us","gender":"W"},
+      "statements": {"A":"There are framed paintings leaning against a table.","B":"There's a filing cabinet next to the wall.","C":"One of the women is speaking on a mobile phone.","D":"Some women are walking through a gate."},
+      "statementsJa": {"A":"額装された絵画がテーブルに立てかけてある。","B":"壁の隣に1台のファイル棚がある。","C":"女性のうちの1人が携帯電話で話している。","D":"女性たちがゲートを通過している。"},
+      "explanation": "中央の1人の女性が右手のmobile phone「携帯電話」で話をしている。\n(A) framed painting「額縁に入った絵画」は壁に掛けられており、テーブルに立てかけてはいない。lean against ~「~にもたれる」。\n(B) 壁の隣に1台のテーブルはあるが、ファイル棚はない。\n(D) 女性たちのそばにgate「門、ゲート」は見当たらない。"
+    }
+  ]
+}
