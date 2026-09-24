@@ -1,0 +1,170 @@
+{
+  "test": "T4",
+  "part": 3,
+  "type": "conversation",
+  "note": "conversationTextは別冊解答・解説から書き起こした会話全文。",
+  "groups": [
+    {
+      "questions": [32, 33, 34],
+      "audioConversation": "185 T2 Part 3 Q32-34 会話.mp3",
+      "audioQuestions": "186 T2 Part 3 Q32-34 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],
+      "conversationText": "M: Thank you for shopping with us today. Before you leave, if you're not a member of the grocery store's loyalty program, would you like to become one?\nW: No, I'm not a member, but I'd consider it. What are the benefits of joining?\nM: Well, you can get discounts and access to limited-time sales promotions if you sign up. There's more information on our Web site.\nW: Hmm. I'll think about it. I'll look into it more when I get home later on.",
+      "items": [
+        { "number": 32, "text": "Who most likely is the woman?", "choices": {"A":"A building inspector","B":"A maintenance worker","C":"A supplier","D":"A customer"}, "answer": "D" },
+        { "number": 33, "text": "What type of benefit does the man mention?", "choices": {"A":"Store discounts","B":"Home delivery","C":"Expedited shipping","D":"Free parking"}, "answer": "A" },
+        { "number": 34, "text": "What will the woman most likely do later?", "choices": {"A":"Order some ingredients","B":"Buy a parking pass","C":"Apply for a job","D":"Visit a Web site"}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [35, 36, 37],
+      "audioConversation": "187 T2 Part 3 Q35-37 会話.mp3",
+      "audioQuestions": "188 T2 Part 3 Q35-37 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],
+      "conversationText": "M: Dr. Lee, I've sent out an e-mail notifying our patients that online scheduling of appointments will be unavailable through Wednesday.\nW: Great. We should also add a statement to our clinic's home page, apologizing for the inconvenience as we update our patient portal. Patients who didn't read your message will see it there.\nM: OK. I'll go ask Sakura Williams to do that now—since she handles the home page messaging. She should still be in her office.",
+      "items": [
+        { "number": 35, "text": "What task did the man complete?", "choices": {"A":"He wrote some prescriptions.","B":"He rescheduled some appointments.","C":"He provided patients with some information.","D":"He responded to some online reviews."}, "answer": "C" },
+        { "number": 36, "text": "What does the woman say should be on a clinic's home page?", "choices": {"A":"An apology statement","B":"Business hours","C":"A doctor's biography","D":"Updated office policies"}, "answer": "A" },
+        { "number": 37, "text": "What will the man do next?", "choices": {"A":"Update patient files","B":"Contact a pharmacy","C":"Submit an order form","D":"Speak with a colleague"}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [38, 39, 40],
+      "audioConversation": "189 T2 Part 3 Q38-40 会話.mp3",
+      "audioQuestions": "190 T2 Part 3 Q38-40 設問.mp3",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"ca","gender":"M"}],
+      "conversationText": "W: Tariq, can you help me with this week's tile-cutting workshop?\nM: Sure. What materials do you need?\nW: Well, this is the third workshop of the series, and we'll be working on complicated cuts. You know, dealing with corners, where plumbing would be placed, and such.\nM: Oh. That's an advanced workshop. How can I help?\nW: In the storage room, there are boxes of old tiles we can use for attendees to practice with. Would you mind getting them?\nM: I can definitely do that.\nW: Great. Thanks!",
+      "items": [
+        { "number": 38, "text": "What will the woman demonstrate during the workshop?", "choices": {"A":"Cutting tile","B":"Painting cabinets","C":"Replacing door locks","D":"Fixing plumbing leaks"}, "answer": "A" },
+        { "number": 39, "text": "What does the man say about the workshop?", "choices": {"A":"It needs to be rescheduled.","B":"It will have a lot of attendees.","C":"It addresses advanced skills.","D":"It is the first one he has helped with."}, "answer": "C" },
+        { "number": 40, "text": "Where will the man go next?", "choices": {"A":"To a hardware shop","B":"To a storage area","C":"To a supervisor's office","D":"To a customer's home"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [41, 42, 43],
+      "audioConversation": "191 T2 Part 3 Q41-43 会話.mp3",
+      "audioQuestions": "192 T2 Part 3 Q41-43 設問.mp3",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],
+      "conversationText": "W: Hongtai, did you submit the reimbursement forms for last week's conference on e-commerce? They're due today.\nM: I was sure there was more time.\nW: I'm glad I checked then. Do you need any help?\nM: Well, what about the car rental rate?\nW: Company policy is to use a standard rate of 40 dollars per day for reimbursement.\nM: Thanks. I'll try to enter everything now.\nW: How about if I e-mail you my form as an example? It'll have all the information you need.",
+      "items": [
+        { "number": 41, "text": "What does the man imply when he says, \"I was sure there was more time\"?", "choices": {"A":"He will check a work calendar.","B":"He has not completed a task.","C":"A project needs a new deadline.","D":"A schedule change is not surprising."}, "answer": "B" },
+        { "number": 42, "text": "What does the man ask about?", "choices": {"A":"A rental rate","B":"A conference schedule","C":"A supplier's name","D":"A client's address"}, "answer": "A" },
+        { "number": 43, "text": "What does the woman offer to do?", "choices": {"A":"Make a copy","B":"Schedule a meeting time","C":"Send a form","D":"Confirm a password"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [44, 45, 46],
+      "audioConversation": "193 T2 Part 3 Q44-46 会話.mp3",
+      "audioQuestions": "194 T2 Part 3 Q44-46 設問.mp3",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"ca","gender":"M"},{"nat":"us","gender":"W"}],
+      "conversationText": "W1: Hello, we wanted to confirm the gate for flight 1226 to New York. Is it still boarding at gate 27? I don't see it on the departure board.\nM: Let me check. Yes, it's at gate 27. There are several flights from this gate before yours, so some aren't displayed on the screen yet.\nW1: OK, thank you. I have another question. My coworker and I both paid for a priority boarding upgrade, but that isn't printed on her boarding pass, only mine.\nW2: Yes, even though I paid an additional fee, my boarding pass doesn't indicate it was upgraded.\nM: That's a known issue with our boarding software. Let me look up your account to confirm your ticket.",
+      "items": [
+        { "number": 44, "text": "Who most likely is the man?", "choices": {"A":"A travel agent","B":"A taxi driver","C":"An airline employee","D":"A security guard"}, "answer": "C" },
+        { "number": 45, "text": "What problem do the women describe?", "choices": {"A":"A pipe is leaking.","B":"A bag was misplaced.","C":"A connection was canceled.","D":"An upgrade has not been added."}, "answer": "D" },
+        { "number": 46, "text": "What will the man do next?", "choices": {"A":"Look up an account","B":"Call for assistance","C":"Check a report","D":"Order replacement items"}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [47, 48, 49],
+      "audioConversation": "195 T2 Part 3 Q47-49 会話.mp3",
+      "audioQuestions": "196 T2 Part 3 Q47-49 設問.mp3",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"ca","gender":"M"}],
+      "conversationText": "W: Tae-Joon, can you come to the conference room? I'd like to get your opinion on some plans. The architect just dropped them off.\nM: Sure! I'm really excited about the new office layout. Right now, we don't have much space for our break room.\nW: Right. We wanted to change that. This new floor plan offers an open concept that will help everyone collaborate on major projects.\nM: I see. But do you think we could close off one of the corners of the office? We could use a private lounge for our breaks.\nW: Hmm. Let me ask the other committee members for opinions before we do anything else.",
+      "items": [
+        { "number": 47, "text": "What does the woman most likely want to discuss?", "choices": {"A":"An office renovation","B":"An upcoming meeting","C":"A holiday party","D":"A new work schedule"}, "answer": "A" },
+        { "number": 48, "text": "What does the man suggest?", "choices": {"A":"Going to lunch","B":"Uploading a program","C":"Hiring a consultant","D":"Changing a plan"}, "answer": "D" },
+        { "number": 49, "text": "What does the woman say she will do?", "choices": {"A":"Speak with an architect","B":"Approve a design","C":"Gather other opinions","D":"Take a break"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [50, 51, 52],
+      "audioConversation": "197 T2 Part 3 Q50-52 会話.mp3",
+      "audioQuestions": "198 T2 Part 3 Q50-52 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],
+      "conversationText": "M: Hi, Kelly. Did you still want to talk about some concerns shoppers have been asking you about?\nW: Yes, specifically customers who order online and pick up their items in our store. Certain products aren't showing up as available on our Web site for customers to purchase—but when I check the shelves, we do have them in stock.\nM: That's not good. Are there any specific products you're aware of?\nW: Um, our large bags of topsoil and Kentucky grass seed. Oh, and uh, red mulch.",
+      "items": [
+        { "number": 50, "text": "Why does the woman want to speak with the man?", "choices": {"A":"To change her work hours","B":"To request a salary increase","C":"To share some feedback","D":"To present a new idea"}, "answer": "C" },
+        { "number": 51, "text": "What does the woman say about a Web site?", "choices": {"A":"It is displaying inventory incorrectly.","B":"It is showing the wrong prices.","C":"It has been updated.","D":"It has some broken links."}, "answer": "A" },
+        { "number": 52, "text": "Where do the speakers most likely work?", "choices": {"A":"At a drug store","B":"At a garden supply store","C":"At a botanical garden","D":"At an equipment manufacturer"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [53, 54, 55],
+      "audioConversation": "199 T2 Part 3 Q53-55 会話.mp3",
+      "audioQuestions": "200 T2 Part 3 Q53-55 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"us","gender":"W"},{"nat":"gb","gender":"M"}],
+      "conversationText": "M1: Sung-Hee, please welcome Yasushi—who I interviewed last week for the assistant property manager position. He'll be a great fit for our team!\nW: Welcome, Yasushi! As the head property manager, I'll be working closely with you. Right now, my primary focus is on drawing up renewal leases for our residents.\nM2: Ah, great. That's something I did at Greenpoint Towers, where I worked previously.\nM1: Perfect! Now, Yasushi, let's go meet the front-office staff, since you'll be in regular communication with them.",
+      "items": [
+        { "number": 53, "text": "What did Yasushi do last week?", "choices": {"A":"He participated in a job interview.","B":"He toured an apartment building.","C":"He purchased some furniture.","D":"He moved to Greenpoint Towers."}, "answer": "A" },
+        { "number": 54, "text": "What task has the woman been working on?", "choices": {"A":"Finding new residents","B":"Contacting potential employees","C":"Remodeling apartments","D":"Preparing leases"}, "answer": "D" },
+        { "number": 55, "text": "Who will Yasushi be introduced to next?", "choices": {"A":"A property owner","B":"The maintenance crew","C":"The office staff","D":"Apartment residents"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [56, 57, 58],
+      "audioConversation": "201 T2 Part 3 Q56-58 会話.mp3",
+      "audioQuestions": "202 T2 Part 3 Q56-58 設問.mp3",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"ca","gender":"M"}],
+      "conversationText": "W: I'm directing a new play for a local theater group, and I'd like to make twenty copies of the script for this play we'll be performing.\nM: Do you have the author's permission to reproduce it?\nW: I actually wrote it myself. See? Here's my ID.\nM: OK. It'll be ten cents per page. Now, how about the binding? We can do staples at no extra charge, or we have some upgraded options.\nW: What about spiral binding?\nM: Sure. If you use the coupon in our mobile application, it's only two dollars extra per script.\nW: I have the app right here on my smartphone.",
+      "items": [
+        { "number": 56, "text": "Who most likely is the woman?", "choices": {"A":"A musician","B":"A publisher","C":"A store manager","D":"A theater director"}, "answer": "D" },
+        { "number": 57, "text": "Why does the woman say, \"I actually wrote it myself\"?", "choices": {"A":"To promote her work","B":"To address a concern","C":"To make a comparison","D":"To request a review"}, "answer": "B" },
+        { "number": 58, "text": "What will the woman most likely do next?", "choices": {"A":"Make use of a coupon","B":"Ask the man to make more copies","C":"Select a different color binding","D":"Delete a mobile application"}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [59, 60, 61],
+      "audioConversation": "203 T2 Part 3 Q59-61 会話.mp3",
+      "audioQuestions": "204 T2 Part 3 Q59-61 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"us","gender":"W"}],
+      "conversationText": "M: Hi, this is Oleg from Waves Restaurant. I'm returning your call about the request you made for a reservation.\nW: Oh, hello. Thanks for getting back to me so quickly.\nM: Sure, no problem. It looks like we can't reserve the outdoor patio for the date you requested. Unfortunately, it'll be undergoing some repairs at that time.\nW: Oh, that's disappointing.\nM: Yes, we're sorry. Now, we do have a small private dining room available upstairs. It would work well for your group size.\nW: OK. Could I still get the reservation for 5:00 P.M.?\nM: No, I'm sorry. But would you be willing to reserve the room for 7:00 P.M.?",
+      "items": [
+        { "number": 59, "text": "Why is the man returning the woman's call?", "choices": {"A":"To follow up on a request","B":"To suggest some meal options","C":"To discuss a payment","D":"To confirm an address"}, "answer": "A" },
+        { "number": 60, "text": "Why is the woman unable to reserve an outdoor patio?", "choices": {"A":"It is not large enough for her group.","B":"It is only available on weekends.","C":"It has been booked already.","D":"It will be closed for repairs."}, "answer": "D" },
+        { "number": 61, "text": "What does the man suggest the woman do?", "choices": {"A":"Contact a different restaurant","B":"Consider some possible changes","C":"Bring in her own caterer","D":"Call again later"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [62, 63, 64],
+      "audioConversation": "205 T2 Part 3 Q62-64 会話.mp3",
+      "audioQuestions": "206 T2 Part 3 Q62-64 設問.mp3",
+      "graphic": "RECORDS OFFICE table: Sheet Cover $2, Standard Shipping $4, Expedited Shipping $10, Electronic Copy $15",
+      "graphicImage": "images/test4/part3/q62-64.jpg",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"gb","gender":"W"}],
+      "conversationText": "M: Good afternoon. I need an official certified copy of my birth certificate, please.\nW: We can do that. When do you need it?\nM: I need it to get a passport for a trip I'm taking later this year. Also, on the application, there's an option for a sheet cover. What is that?\nW: It's a clear, plastic sheet protector for your document.\nM: That would be handy. I'd like to add that.\nW: Great. It'll take five to seven business days. It should be ready for pick up next Friday, but I suggest you call ahead to check that it's here. My number's 555-0101.",
+      "items": [
+        { "number": 62, "text": "What does the man ask for a copy of?", "choices": {"A":"A passport","B":"An academic transcript","C":"An application","D":"A birth certificate"}, "answer": "D" },
+        { "number": 63, "text": "Look at the graphic. What amount will be added to the man's purchase?", "choices": {"A":"$2","B":"$4","C":"$10","D":"$15"}, "answer": "A" },
+        { "number": 64, "text": "What does the woman suggest the man do?", "choices": {"A":"Make a phone call","B":"Submit a payment","C":"Go to a photo studio","D":"Confirm an address"}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [65, 66, 67],
+      "audioConversation": "207 T2 Part 3 Q65-67 会話.mp3",
+      "audioQuestions": "208 T2 Part 3 Q65-67 設問.mp3",
+      "graphic": "Advertising Spending pie chart: 40% Magazines and Newspapers, 25% Social Media, 20% Television, 15% Other Web Sites",
+      "graphicImage": "images/test4/part3/q65-67.jpg",
+      "speakers": [{"nat":"ca","gender":"M"},{"nat":"us","gender":"W"}],
+      "conversationText": "M: So-Jin, I'm concerned about sales of our latest sports drink. The beverage just hasn't become as popular as we'd hoped.\nW: I agree. We need to do something to address the issue. Let's look at where we're currently spending our advertising money.\nM: We've been focusing heavily on newspapers and magazines. Perhaps we should decrease that and put more ad dollars in television?\nW: You make a good point. With television, we could reach more potential customers. I'll call the rest of the team together to brainstorm some different ways to create effective TV commercials.",
+      "items": [
+        { "number": 65, "text": "Where do the speakers most likely work?", "choices": {"A":"At a publishing company","B":"At a farmers market","C":"At a beverage manufacturer","D":"At an athletic clothing company"}, "answer": "C" },
+        { "number": 66, "text": "Look at the graphic. Which percentage will be decreased?", "choices": {"A":"40","B":"20","C":"25","D":"15"}, "answer": "A" },
+        { "number": 67, "text": "What does the woman say she will do?", "choices": {"A":"Create a new account","B":"Speak to the CEO","C":"Order some new products","D":"Organize a team meeting"}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [68, 69, 70],
+      "audioConversation": "209 T2 Part 3 Q68-70 会話.mp3",
+      "audioQuestions": "210 T2 Part 3 Q68-70 設問.mp3",
+      "graphic": "Conference schedule table: Friday Check-in, Friday Dinner, Saturday Keynote speech, Saturday Workshops, Sunday Demonstrations, Monday Checkout",
+      "graphicImage": "images/test4/part3/q68-70.jpg",
+      "speakers": [{"nat":"gb","gender":"W"},{"nat":"au","gender":"M"}],
+      "conversationText": "W: Hi, Pablo. I was looking at the technology conference schedule and it looks like you'll be arriving a day early. Check-in isn't until Friday, but your flight is Thursday.\nM: Oh, I didn't realize. Can we change my flight? I'm really only interested in the events on Sunday anyway.\nW: Let me see. The travel service that books trips for us is usually good with making these types of changes, so it should be fine. I'll let you know.\nM: OK, thank you. Could you please print my tickets later, after you've spoken with the travel service? I always like having paper copies with me, just in case.",
+      "items": [
+        { "number": 68, "text": "What does the woman point out about the man's trip?", "choices": {"A":"He will use a local airline.","B":"He will have a layover.","C":"He will arrive early.","D":"He will stay at a new hotel."}, "answer": "C" },
+        { "number": 69, "text": "Look at the graphic. Which event is the man's priority?", "choices": {"A":"Dinner","B":"Keynote speech","C":"Workshops","D":"Demonstrations"}, "answer": "D" },
+        { "number": 70, "text": "What will the woman most likely prepare for the man later?", "choices": {"A":"A revised shipping label","B":"Some printed tickets","C":"A hotel voucher","D":"Some tourist brochures"}, "answer": "B" }
+      ]
+    }
+  ]
+}

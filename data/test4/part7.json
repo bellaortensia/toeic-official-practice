@@ -1,0 +1,219 @@
+{
+  "test": "T4",
+  "part": 7,
+  "type": "reading_comprehension",
+  "passages": [
+    {
+      "questions": [147, 148],
+      "audio": "266 特典 T2 Part 7 Q147-148.mp3",
+      "topic": "invoice",
+      "documents": [
+        { "label": "invoice", "image": "images/test4/part7/q147-148.jpg", "text": "Invoice Number 1502\nCranford Lee Design, Inc.\n21 Blossom Valley Road\nDURHAM\nDD8 6NJ\n\nCustomer: Raibin Paper Company\n9388 Victoria Street\nCHESTER\nCH1 2AF\nAttention: Nigel Anderson, Purchasing Manager\n\nDate: 17 November\n\nItem | Quantity | Unit Price | Total Price\nComputer desk with bookshelf | 5 | £800 | £4,000\nAdjustable-height office chair | 5 | £250 | £1,250\nWooden bookcase | 2 | £300 | £600\nSubtotal | | | £5,850\nDelivery and assembly | | | £150\nTotal | | | £6,000\n\nPaid in full: 10 November, cheque number 1496\nNOTES: All products were assembled at the customer's office building." }
+      ],
+      "items": [
+        { "number": 147, "text": "What type of items did Mr. Anderson order?", "choices": {"A":"Furniture","B":"Stationery","C":"Computers","D":"Books"}, "answer": "A" },
+        { "number": 148, "text": "What does the invoice suggest about the items?", "choices": {"A":"They were sold at a discounted price.","B":"They were bought for use in an office.","C":"They were delivered to 21 Blossom Valley Road.","D":"They were paid for by credit card."}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [149, 150, 151],
+      "audio": "267 特典 T2 Part 7 Q149-151.mp3",
+      "topic": "article",
+      "documents": [
+        { "label": "article", "image": "images/test4/part7/q149-151.jpg", "text": "Hanson Press Announces Acquisition\n\nLONDON (6 September)—Publishing giant Hanson Press yesterday announced that it had successfully acquired Cassidy Books, a well-regarded publisher of trade books. While Hanson has been a force in university textbook publishing for more than 25 years, its latest expansion is expected to solidify its presence in the general readership market.\n\nOver the past five years, Hanson acquired British trade book publishers Wingate Press and Pelagornis Publishing. However, the addition of Cassidy Books holds special significance. \"Cassidy has a huge market in the United States and a large presence in Canada,\" said Hanson's CEO, Ravinder Kachru. \"Not only will this give us a foothold in North America, it will also increase our visibility as an academic publisher.\"\n\nAmongst Cassidy's most notable titles is Spencer Blackhorse's bestselling memoir Whispers, which chronicles his childhood in a remote part of Alaska. Cassidy has also discovered emerging talents like Shannon Oliver, known for her gripping thrillers, and romance novelist Lilli Gu." }
+      ],
+      "items": [
+        { "number": 149, "text": "What is indicated about Hanson Press?", "choices": {"A":"It was founded five years ago.","B":"It publishes academic books.","C":"It recently moved its offices to London.","D":"It merged with another publisher last year."}, "answer": "B" },
+        { "number": 150, "text": "According to Mr. Kachru, why is Hanson Press's newest acquisition important?", "choices": {"A":"It strengthens the relationship between Hanson Press and the authors.","B":"It will make Hanson Press the largest publisher in Europe.","C":"It expands Hanson Press's reach into North America.","D":"It enables Hanson Press to hire additional staff."}, "answer": "C" },
+        { "number": 151, "text": "What is indicated about Mr. Blackhorse?", "choices": {"A":"He grew up in Alaska.","B":"He writes romance novels.","C":"He wrote a book with Ms. Oliver.","D":"He won an award for Whispers."}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [152, 153],
+      "audio": "268 特典 T2 Part 7 Q152-153.mp3",
+      "topic": "text-message chain",
+      "documents": [
+        { "label": "text-message chain", "image": "images/test4/part7/q152-153.jpg", "text": "Minyuan Deng [9:12 P.M.]\nHi Charlene. Are you still in the library, by any chance?\n\nCharlene Tillman [9:13 P.M.]\nI just locked up. Do you need something?\n\nMinyuan Deng [9:14 P.M.]\nI forgot to tell you that since it's the day before a holiday, we have to change the library voicemail message.\n\nCharlene Tillman [9:15 P.M.]\nOh, that's right! The regular message says we open tomorrow at 8:00.\n\nMinyuan Deng [9:16 P.M.]\nI'm sorry I didn't remind you earlier.\n\nCharlene Tillman [9:17 P.M.]\nThat's fine, Minyuan. I'll see to it. Have a good evening.\n\nMinyuan Deng [9:18 P.M.]\nYou as well, Charlene. And thank you for taking my daily 4:00 P.M. shift today. I appreciate it and am happy to return the favor." }
+      ],
+      "items": [
+        { "number": 152, "text": "At 9:17 P.M., what does Ms. Tillman most likely mean when she writes, \"I'll see to it\"?", "choices": {"A":"She will check that the library doors are locked.","B":"She will post a holiday greeting on the library's Web site.","C":"She will change a voicemail message.","D":"She will send Ms. Deng a reminder e-mail."}, "answer": "C" },
+        { "number": 153, "text": "What is suggested about Ms. Deng?", "choices": {"A":"She usually starts work in the library in the afternoon.","B":"She is responsible for opening the library in the morning.","C":"She forgot that the library will be closed tomorrow.","D":"She recently did Ms. Tillman a favor."}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [154, 155],
+      "audio": "269 特典 T2 Part 7 Q154-155.mp3",
+      "topic": "e-mail",
+      "documents": [
+        { "label": "e-mail", "image": "images/test4/part7/q154-155.jpg", "text": "To: Isabel Koffler <ikoffler@allmail.com>\nFrom: Kerstin Eklund <kerstineklund@litowtreecare.com>\nDate: July 25\nSubject: RE: Tree job query\nAttachment: Estimate\n\nDear Ms. Koffler,\n\nThank you for contacting Litow Tree Care about the work you need done. We would gladly remove the 20-meter oak tree on your property and trim your hickory trees.\n\nYou also asked if we could cut a section from the oak tree so you can turn it into a dining room table. We should be able to, but we need to see your tree first. As you noticed in the reviews on our website, we have done that for several customers.\n\nUnfortunately, we are already booked on the day you requested, Monday, July 30. However, we can schedule your job for July 31 or August 1. If the attached estimate is acceptable, please call me at 757-555-0111 to confirm your preferred date.\n\nSincerely,\n\nKerstin Eklund" }
+      ],
+      "items": [
+        { "number": 154, "text": "What is one purpose of the e-mail?", "choices": {"A":"To thank Ms. Koffler for a referral","B":"To ask Ms. Koffler to write a review","C":"To confirm receipt of a revised estimate","D":"To arrange a date for a job to start"}, "answer": "D" },
+        { "number": 155, "text": "What does Ms. Koffler want to do with the oak tree?", "choices": {"A":"Plant some bushes near it","B":"Trim some of its larger branches","C":"Use its wood to make a piece of furniture","D":"Sell it to a lumber business"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [156, 157],
+      "audio": "270 特典 T2 Part 7 Q156-157.mp3",
+      "topic": "e-mail",
+      "documents": [
+        { "label": "e-mail", "image": "images/test4/part7/q156-157.jpg", "text": "*E-mail*\nTo: rose.matro@mymail.com\nFrom: customerservice@sitright.com\nDate: May 7\nSubject: Thank you!\n\nDear Ms. Matro,\n\nThank you for purchasing a Sit Right sofa. It will arrive at your home between 9 A.M. and 12:00 noon on May 15. We are confident it will bring you many hours of relaxation and joy. We also hope your experience will support our mission to provide quality comfort at an affordable price.\n\nAs a token of our appreciation, we are delighted to offer you an exclusive 15 percent discount on your next order of one or more items from our online store. As you may know, our virtual catalog includes armchairs, loveseats, decorative pillows, area rugs, and much more. To obtain your discount, simply enter the code MATRO15 at checkout.\n\nAgain, thank you for your business.\n\nSincerely,\n\nJuro Tada\nCustomer Service Specialist" }
+      ],
+      "items": [
+        { "number": 156, "text": "What is suggested about the sofa Ms. Matro bought?", "choices": {"A":"It will arrive later than expected.","B":"It comes with a set of decorative pillows.","C":"It was purchased on May 15.","D":"It is reasonably priced."}, "answer": "D" },
+        { "number": 157, "text": "What is indicated about a code?", "choices": {"A":"It can be used only in person.","B":"It can be used to purchase multiple items.","C":"It can be transferred to a relative or friend.","D":"It is valid for May only."}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [158, 159, 160],
+      "audio": "271 特典 T2 Part 7 Q158-160.mp3",
+      "topic": "notice",
+      "documents": [
+        { "label": "notice", "image": "images/test4/part7/q158-160.jpg", "text": "Attention Bellamy Office Tower Tenants and Staff\n\nBeginning Monday, November 11, and through the end of the month, the mosaic fountains in the lobby area will be repaired and retiled. — [1] —. Most of the work will be done outside of regular business hours. — [2] —.\n\nWhile the project is ongoing, please enter and exit the building through the rear doors rather than the front doors. — [3] —. Also, please refrain from using the lobby to socialize or make phone calls until the repairs and retiling are finished. — [4] —. The work on the fountains is expected to be done by December 1.\n\nIf you have any questions or concerns, e-mail facilities@bellamy.com. Thank you in advance for your cooperation.\n\nRicardo Nieves, Facilities Manager\nBellamy Office Tower" }
+      ],
+      "items": [
+        { "number": 158, "text": "What is one purpose of the notice?", "choices": {"A":"To report a water leak","B":"To share a project schedule","C":"To discuss a lobby expansion plan","D":"To announce the installation of some fountains"}, "answer": "B" },
+        { "number": 159, "text": "What are readers of the notice asked to do?", "choices": {"A":"Use a back entrance","B":"Use a different parking area","C":"Work late if necessary","D":"Submit their design ideas"}, "answer": "A" },
+        { "number": 160, "text": "In which of the positions marked [1], [2], [3], and [4] does the following sentence best belong?\n\"Instead, consider using the lounge on the tenth floor.\"", "choices": {"A":"[1]","B":"[2]","C":"[3]","D":"[4]"}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [161, 162, 163, 164],
+      "audio": "272 特典 T2 Part 7 Q161-164.mp3",
+      "topic": "job posting",
+      "documents": [
+        { "label": "job posting", "image": "images/test4/part7/q161-164.jpg", "text": "Main Attraction Cinema, an innovative entertainment complex with venues across New Mexico that offers customers dinner and a movie under one roof, is seeking to fill the following positions at its Albuquerque location.\n\nNight manager: Oversees operations, trains and manages staff, coordinates schedules, addresses customer inquiries, and promotes a professional and courteous atmosphere. At least two years of relevant experience is required.\n\nChef: Cooks a variety of dishes, ensuring quality and consistency. Collaborates with kitchen staff to develop new recipes and seasonal menus. A culinary degree or equivalent experience is required.\n\nProjectionist: Operates and maintains projectors and ensures that movies start on time and play without issues. Detail-oriented job seekers with a passion for film are encouraged to apply. Will train the right candidate.\n\nFloor employee: Sells tickets, seats attendees, works the concession stand, and cleans auditoriums between films, among other tasks.\n\nMain Attraction Cinema offers competitive pay, discounts on tickets and food, and advancement opportunities. Visit www.mainattractioncinema.com/careers to apply." }
+      ],
+      "items": [
+        { "number": 161, "text": "What is suggested about Main Attraction Cinema?", "choices": {"A":"It has more than one location.","B":"It hosts a seasonal film festival.","C":"It offers discounts to students.","D":"It serves lunch every day."}, "answer": "A" },
+        { "number": 162, "text": "In paragraph 2, line 2, the word \"atmosphere\" is closest in meaning to", "choices": {"A":"personality","B":"setting","C":"height","D":"influence"}, "answer": "B" },
+        { "number": 163, "text": "What is suggested about the projectionist job opening?", "choices": {"A":"It does not begin until next month.","B":"It involves creating movie schedules.","C":"It does not require experience.","D":"It is part-time."}, "answer": "C" },
+        { "number": 164, "text": "What do a night manager and a floor employee have in common?", "choices": {"A":"Both receive free food during their shifts.","B":"Both provide training.","C":"Both are paid on an hourly basis.","D":"Both interact with customers."}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [165, 166, 167, 168],
+      "audio": "273 特典 T2 Part 7 Q165-168.mp3",
+      "topic": "online chat discussion",
+      "documents": [
+        { "label": "online chat discussion", "image": "images/test4/part7/q165-168.jpg", "text": "Charu Aiyar [11:32 A.M.] Hello, Jack and Marcia. I wanted to update you on the search for delivery drivers. I just hired two new people for our Hilltown location. Since I won't be there this week, I'll need your assistance.\n\nJack Plebani [11:34 A.M.] When will the new hires start?\n\nCharu Aiyar [11:35 A.M.] One of them, James Hesney, can start tomorrow. The other, Luke Pfaff, will start on Friday.\n\nMarcia Berk [11:35 A.M.] Excellent.\n\nCharu Aiyar [11:36 A.M.] Can you keep them busy at the restaurant between deliveries? Their shift is noon till 8 or 9 P.M. Wednesday through Sunday, so there will be some slow times.\n\nMarcia Berk [11:36 A.M.] They could fold pizza boxes. I like having all the boxes ready before the dinner rush hour.\n\nJack Plebani [11:37 A.M.] Additionally, they can take telephone orders and take out the trash.\n\nCharu Aiyar [11:37 A.M.] I'll also ask them to sweep the kitchen floors throughout the day. Jack, can you start training James tomorrow? Marcia, could you start Luke's training on Friday?\n\nJack Plebani [11:38 A.M.] Sure. Let's also enroll them in a basic food-handling certificate course. Having that certification would allow them to prepare sauce and dough when needed. This would give me more time to assemble salads and pasta dishes.\n\nMarcia Berk [11:39 A.M.] I've got a planned day off.\n\nCharu Aiyar [11:40 A.M.] Oh, right. I forgot.\n\nJack Plebani [11:40 A.M.] I'll do it, then. No problem." }
+      ],
+      "items": [
+        { "number": 165, "text": "What is suggested about the restaurant?", "choices": {"A":"It accepts telephone orders.","B":"It recycles pizza boxes.","C":"It closes at 8:00 P.M.","D":"It serves pizzas exclusively."}, "answer": "A" },
+        { "number": 166, "text": "What is one thing Mr. Hesney and Mr. Pfaff will do when they are not making deliveries?", "choices": {"A":"Order supplies","B":"Fold napkins","C":"Make salads","D":"Clean floors"}, "answer": "D" },
+        { "number": 167, "text": "What will most likely happen tomorrow?", "choices": {"A":"Vacation requests will be reviewed.","B":"A training program will begin.","C":"A shipment of unfolded pizza boxes will arrive.","D":"Some servers will learn how to make pizza sauce."}, "answer": "B" },
+        { "number": 168, "text": "At 11:39 A.M., what does Ms. Berk most likely mean when she writes, \"I've got a planned day off\"?", "choices": {"A":"She forgot to tell Ms. Aiyar about her schedule.","B":"She has not taken a vacation day in a long time.","C":"She cannot train anyone on Friday.","D":"She will find someone else to make dough on Friday."}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [169, 170, 171],
+      "audio": "274 特典 T2 Part 7 Q169-171.mp3",
+      "topic": "article",
+      "documents": [
+        { "label": "article", "image": "images/test4/part7/q169-171.jpg", "text": "Mini-Museums on the Rise\nBy Erika Eaton\n\nJACKSON (January 4)—Known for its large collection of culturally significant artifacts, the Haywood Museum is partnering with several municipalities throughout the Haywood Mountain region to open satellite locations. — [1] —. The first 5,000-square-meter \"mini-museum\" is set to open this May in Jackson. According to Haywood Museum Director Thaddeus Lopez, three more mini-museums are planned. — [2] —.\n\nSpeaking at Tuesday's groundbreaking ceremony in Jackson, Lopez said the mini-museums are part of the Haywood Museum's broader goal to enhance the public's appreciation of local history. — [3] —. \"Our exhibits and programming seek to honor our ancestors in ways that are authentic and interactive,\" Lopez told about 40 onlookers, including Jackson Mayor Max Wu.\n\nIn addition to building mini-museums, the Haywood Museum has hired Mollie Finley of Merriweather University to record, analyze, and organize oral histories of longtime members of the Haywood community. — [4] —. To nominate someone to share their story for Ms. Finley's project, please visit www.haywoodmuseum.org." }
+      ],
+      "items": [
+        { "number": 169, "text": "What is NOT mentioned as a goal of the Haywood Museum?", "choices": {"A":"Making oral histories available on its Web site","B":"Exposing more people to its exhibits","C":"Creating several smaller museums","D":"Collecting stories from local residents"}, "answer": "A" },
+        { "number": 170, "text": "Who is Ms. Finley?", "choices": {"A":"The director of a mini-museum","B":"A newspaper reporter","C":"The mayor of a small town","D":"A historical researcher"}, "answer": "D" },
+        { "number": 171, "text": "In which of the positions marked [1], [2], [3], and [4] does the following sentence best belong?\n\"The recordings will be converted into virtual reality experiences for visitors to enjoy.\"", "choices": {"A":"[1]","B":"[2]","C":"[3]","D":"[4]"}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [172, 173, 174, 175],
+      "audio": "275 特典 T2 Part 7 Q172-175.mp3",
+      "topic": "brochure",
+      "documents": [
+        { "label": "brochure", "image": "images/test4/part7/q172-175.jpg", "text": "Bright Beach Lodge on the North Coast\n\nThe North Coast is well known for its sandy beaches and clear blue waters, but it also offers plenty to see and do beyond the shore. Every summer weekend, tourists flock to the area for festivals celebrating local food and music. Nature lovers can also explore Great Gramble Forest, a national park popular for hiking. Kayaks and bicycles are available to rent at Bright Beach Lodge.\n\nBright Beach Lodge offers guests a relaxing stay just steps from the beach. Our suites include a private bathtub and a stunning ocean view. Guests staying in one of our cozy cabins will enjoy a fully equipped kitchen and a private porch.\n\nAll rooms include access to our amenities, including a private beach, two playgrounds, a shared fire pit, and benches with scenic views. Fishing equipment and kayaks are available to rent separately.\n\nBright Beach Lodge is open from May 15 through October 15. Thank you for considering us for your next getaway!" }
+      ],
+      "items": [
+        { "number": 172, "text": "What does the brochure indicate about the North Coast?", "choices": {"A":"It has several famous restaurants.","B":"It is located at the base of a mountain.","C":"It is a popular tourist destination.","D":"It hosts an annual fireworks display."}, "answer": "C" },
+        { "number": 173, "text": "What activity at Great Gramble Forest is mentioned?", "choices": {"A":"Boating","B":"Camping","C":"Bicycling","D":"Hiking"}, "answer": "D" },
+        { "number": 174, "text": "What is included in Bright Beach Lodge's daily rate?", "choices": {"A":"Fire pit access","B":"Fishing equipment","C":"Kayaks and paddles","D":"Exercise machines"}, "answer": "A" },
+        { "number": 175, "text": "What is suggested about Bright Beach Lodge?", "choices": {"A":"It is open year-round.","B":"It welcomes families with young children.","C":"It plans to build additional cabins.","D":"It has a lake on the property."}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [176, 177, 178, 179, 180],
+      "audio": ["276 特典 T2 Part 7 Q176-180.mp3", "277 特典 T2 Part 7 Q176-180.mp3"],
+      "topic": "e-mail and invoice",
+      "documents": [
+        { "label": "e-mail", "image": "images/test4/part7/q176-180-doc1.jpg", "text": "To: Makoto Aoki\nFrom: Jin-Sook Min\nDate: January 15\nSubject: Microeconomics conference\n\nHello, Dr. Aoki,\n\nI booked hotel rooms for the six speakers who are coming to town for next month's microeconomics conference. All will fly in on Friday, February 17, and most will fly home the Sunday after the conference. One speaker is staying for four nights because Dr. Lam asked her to discuss her research with his Tuesday morning microeconomics class.\n\nPlease confirm that I have associated the speakers' hotel expenses with the correct account numbers.\n\nExpense | Total | Fund Description | Account Number\nSix hotel rooms, Friday–Sunday (two nights) | $1,560.00 | Conference fund | 73546\nOne hotel room, Sunday–Tuesday (two nights) | $260.00 | Dr. Lam's seminar fund | 09485\n\nI'll send you invoices for all conference expenses by March 1.\n\nThank you,\nJin-Sook Min" },
+        { "label": "invoice", "image": "images/test4/part7/q176-180-doc2.jpg", "text": "Scarlet State University Hotel, 1 University Blvd., Yorkbridge, KY 41402\n\nBusiness center open daily, 6 A.M.–10 P.M.\nFree airport shuttle service departs every two hours, 6:00 A.M.–midnight.\n\nCheckout date: February 21\nGuest name: Dr. Layla Riggs\nBill to: Scarlet State University Department of Economics (Attention: Jin-Sook Min)\n\nDescription | Quantity | Rate | Amount\nHotel room | Four nights | $130.00/night | $520.00\nPrinting charges | 40 pages | $0.25/page | $10.00\nTotal | | | $530.00" }
+      ],
+      "items": [
+        { "number": 176, "text": "What is one purpose of the e-mail?", "choices": {"A":"To request receipts from conference speakers","B":"To ask Dr. Aoki about a schedule change","C":"To inform Dr. Aoki about a set of hotel reservations","D":"To confirm the topic of a conference"}, "answer": "C" },
+        { "number": 177, "text": "In the e-mail, the word \"associated\" in paragraph 2, line 1, is closest in meaning to", "choices": {"A":"linked","B":"decided","C":"socialized","D":"communicated"}, "answer": "A" },
+        { "number": 178, "text": "What amount will be covered by Dr. Lam's budget?", "choices": {"A":"$130.00","B":"$260.00","C":"$530.00","D":"$1,560.00"}, "answer": "B" },
+        { "number": 179, "text": "What is indicated about Dr. Riggs?", "choices": {"A":"She arrived in Yorkbridge on Tuesday.","B":"She shared a room with Ms. Min.","C":"She was invited to apply for a job at Scarlet State University.","D":"She spoke to a group of students at Scarlet State University."}, "answer": "D" },
+        { "number": 180, "text": "According to the invoice, what did Dr. Riggs do during her hotel stay?", "choices": {"A":"She requested a larger room.","B":"She used the laundry facility.","C":"She ordered room service.","D":"She printed some documents."}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [181, 182, 183, 184, 185],
+      "audio": ["278 特典 T2 Part 7 Q181-185.mp3", "279 特典 T2 Part 7 Q181-185.mp3"],
+      "topic": "advertisement and e-mail",
+      "documents": [
+        { "label": "advertisement", "image": "images/test4/part7/q181-185-doc1.jpg", "text": "APPLIANCE GROVE ANNUAL DISCOUNT SALE - October 1-31\n\nWe are clearing out our inventory to make room for next year's models!\n\nSave 25 percent on select refrigerators, dishwashers, washing machines, and dryers. Visit us in Louisville, Lexington, Owensboro, or at our latest location in Covington.\n\nStore credit is available to qualifying buyers who make a small down payment followed by monthly installments. There is no interest on purchases paid in full within six months.\n\nFree delivery and low fees for installation of your new appliance and disposal of your old one!" },
+        { "label": "e-mail", "image": "images/test4/part7/q181-185-doc2.jpg", "text": "To: Bradley McDonald <mcdonald@appliancegrove.com>\nFrom: Mark Li <mark.li@futuremail.com>\nDate: October 29\nSubject: Ayana Dawson\n\nDear Mr. McDonald,\n\nWith my old washer nearing the end of its usefulness, I visited your new store yesterday hoping to buy one of your discounted machines. Unfortunately, only two models were available during my visit, and neither was suitable. After hearing my predicament, one of your sales representatives, Ms. Ayana Dawson, offered to help and directed me to a catalog of next year's models. She also showed me a video describing Expertize's heavy-duty, large-capacity washer. This machine perfectly meets my needs! Regrettably, it won't arrive until mid-November. Rather than push for an immediate sale or let me leave the store disappointed, Ms. Dawson reminded me that since my current washer isn't broken, I could probably use it until the Expertize washer becomes available. Additionally, she told me about Appliance Grove's store credit program, for which I applied and was instantly approved.\n\nI couldn't be happier with the service and personal attention I received in your store.\n\nSincerely,\n\nMark Li" }
+      ],
+      "items": [
+        { "number": 181, "text": "What is indicated about Appliance Grove's 25 percent discount sale?", "choices": {"A":"It ends in mid-November.","B":"It takes place twice a year.","C":"It will create needed floor space.","D":"It applies to everything in the store."}, "answer": "C" },
+        { "number": 182, "text": "According to the advertisement, what does Appliance Grove offer?", "choices": {"A":"A discounted price on ovens","B":"Free samples of laundry detergent","C":"Low-cost delivery service","D":"Interest-free payment plans"}, "answer": "D" },
+        { "number": 183, "text": "Why did Mr. Li send the e-mail?", "choices": {"A":"To complain about an item he purchased","B":"To praise an employee","C":"To inquire about a lost credit card","D":"To give feedback about an advertising campaign"}, "answer": "B" },
+        { "number": 184, "text": "Where did Mr. Li meet Ms. Dawson?", "choices": {"A":"In Louisville","B":"In Lexington","C":"In Owensboro","D":"In Covington"}, "answer": "D" },
+        { "number": 185, "text": "What is most likely true about Mr. Li?", "choices": {"A":"He will contact Mr. McDonald again next month.","B":"He made a down payment on the Expertize washer.","C":"He will try to sell his current washer.","D":"He will view a video about Expertize appliances at home."}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [186, 187, 188, 189, 190],
+      "audio": ["280 特典 T2 Part 7 Q186-190.mp3", "281 特典 T2 Part 7 Q186-190.mp3", "282 特典 T2 Part 7 Q186-190.mp3"],
+      "topic": "e-mail, invoice, and newsletter",
+      "documents": [
+        { "label": "e-mail", "image": "images/test4/part7/q186-190-doc1.jpg", "text": "To: inquiries@escapemode.co.uk\nFrom: dhutchins@hamptonfarms.co.uk\nDate: 12 January\nSubject: Playground renovations\n\nHello. I am the facilities manager at Hampton Farms Estate in Bostwick. I oversee the updates of some shared spaces on our property, including replacing most of our playground equipment.\n\nI was referred by my counterpart at Crestview Village, Feng Tao. The project at Crestview Village included many of the same features we are looking for, though we would like a bigger splash pad. Could you please call me at 079 5555 6004 at your earliest convenience? I would like to discuss your timeline and warranty, among other things. Ideally, we would like to see a design proposal by mid-March and have the work completed prior to 1 June.\n\nBest wishes,\n\nDelia Hutchins" },
+        { "label": "invoice", "image": "images/test4/part7/q186-190-doc2.jpg", "text": "Escape Mode, Inc.\n\nProject: Hampton Farms\nInstallation completed: 14 May\nPayment due: 31 May\n\nItem number/Name | Description | Ages | Price\n042/Sunny Heights (house theme) | Stairs, double slides, windows, doors | 3–12 | £9,000\n006/Tilley's Tracks (train theme) | Slides, gears, wheels | 2–8 | £8,800\n015/Daisy's Cool Zone | Splash pad | 2–adult | £6,200\n011/Explorer's Post | Climbing wall with nets, grips and footholds | 5–adult | £4,100\n\nSubtotal: £28,100\nVAT (20%): £5,620\nGrand total: £33,720\n\nAll prices include delivery and installation." },
+        { "label": "newsletter", "image": "images/test4/part7/q186-190-doc3.jpg", "text": "Hampton Farms Newsletter, 15 June\nVolume 9, Issue 6\n\nJust in time for summer, Hampton Farms has reopened its enhanced recreational spaces. At the east playground, adjacent to the swimming pool, you will find Tilley's Tracks and Explorer's Post play structures. On the west playground, children can enjoy the Sunny Heights play structure and Daisy's Cool Zone, a splash pad that can accommodate up to 20 people at once. Swing sets and sandboxes in both playgrounds were unchanged, although new mulch was added as needed. The rotting wooden benches and picnic tables at both playground areas have been replaced with sturdier versions made from recycled plastic. What's more, you'll find more chairs and umbrellas at the poolside. We hope these upgrades will delight residents and their guests." }
+      ],
+      "items": [
+        { "number": 186, "text": "What is the purpose of the e-mail?", "choices": {"A":"To initiate a business relationship","B":"To change a deadline for delivery","C":"To confirm the date of a tour","D":"To extend a product warranty"}, "answer": "A" },
+        { "number": 187, "text": "What is indicated about Mr. Tao?", "choices": {"A":"He is a resident of Hampton Farms.","B":"He has children under age twelve.","C":"He works as a facilities manager.","D":"He was referred to Escape Mode, Inc., by Ms. Hutchins."}, "answer": "C" },
+        { "number": 188, "text": "Where in Hampton Farms was item number 011 installed?", "choices": {"A":"On the swimming pool deck","B":"In the middle of the picnic area","C":"At the east playground","D":"At the west playground"}, "answer": "C" },
+        { "number": 189, "text": "What can be concluded about Crestview Village?", "choices": {"A":"It has three playgrounds.","B":"It does not have a swimming pool.","C":"Its outdoor furniture was manufactured in Bostwick.","D":"Its splash pad accommodates fewer than twenty people."}, "answer": "D" },
+        { "number": 190, "text": "What does the newsletter indicate about Hampton Farms?", "choices": {"A":"It has more sandboxes than swing sets.","B":"It removed some old benches.","C":"It will reopen its recreational spaces in July.","D":"It did not need to add any mulch this year."}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [191, 192, 193, 194, 195],
+      "audio": ["283 特典 T2 Part 7 Q191-195.mp3", "284 特典 T2 Part 7 Q191-195.mp3", "285 特典 T2 Part 7 Q191-195.mp3"],
+      "topic": "advertisement, review, and e-mail",
+      "documents": [
+        { "label": "advertisement", "image": "images/test4/part7/q191-195-doc1.jpg", "text": "Time Wise Payroll Software\n\nElevate your small business with Time Wise, the all-in-one time sheet and payroll management system. Tailored for small businesses and designed to simplify your workflow, the Time Wise app provides automated payroll processing and customizable reports. With Time Wise's user-friendly interface and robust support system, tracking employees' work hours and ensuring accurate, timely payroll disbursements has never been easier. To stay competitive, Time Wise has not changed its subscription rate since the software was rolled out. The basic monthly cost is still just $35 plus $6 per employee. In celebration of our fifth anniversary, new customers get a 10 percent discount on their first-month charges if they subscribe during May. Please visit www.timewise.com/subscribe for details." },
+        { "label": "review", "image": "images/test4/part7/q191-195-doc2.jpg", "text": "TECH REVIEW TODAY\n\nPosted by/Job title: Andrew Klossner, Office Manager, Redmond Printing\n\nProduct reviewed: Time Wise Payroll Software\n\nDate posted: May 23\n\nE-mail address (optional): a.klossner@redmondprinting.com\n\nMy company, Redmond Printing, purchased the Time Wise software earlier this month specifically because it is geared toward businesses of our size. It is reasonably priced, has various useful features, and is easy to install. Initially, though, I had a problem uploading personnel data from our old system. When I contacted the Time Wise support staff for help using the app's live chat feature, they responded quickly and resolved the issue within minutes. My only frustration is with the program's periodic maintenance procedures, which disrupt round-the-clock access to time sheet data." },
+        { "label": "e-mail", "image": "images/test4/part7/q191-195-doc3.jpg", "text": "To: Andrew Klossner <a.klossner@redmondprinting.com>\nFrom: Femke Haagsma <femke.haagsma@timewise.com>\nDate: May 25\nSubject: Time Wise\n\nDear Mr. Klossner,\n\nThank you for signing up for Time Wise! We are committed to providing a seamless experience for our customers, and we apologize that your introduction to our platform has not been as smooth as we had hoped. As a gesture of appreciation, we will apply our anniversary special to your company for an additional six months.\n\nRest assured—we are working hard to reduce the number and length of downtime periods. I hope you will reassess our service and consider updating your testimonial in the near future.\n\nSincerely,\n\nFemke Haagsma\n\nTime Wise Customer Support" }
+      ],
+      "items": [
+        { "number": 191, "text": "What does the advertisement suggest about Time Wise?", "choices": {"A":"It is the newest payroll system on the market.","B":"It is the world's highest-rated payroll system.","C":"It is available in versions for both small and large companies.","D":"It is easy to use."}, "answer": "D" },
+        { "number": 192, "text": "What is true about Redmond Printing?", "choices": {"A":"It is owned by Mr. Klossner.","B":"It is a small business.","C":"It does print jobs for Tech Review Today.","D":"It doubled its staff in May."}, "answer": "B" },
+        { "number": 193, "text": "According to the review, what aspect of Time Wise is Mr. Klossner dissatisfied with?", "choices": {"A":"Its data-import procedure","B":"Its sign-up process","C":"Its maintenance schedule","D":"Its live chat feature"}, "answer": "C" },
+        { "number": 194, "text": "What does Ms. Haagsma offer to do for Mr. Klossner?", "choices": {"A":"Reduce his monthly charges for a limited time","B":"Ask a technician to check his database","C":"Offer a free training session to his team","D":"Arrange for him to receive a refund"}, "answer": "A" },
+        { "number": 195, "text": "What does Ms. Haagsma want Mr. Klossner to do?", "choices": {"A":"Change his mind about canceling his subscription","B":"Tell others about Time Wise's benefits","C":"Try all of Time Wise's features","D":"Revise his product review"}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [196, 197, 198, 199, 200],
+      "audio": ["286 特典 T2 Part 7 Q196-200.mp3", "287 特典 T2 Part 7 Q196-200.mp3", "288 特典 T2 Part 7 Q196-200.mp3"],
+      "topic": "advertisement, e-mail, and profile",
+      "documents": [
+        { "label": "advertisement", "image": "images/test4/part7/q196-200-doc1.jpg", "text": "Looking for an Apartment? Check Out Moonstone Properties\n\nMoonstone Properties opened its first apartment complex in New York City twenty years ago and later expanded into Philadelphia and Pittsburgh. This December, we are opening our fourth Moonstone apartment complex in Baltimore.\n\nConveniently located at 2 James Street, the complex is a short walk to a public park, grocery store, library, and bus stop. Each of our four buildings has a fitness center and community room.\n\nBuilding 1: Next door to the Floral Café. Bicycle storage room.\n\nBuilding 2: Rooftop vegetable garden. Next to Finlay Park.\n\nBuilding 3: River view. Private balconies.\n\nBuilding 4: Close to a playground. Parking garage under the building.\n\nSchedule a tour of our one- or two-bedroom units at www.moonstone.com/baltimore today!" },
+        { "label": "e-mail", "image": "images/test4/part7/q196-200-doc2.jpg", "text": "To: Aisha Abara <aishaabara@jmail.net>\nFrom: Suzanna Cohen <scohen@moonstone.com>\nDate: Saturday, January 12\nSubject: Apartment tour\n\nDear Ms. Abara,\n\nThank you for completing the inquiry form on our Web site. Per your request, I will meet you at 10 A.M. tomorrow at the Floral Café to give you a tour of the apartment complex. We have several vacant units available in each building. If you see an apartment you like, you can put down a deposit and sign a lease agreement immediately.\n\nYou indicated that you need two bedrooms but did not mention whether you prefer a certain building. Please let me know if you do.\n\nBest,\n\nSuzanna Cohen, Leasing Agent\nMoonstone Properties" },
+        { "label": "profile", "image": "images/test4/part7/q196-200-doc3.jpg", "text": "Moonstone Apartments Newsletter\n\nResident Profile: Aisha Abara\n\nAisha can often be spotted sipping coffee at the Floral Café or enjoying the peaceful view of the river from her balcony. An avid reader, Aisha visits the library weekly. She also enjoys jogging and tennis when she is not teaching chemistry at Spurlock High School. We are delighted to welcome Aisha to the Moonstone community." }
+      ],
+      "items": [
+        { "number": 196, "text": "What does the advertisement state about Moonstone Properties' newest complex?", "choices": {"A":"It is close to public transportation.","B":"It has an outdoor parking area for residents.","C":"It includes a business center in each building.","D":"It has a courtyard with a flower garden."}, "answer": "A" },
+        { "number": 197, "text": "Where does Ms. Cohen most likely work?", "choices": {"A":"In New York City","B":"In Philadelphia","C":"In Pittsburgh","D":"In Baltimore"}, "answer": "D" },
+        { "number": 198, "text": "What information does Ms. Cohen ask Ms. Abara to provide?", "choices": {"A":"How many bedrooms she wants","B":"When she wants to move in","C":"When she will return a signed lease","D":"Whether she prefers a particular building"}, "answer": "D" },
+        { "number": 199, "text": "In what building does Ms. Abara live?", "choices": {"A":"Building 1","B":"Building 2","C":"Building 3","D":"Building 4"}, "answer": "C" },
+        { "number": 200, "text": "What is Ms. Abara's profession?", "choices": {"A":"Fitness instructor","B":"Schoolteacher","C":"Leasing agent","D":"Librarian"}, "answer": "B" }
+      ]
+    }
+  ]
+}

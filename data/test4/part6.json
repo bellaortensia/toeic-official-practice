@@ -1,0 +1,59 @@
+{
+  "test": "T4",
+  "part": 6,
+  "type": "text_completion",
+  "passages": [
+    {
+      "questions": [131, 132, 133, 134],
+      "audio": "262 特典 T2 Part 6 Q131-134.mp3",
+      "topic": "e-mail",
+      "textImage": "images/test4/part6/q131-134.jpg",
+      "text": "To: wartono@sumatrapetroleum.co.id\nFrom: isuzuki@archaeologyresearchguild.org\nDate: 21 May\nSubject: Course enrollment\n\nDear Ms. Wartono,\n\nIt was a pleasure meeting you at the symposium of the Archaeology Research Guild (ARG). (131)_____ the conclusion of the symposium, you inquired about enrolling in one of ARG's continuing education courses. I am confident that taking one of our courses would be a (132)_____ experience for you. The course registration fee for nonmembers is $500. However, ARG members receive a 10 percent discount. If you are interested in (133)_____ us, we'd love to hear from you. (134)_____ I am happy to assist with any additional details you might need.\n\nSincerely,\n\nIsaku Suzuki, Membership Coordinator\nArchaeology Research Guild",
+      "items": [
+        { "number": 131, "choices": {"A":"Along","B":"Over","C":"To","D":"At"}, "answer": "D" },
+        { "number": 132, "choices": {"A":"valuable","B":"valuably","C":"values","D":"value"}, "answer": "A" },
+        { "number": 133, "choices": {"A":"seeing","B":"joining","C":"working for","D":"banking with"}, "answer": "B" },
+        { "number": 134, "choices": {"A":"Unfortunately, all our courses are currently full.","B":"ARG membership increased after the symposium.","C":"You can sign up through our online portal.","D":"Prizes will be awarded to our organization's volunteers."}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [135, 136, 137, 138],
+      "audio": "263 特典 T2 Part 6 Q135-138.mp3",
+      "topic": "article",
+      "textImage": "images/test4/part6/q135-138.jpg",
+      "text": "Electric Bicycles Are Taking Off\n\nWEST CLARKVILLE (April 22)—Because of rising concerns about the price of fuel and the cost of car maintenance, more people are seeking alternative ways to get around. All over the world, electric bicycles (e-bicycles) are increasing in (135)_____. These green vehicles sell faster than electric cars, their four-wheeled competitors. (136)_____, the industry is showing no signs of slowing down. Tara Murray, owner of E-Bicycle World in West Clarkville, expects sales to continue to increase.\n\nMs. Murray says, \"E-bicycles are in demand across all age groups. Thus, everyone, from youngsters to adults, likes (137)_____.\" She adds, \"E-bicycle riders use cars less often. Contrary to common misconceptions, people get exercise while riding e-bicycles. (138)_____\"",
+      "items": [
+        { "number": 135, "choices": {"A":"popularity","B":"popularly","C":"popular","D":"popularized"}, "answer": "A" },
+        { "number": 136, "choices": {"A":"In particular","B":"On the other hand","C":"Nevertheless","D":"Moreover"}, "answer": "D" },
+        { "number": 137, "choices": {"A":"it","B":"us","C":"them","D":"him"}, "answer": "C" },
+        { "number": 138, "choices": {"A":"Others prefer different challenges.","B":"E-Bicycle World offers several classes.","C":"Riding keeps riders healthy and fit.","D":"Some use our charging station."}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [139, 140, 141, 142],
+      "audio": "264 特典 T2 Part 6 Q139-142.mp3",
+      "topic": "advertisement",
+      "textImage": "images/test4/part6/q139-142.jpg",
+      "text": "Fresh Bites Express\n\nAre you craving just-picked vegetables, (139)_____ berries, and juicy tomatoes? Fresh Bites Express (140)_____ the bounty of local farms straight to your table. Depending on your household size, you can order a small, medium, or large box of produce. Just tell us how often you want to receive a box. (141)_____\n\nEach box contains a mix of seasonal fruits and vegetables from nearby farms. (142)_____, in the summer, you might receive strawberries, eggplant, and peppers; in autumn, you might get pumpkins, cauliflower, and beets. We guarantee you will always receive products that are fresh and of the highest quality. Visit www.freshbitesexpress.com to sign up for a subscription.",
+      "items": [
+        { "number": 139, "choices": {"A":"ripely","B":"ripest","C":"ripe","D":"to ripen"}, "answer": "C" },
+        { "number": 140, "choices": {"A":"bringing","B":"brought","C":"to bring","D":"brings"}, "answer": "D" },
+        { "number": 141, "choices": {"A":"Blueberries are popular with our customers.","B":"You can choose a weekly or bi-weekly delivery.","C":"The spring is the best time to grow produce.","D":"Please tell us about your favorite vegetables."}, "answer": "B" },
+        { "number": 142, "choices": {"A":"For example","B":"Above all","C":"However","D":"Similarly"}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [143, 144, 145, 146],
+      "audio": "265 特典 T2 Part 6 Q143-146.mp3",
+      "topic": "e-mail",
+      "textImage": "images/test4/part6/q143-146.jpg",
+      "text": "To: Drama Workshop Participants\nFrom: Sprinson Community Theater\nDate: May 27\nSubject: Acting with Sarah Gallos class\n\nDear Workshop Participants,\n\nWe are looking forward to seeing you on Monday, June 3, for Acting with Sarah Gallos. When you enter Sprinson Community Theater, please (143)_____ directly to the theater stage. We will meet there each day at 8:00 A.M. for a brief (144)_____ and then split into small groups. In the mornings, we will focus on improvisation exercises. We will continue in our groups in the afternoons until 3:30 P.M. (145)_____ Dress in (146)_____ footwear and clothing. Doing so will enable you to move about freely on the stage. Of course, you should also be prepared to have fun!\n\nBest,\n\nDenise Gordon\nProgram Coordinator",
+      "items": [
+        { "number": 143, "choices": {"A":"proceed","B":"proceeding","C":"proceeded","D":"to proceed"}, "answer": "A" },
+        { "number": 144, "choices": {"A":"present","B":"presenter","C":"presentation","D":"presented"}, "answer": "C" },
+        { "number": 145, "choices": {"A":"The theater hosts drama classes for children too.","B":"We will end the days by gathering in the auditorium.","C":"There are several restaurants near the theater.","D":"Sarah Gallos is one of our most popular teachers."}, "answer": "B" },
+        { "number": 146, "choices": {"A":"comfortable","B":"expensive","C":"protective","D":"clean"}, "answer": "A" }
+      ]
+    }
+  ]
+}

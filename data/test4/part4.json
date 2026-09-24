@@ -1,0 +1,132 @@
+{
+  "test": "T4",
+  "part": 4,
+  "type": "talk",
+  "note": "talkTextは別冊解答・解説から書き起こしたトーク全文。",
+  "groups": [
+    {
+      "questions": [71, 72, 73],
+      "audioTalk": "212 T2 Part 4 Q71-73 トーク.mp3",
+      "audioQuestions": "213 T2 Part 4 Q71-73 設問.mp3",
+      "speakers": [{"nat":"au","gender":"M"}],
+      "talkText": "I'm reporting to you live from the University Science Museum. They've recently opened up a fantastic new exhibit on the first floor. From what I understand, the idea behind the exhibit came from Hazam Feras. Mr. Feras develops exhibits at various institutions around the world. I can see why he's in high demand! This latest exhibit of his allows patrons to explore outer space. It starts with the simulated thrill of rocket ship liftoff and continues as you experience traveling around the planets, watching the mysteries of outer space unfold around you.",
+      "items": [
+        { "number": 71, "text": "Where is the speaker reporting from?", "choices": {"A":"A science museum","B":"A sports stadium","C":"An amusement park","D":"A university library"}, "answer": "A" },
+        { "number": 72, "text": "What does the speaker say about Hazam Feras?", "choices": {"A":"He is a famous actor.","B":"He was elected mayor.","C":"He has traveled to space.","D":"He has designed exhibits internationally."}, "answer": "D" },
+        { "number": 73, "text": "What are the listeners able to experience?", "choices": {"A":"A personalized tour","B":"Interactive games","C":"Views of outer space","D":"Live performances by actors"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [74, 75, 76],
+      "audioTalk": "214 T2 Part 4 Q74-76 トーク.mp3",
+      "audioQuestions": "215 T2 Part 4 Q74-76 設問.mp3",
+      "speakers": [{"nat":"us","gender":"W"}],
+      "talkText": "Hello and good morning. It's great to see so many people here at the Overlook Community Center for our weekly health and wellness program. We have a treat for you today! Our special guest presenter is Susana Adachi, a yoga and meditation expert. You may not be familiar with her work, but she has won multiple awards! Ms. Adachi is excited to share with you her knowledge and insights about how yoga can improve your life. Now, as we prepare to begin the program, please roll out your yoga mats in front of you.",
+      "items": [
+        { "number": 74, "text": "Where is the announcement being made?", "choices": {"A":"At a community center","B":"At a doctor's office","C":"At a government building","D":"At a health food company"}, "answer": "A" },
+        { "number": 75, "text": "Why does the speaker say, \"she has won multiple awards\"?", "choices": {"A":"To correct a mistake","B":"To request confirmation","C":"To reassure the listeners","D":"To make a suggestion"}, "answer": "C" },
+        { "number": 76, "text": "According to the speaker, what will the listeners do next?", "choices": {"A":"Answer some questions","B":"Participate in a program","C":"Watch a sporting event","D":"Shop for clothes"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [77, 78, 79],
+      "audioTalk": "216 T2 Part 4 Q77-79 トーク.mp3",
+      "audioQuestions": "217 T2 Part 4 Q77-79 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"}],
+      "talkText": "We're proud of our windows here at National Window Retailers. We offer a wide variety of windows from the country's largest manufacturers so that our customers won't have to shop around anywhere else. We guarantee that with our large inventory, you will always find the right product for your needs. Our competitors can't beat that. Right now, go to our Web site to take advantage of a special limited-time discount only available online. But hurry, this offer ends soon!",
+      "items": [
+        { "number": 77, "text": "What product is being advertised?", "choices": {"A":"Power tools","B":"Doors","C":"Windows","D":"Mattresses"}, "answer": "C" },
+        { "number": 78, "text": "According to the speaker, what distinguishes a business from its competitors?", "choices": {"A":"It is locally owned.","B":"It is open late each evening.","C":"It has been in business the longest.","D":"It has a large inventory."}, "answer": "D" },
+        { "number": 79, "text": "How can the listeners take advantage of a special promotion?", "choices": {"A":"By shopping online","B":"By using a special code","C":"By visiting a new location","D":"By signing up for a newsletter"}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [80, 81, 82],
+      "audioTalk": "218 T2 Part 4 Q80-82 トーク.mp3",
+      "audioQuestions": "219 T2 Part 4 Q80-82 設問.mp3",
+      "speakers": [{"nat":"us","gender":"W"}],
+      "talkText": "Good morning everyone, and welcome to this training session on my company's database software. I'm Francesca Romero with Global Medical, and I'll be facilitating this session. We're excited to continue providing your patients with the highest quality care by helping keep accurate records for your doctors and nurses. Let's start first by logging in to the Web site with the username and automatically generated password you were provided via e-mail earlier this week. Once you've logged in, please update your password, adhering to the requirements noted on the page.",
+      "items": [
+        { "number": 80, "text": "What is the purpose of the session?", "choices": {"A":"To brainstorm new work strategies","B":"To revise a checklist","C":"To analyze customer comments","D":"To provide some software training"}, "answer": "D" },
+        { "number": 81, "text": "Where do the listeners most likely work?", "choices": {"A":"At a hospital","B":"At a hotel","C":"At a restaurant","D":"At a computer store"}, "answer": "A" },
+        { "number": 82, "text": "What are the listeners told to do?", "choices": {"A":"Watch an instructional video","B":"Register for the next course","C":"Update a password","D":"Read a manual"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [83, 84, 85],
+      "audioTalk": "220 T2 Part 4 Q83-85 トーク.mp3",
+      "audioQuestions": "221 T2 Part 4 Q83-85 設問.mp3",
+      "speakers": [{"nat":"au","gender":"M"}],
+      "talkText": "If you're in the market for a new vehicle, look no further than Becker's auto dealerships! You can't find a better locally owned dealership than Becker's. We're special because our sales agents are the best in the area—they'll work hard to match you with the vehicle most suited to your needs. And, if you visit next week, you'll also be entered to win significant prizes with any purchase. Imagine receiving free car washes for a year! This is our biggest promotion yet, and twenty winners will be selected!",
+      "items": [
+        { "number": 83, "text": "What type of product does the speaker's business sell?", "choices": {"A":"Home appliances","B":"Children's clothing","C":"Automobiles","D":"Groceries"}, "answer": "C" },
+        { "number": 84, "text": "According to the speaker, what is special about the business?", "choices": {"A":"It offers free delivery.","B":"It offers unique products.","C":"It has excellent employees.","D":"It has positive reviews."}, "answer": "C" },
+        { "number": 85, "text": "Why does the speaker say, \"twenty winners will be selected\"?", "choices": {"A":"To correct a misconception","B":"To encourage participation","C":"To reject a criticism","D":"To explain a problem"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [86, 87, 88],
+      "audioTalk": "222 T2 Part 4 Q86-88 トーク.mp3",
+      "audioQuestions": "223 T2 Part 4 Q86-88 設問.mp3",
+      "speakers": [{"nat":"ca","gender":"M"}],
+      "talkText": "On July fifth, the town of Pennington will host its annual music festival in Maple Park, and the organizers are seeking volunteers from our community to help make the event a success. On June twelfth, there will be auditions for local musicians at the town recreation center. The organizers would like you to help select which acts will perform onstage. If you're interested in helping out, please e-mail musicfest@mymail.com with your name and phone number.",
+      "items": [
+        { "number": 86, "text": "Where will a music festival take place?", "choices": {"A":"In a community center","B":"In a sports arena","C":"In a school","D":"In a park"}, "answer": "D" },
+        { "number": 87, "text": "What will volunteers do to help with the music festival?", "choices": {"A":"Choose musical acts","B":"Sell refreshments","C":"Answer guest questions","D":"Set up a performance area"}, "answer": "A" },
+        { "number": 88, "text": "According to the speaker, how can volunteers sign up?", "choices": {"A":"By visiting a Web site","B":"By sending an e-mail","C":"By making a phone call","D":"By going to city hall"}, "answer": "B" }
+      ]
+    },
+    {
+      "questions": [89, 90, 91],
+      "audioTalk": "224 T2 Part 4 Q89-91 トーク.mp3",
+      "audioQuestions": "225 T2 Part 4 Q89-91 設問.mp3",
+      "speakers": [{"nat":"us","gender":"W"}],
+      "talkText": "I'd like to update the product development team on the results of our focus group. Each participant smelled our new scented soaps and filled out a card to tell us what they thought. People in the focus group loved our fruit aromas, like strawberry and lemon. A few fragrances, however, were a bit less popular. Most of the participants noted that they didn't like tree scents like pine, and they felt that the outdoor scents like ocean breeze were too strong. Management would like us to develop additional fragrances instead of these.",
+      "items": [
+        { "number": 89, "text": "What does the speaker's company make?", "choices": {"A":"Perfume","B":"Soap","C":"Candy","D":"Soft drinks"}, "answer": "B" },
+        { "number": 90, "text": "According to the speaker, what did focus group participants like the best?", "choices": {"A":"Natural ingredients","B":"Fruit fragrances","C":"Competitive prices","D":"Colorful packaging"}, "answer": "B" },
+        { "number": 91, "text": "What will the listeners most likely need to do?", "choices": {"A":"Meet with their managers","B":"Review a budget","C":"Create additional products","D":"Arrange another focus group"}, "answer": "C" }
+      ]
+    },
+    {
+      "questions": [92, 93, 94],
+      "audioTalk": "226 T2 Part 4 Q92-94 トーク.mp3",
+      "audioQuestions": "227 T2 Part 4 Q92-94 設問.mp3",
+      "speakers": [{"nat":"gb","gender":"W"}],
+      "talkText": "Hello, this message is for Mr. Kwon at Quality Furniture Company. This is Jessica Robertson from Salazar Supply. I'm calling about the metal drawer handles that you ordered last week. I know you were expecting the handles this morning, and they're on the delivery truck now. But, I just spoke to the driver, and he has several more stops to make on his route. Sorry for the inconvenience. Oh, and by the way, thank you for paying electronically. We had a little difficulty with our payment processing, but yours was received on time.",
+      "items": [
+        { "number": 92, "text": "Where does the listener work?", "choices": {"A":"At an architecture firm","B":"At a car rental agency","C":"At a computer center","D":"At a furniture store"}, "answer": "D" },
+        { "number": 93, "text": "What does the speaker mean when she says, \"he has several more stops to make on his route\"?", "choices": {"A":"The driver has to take a detour.","B":"The driver is behind schedule.","C":"The driver needs to confirm an address.","D":"The driver will need updated directions."}, "answer": "B" },
+        { "number": 94, "text": "What does the speaker thank the listener for?", "choices": {"A":"Submitting a payment","B":"Completing an order form","C":"Providing positive feedback","D":"Pointing out a billing error"}, "answer": "A" }
+      ]
+    },
+    {
+      "questions": [95, 96, 97],
+      "audioTalk": "228 T2 Part 4 Q95-97 トーク.mp3",
+      "audioQuestions": "229 T2 Part 4 Q95-97 設問.mp3",
+      "graphic": "Trail map: Start at Chamberlain Trail, splits into Fowler Trail (left, past Forest), Hanover Trail (straight to End), and Walnut Trail (right, past Castle)",
+      "graphicImage": "images/test4/part4/q95-97.jpg",
+      "speakers": [{"nat":"us","gender":"W"}],
+      "talkText": "Welcome, hikers! Today, your self-guided journey will begin along Chamberlain Trail. After a short hike on that trail, you'll come to a place where it splits in three. The trail on the right leads to the ruins of a castle that was built hundreds of years ago. The left trail takes you along a forest. Continue straight ahead only if you're an experienced hiker—there's rugged terrain along that trail. Now, there's a drinking fountain in the visitor's center. I recommend filling your bottles before you start.",
+      "items": [
+        { "number": 95, "text": "What does the speaker say about a castle?", "choices": {"A":"It is old.","B":"It is well maintained.","C":"It is made of stone.","D":"It is next to a waterfall."}, "answer": "A" },
+        { "number": 96, "text": "Look at the graphic. Which trail does the speaker say is for experienced hikers only?", "choices": {"A":"Chamberlain Trail","B":"Fowler Trail","C":"Hanover Trail","D":"Walnut Trail"}, "answer": "C" },
+        { "number": 97, "text": "What does the speaker encourage the listeners to do?", "choices": {"A":"Sign up for a lecture","B":"Download an area map","C":"Post pictures to social media","D":"Fill a water bottle"}, "answer": "D" }
+      ]
+    },
+    {
+      "questions": [98, 99, 100],
+      "audioTalk": "230 T2 Part 4 Q98-100 トーク.mp3",
+      "audioQuestions": "231 T2 Part 4 Q98-100 設問.mp3",
+      "graphic": "Meeting Schedule, October 2: 9:00 A.M. Editorial Department, 11:00 A.M. Sales, 2:00 P.M. Marketing and Advertisement, 4:00 P.M. Publishing",
+      "graphicImage": "images/test4/part4/q98-100.jpg",
+      "speakers": [{"nat":"ca","gender":"M"}],
+      "talkText": "Good morning, Ms. Madan. This is your assistant, Olivier. I e-mailed you today's meeting schedule. The purpose of the meeting with the editorial department is to discuss a publishing delay. Producing the article about Lauren Mitchell's philanthropic efforts ran into difficulties, unfortunately. Apparently, Ms. Mitchell had to change her availability last minute, which required me to reschedule her photo shoot. We could shift to one of our reserve articles to address the problem. I'd be happy to assist you with finding a suitable one.",
+      "items": [
+        { "number": 98, "text": "Look at the graphic. When is the meeting to discuss a delay?", "choices": {"A":"9:00 A.M.","B":"11:00 A.M.","C":"2:00 P.M.","D":"4:00 P.M."}, "answer": "A" },
+        { "number": 99, "text": "What did the speaker have to reschedule with Lauren Mitchell?", "choices": {"A":"A staff meeting","B":"A book signing","C":"A photo shoot","D":"A second interview"}, "answer": "C" },
+        { "number": 100, "text": "What does the speaker offer to do for the listener?", "choices": {"A":"Edit a submitted article","B":"Print copies for everyone","C":"Update a meeting schedule","D":"Help find another article"}, "answer": "D" }
+      ]
+    }
+  ]
+}

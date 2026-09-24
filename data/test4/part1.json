@@ -1,0 +1,50 @@
+{
+  "test": "T4",
+  "part": 1,
+  "type": "photograph",
+  "note": "音声で読まれる4つの文は本紙に印刷されていないため、statements/statementsJaは別冊解答・解説から書き起こしたもの。",
+  "questions": [
+    {
+      "number": 1, "audio": "152 T2 Part 1 Q1.mp3", "answer": "D", "image": "images/test4/part1/q1.jpg",
+      "speaker": {"nat":"au","gender":"M"},
+      "statements": {"A":"She's picking up a coffee mug.","B":"She's paying for a pair of jeans.","C":"She's searching through a shopping bag.","D":"She's holding up an item of clothing."},
+      "statementsJa": {"A":"彼女はコーヒーのマグカップを手に取っている。","B":"彼女は1着のジーンズの代金を支払っている。","C":"彼女は買い物袋の中をくまなく探している。","D":"彼女は1点の衣類を持ち上げている。"},
+      "explanation": "女性はマフラーを両手で持ち上げている。hold up ~「~を持ち上げる」、item「品物」、clothing「衣類」。\n(A) 女性が手に取っているのはマフラーであり、マグカップではない。pick up ~「~を手に取る」。\n(B) 後方に店舗らしきものが見えるが、女性は代金を支払っているところではない。pay for ~「~の代金を支払う」、a pair of ~「(2つの部分から成っている)1個の~、1着の~」。\n(C) 買い物袋は写っているが、女性はそれに触れてはいない。search through ~「~をくまなく探す」。"
+    },
+    {
+      "number": 2, "audio": "153 T2 Part 1 Q2.mp3", "answer": "B", "image": "images/test4/part1/q2.jpg",
+      "speaker": {"nat":"us","gender":"W"},
+      "statements": {"A":"The man is pushing an elevator button.","B":"An elevator door is being held open.","C":"Some people are standing near an elevator.","D":"A sign has been posted inside an elevator."},
+      "statementsJa": {"A":"男性はエレベーターのボタンを押している。","B":"エレベーターのドアが開いた状態で押さえられている。","C":"何人かの人がエレベーターのそばに立っている。","D":"エレベーター内に掲示物が張られている。"},
+      "explanation": "男性が、エレベーターのドアが閉まらないよう左手で押さえている。〈be動詞+being+過去分詞〉は「~されているところである」という意味。hold ~ …「~を…の状態にしておく」。\n(A) 男性が触れているのはエレベーターのドアで、エレベーターのボタンは写っていない。\n(C) 人々はエレベーターの中に立っているのであり、そばに立っているのではない。\n(D) 掲示物は写っていない。"
+    },
+    {
+      "number": 3, "audio": "154 T2 Part 1 Q3.mp3", "answer": "D", "image": "images/test4/part1/q3.jpg",
+      "speaker": {"nat":"gb","gender":"W"},
+      "statements": {"A":"One of the men is reaching for a water bottle.","B":"One of the men is hanging up a jacket.","C":"The men are looking out a window.","D":"The men are seated across from each other."},
+      "statementsJa": {"A":"男性の1人は水筒を取ろうと手を伸ばしている。","B":"男性の1人は上着を掛けている。","C":"男性たちは窓から外を眺めている。","D":"男性たちは向かい合って座っている。"},
+      "explanation": "2人の男性が向かい合わせに座っている。be seated「座る」、across from ~「~の向かい側に」。\n(A) water bottle「水筒」は写っているが、2人ともそれに手を伸ばしてはいない。\n(B) 左の男性は上着を着るか脱ぐかしようとしているように見え、それを掛けているところではない。hang up ~「~を掛ける」。\n(C) 男性たちはどちらも、窓の外に視線を向けてはいない。look out ~「~から外を見る」。"
+    },
+    {
+      "number": 4, "audio": "155 T2 Part 1 Q4.mp3", "answer": "C", "image": "images/test4/part1/q4.jpg",
+      "speaker": {"nat":"ca","gender":"M"},
+      "statements": {"A":"A bus is passing under a bridge.","B":"Some passengers are getting on a bus.","C":"A bus is traveling along a busy road.","D":"A bus is turning into a parking garage."},
+      "statementsJa": {"A":"バスが橋の下を通っている。","B":"何人かの乗客がバスに乗り込もうとしている。","C":"バスが交通量の多い道路を進んでいる。","D":"バスが屋内駐車場へ曲がって入っていくところである。"},
+      "explanation": "バスが道路を通行中で、道路には他にも複数の自動車が通行している。travel along ~「(乗り物が)~を通って進む」、busy「交通量の多い」。\n(A) 奥に橋は写っているが、バスはすでにその下を通過済みであり、通っているところではない。pass「通る」。\n(B) バスは道路を通行しており、乗り込もうとしているpassenger「乗客」は確認できない。\n(D) parking garage「屋内駐車場」は写っていない。turn into ~「~へ曲がって入る」。"
+    },
+    {
+      "number": 5, "audio": "156 T2 Part 1 Q5.mp3", "answer": "A", "image": "images/test4/part1/q5.jpg",
+      "speaker": {"nat":"gb","gender":"W"},
+      "statements": {"A":"A woman is browsing books on a shelf.","B":"A woman is putting some books into a basket.","C":"Some books have been piled on the floor.","D":"Some bookshelves have been taken apart."},
+      "statementsJa": {"A":"女性が棚にある幾つかの本を拾い読みしている。","B":"女性が幾つかの本をかごの中に入れている。","C":"幾つかの本が床の上に積み重ねられている。","D":"幾つかの本棚が解体されている。"},
+      "explanation": "女性が棚に収められている本を手にして見ている。browse「~を拾い読みする、~(店など)を見て回る」。\n(B) 多数の本は写っているが、basket「かご」は見当たらない。\n(C) 本はどれも棚に収められており、床の上に置かれてはいない。pile「~を積み重ねる」、floor「床」。\n(D) 複数の本棚が写っているが、解体された状態のものは見当たらない。bookshelvesはbookshelf「本棚」の複数形。take apart ~「~をばらばらにする」。"
+    },
+    {
+      "number": 6, "audio": "157 T2 Part 1 Q6.mp3", "answer": "D", "image": "images/test4/part1/q6.jpg",
+      "speaker": {"nat":"ca","gender":"M"},
+      "statements": {"A":"A worker is directing customers to the checkout counter.","B":"A worker is loading merchandise into a vehicle.","C":"One of the customers is stacking some crates.","D":"One of the customers is inspecting a vegetable."},
+      "statementsJa": {"A":"従業員が客をレジへと案内している。","B":"従業員が商品を車両に積んでいる。","C":"客の1人が枠箱を積み重ねている。","D":"客の1人が野菜を調べている。"},
+      "explanation": "買い物かごを持った中央の女性が、手にした野菜を注意深く眺めている。inspect「(問題などがないか)~を調べる」、vegetable「野菜」。\n(A) レジは写っておらず、客を誘導している従業員らしき人物も見当たらない。direct「~を案内する」。\n(B) vehicle「車両」は写っておらず、商品を積んでいる人物もいない。load「~を積む」。\n(C) crate「(果物などを運ぶ)枠箱、木箱」はすでに積み重ねられた状態であり、それを積み重ねている人物は見当たらない。"
+    }
+  ]
+}
