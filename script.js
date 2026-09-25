@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v133';
+const BUILD_VERSION = 'v134';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -1644,7 +1644,10 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
 // bottleneckLabelには呼び出し側が「Listeningボトルネック」(Part3/4)または
 // 「Readingボトルネック」(Part6/7)を渡す。Part5はそもそもこの翻訳ウィジェット
 // (チャンク単位でクリックできる英文表示)自体が無いため対象外。
-function buildTranslatableBlock(text, cacheKey, speakers, bottleneckLabel) {
+// defaultWideは初期表示時のワイドモードの状態(省略時はtrue=ワイドモード)。
+// Part3/4は会話・トークが短く、ワイドモードだと逆に読みにくいとの要望により
+// falseを渡して最初から解除された状態にする。
+function buildTranslatableBlock(text, cacheKey, speakers, bottleneckLabel, defaultWide = true) {
   const wrap = document.createElement('div');
   wrap.className = 'translate-block';
 
@@ -1700,7 +1703,7 @@ function buildTranslatableBlock(text, cacheKey, speakers, bottleneckLabel) {
 
   let data = null;
   let mode = 'natural'; // 'literal' | 'natural'(デフォルトは意訳)
-  let wide = true; // デフォルトでワイドモード
+  let wide = defaultWide;
   let tall = false; // デフォルトではトールモードは解除された状態
   let slash = false; // デフォルトではスラッシュ非表示(押して初めてチャンク間に/が入る)
 
@@ -2308,6 +2311,54 @@ async function loadPdfExplainMap(test) {
   } catch (e) { return null; }
 }
 
+// ポップアップの横幅いっぱいにPDF画像を表示する(元は本文カラム内にインライン
+// 表示していたが、カラム幅に制限されて文字が読めないとの要望により、画面全体を
+// 使うモーダル表示に変更した)。
+function openPdfExplainModal(files) {
+  const overlay = document.createElement('div');
+  overlay.className = 'pdf-explain-modal-overlay';
+
+  const content = document.createElement('div');
+  content.className = 'pdf-explain-modal-content';
+  overlay.appendChild(content);
+
+  const closeBtn = document.createElement('button');
+  closeBtn.className = 'pdf-explain-modal-close';
+  closeBtn.textContent = '✕';
+  content.appendChild(closeBtn);
+
+  const imgsWrap = document.createElement('div');
+  imgsWrap.className = 'pdf-explain-modal-images';
+  content.appendChild(imgsWrap);
+
+  if (files && files.length) {
+    files.forEach(src => {
+      const img = document.createElement('img');
+      img.src = src;
+      img.className = 'pdf-explain-modal-img';
+      imgsWrap.appendChild(img);
+    });
+  } else {
+    const p = document.createElement('p');
+    p.className = 'hint';
+    p.textContent = 'このテストのPDF解説はまだ用意されていません。';
+    imgsWrap.appendChild(p);
+  }
+
+  function close() {
+    overlay.remove();
+    document.removeEventListener('keydown', onKeydown);
+  }
+  function onKeydown(e) {
+    if (e.key === 'Escape') close();
+  }
+  closeBtn.addEventListener('click', close);
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
+  document.addEventListener('keydown', onKeydown);
+
+  document.body.appendChild(overlay);
+}
+
 function buildPdfExplainWidget(test, questionNumber) {
   const wrap = document.createElement('div');
   wrap.className = 'pdf-explain-wrap';
@@ -2316,43 +2367,15 @@ function buildPdfExplainWidget(test, questionNumber) {
   btn.textContent = 'PDF解説文へ';
   wrap.appendChild(btn);
 
-  const imgsWrap = document.createElement('div');
-  imgsWrap.className = 'pdf-explain-images';
-  imgsWrap.style.display = 'none';
-  wrap.appendChild(imgsWrap);
-
-  let shown = false;
+  let cachedFiles = null;
   btn.addEventListener('click', async () => {
-    if (shown) {
-      imgsWrap.style.display = 'none';
-      btn.textContent = 'PDF解説文へ';
-      shown = false;
-      return;
-    }
-    if (!imgsWrap.dataset.loaded) {
+    if (cachedFiles == null) {
       btn.disabled = true;
       const map = await loadPdfExplainMap(test);
       btn.disabled = false;
-      const files = map && map[String(questionNumber)];
-      imgsWrap.innerHTML = '';
-      if (files && files.length) {
-        files.forEach(src => {
-          const img = document.createElement('img');
-          img.src = src;
-          img.className = 'pdf-explain-img';
-          imgsWrap.appendChild(img);
-        });
-      } else {
-        const p = document.createElement('p');
-        p.className = 'hint';
-        p.textContent = 'このテストのPDF解説はまだ用意されていません。';
-        imgsWrap.appendChild(p);
-      }
-      imgsWrap.dataset.loaded = '1';
+      cachedFiles = (map && map[String(questionNumber)]) || [];
     }
-    imgsWrap.style.display = 'block';
-    btn.textContent = 'PDF解説文を閉じる';
-    shown = true;
+    openPdfExplainModal(cachedFiles);
   });
 
   return wrap;
@@ -5101,7 +5124,7 @@ function renderPart3or4() {
         // fullTextが無い(データ不備等の)ときだけ、ノートを書く場所が無くなら
         // ないようフォールバックとして一般ノート欄を出す。
         translateSlot.style.display = 'block';
-        translateSlot.appendChild(buildTranslatableBlock(fullText, `${state.test}-${state.part}-${g.questions[0]}`, g.speakers, 'Listeningボトルネック'));
+        translateSlot.appendChild(buildTranslatableBlock(fullText, `${state.test}-${state.part}-${g.questions[0]}`, g.speakers, 'Listeningボトルネック', false));
       } else {
         notesSlot.appendChild(buildNotesWidget(`${state.test}-${state.part}-${g.questions[0]}`));
       }
