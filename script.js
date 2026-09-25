@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v134';
+const BUILD_VERSION = 'v135';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -130,6 +130,19 @@ sheetUrlInput.addEventListener('change', () => localStorage.setItem(SHEET_URL_LS
 
 function getSheetUrl() {
   return localStorage.getItem(SHEET_URL_LS) || sheetUrlInput.value.trim();
+}
+
+// Apps Script(スプレッドシート同期)へのfetchには必ずこれを使う。素のfetch()には
+// タイムアウトが無いため、会社のネットワークのセキュリティソフト/プロキシが
+// script.google.comへの通信を検知してブロック・保留する環境では、レスポンスが
+// 返ってくるまで(あるいは永久に)待たされてしまい、「ノートを見返す」やノート
+// 保存ボタンが固まったように見える原因になっていた。AbortControllerで一定時間
+// (デフォルト8秒)経過したら強制的に諦め、呼び出し元のtry/catchでlocalStorage
+// のみの動作へフォールバックできるようにする。
+function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(timer));
 }
 
 const copyGasBtn = document.getElementById('copyGasBtn');
@@ -724,7 +737,7 @@ function getSheetNotesCache() {
       // 警戒され、ブロックされる原因になっていた(姉妹アプリdecode-toeicは同じ
       // Apps Script方式でも素のfetch()を使っており、そちらは問題なく通ることが
       // 確認できたため、fetch()に統一した)。
-      sheetNotesCachePromise = fetch(`${url}?action=getNotes`)
+      sheetNotesCachePromise = fetchWithTimeout(`${url}?action=getNotes`)
         .then(async r => {
           const bodyText = await r.text();
           if (!r.ok) throw new Error(`HTTP ${r.status}: ${bodyText.slice(0, 300)}`);
@@ -743,7 +756,11 @@ function getSheetNotesCache() {
           });
           return notes;
         })
-        .catch(e => { sheetConnectionStatus = 'error'; sheetConnectionError = e.message; return {}; });
+        .catch(e => {
+          sheetConnectionStatus = 'error';
+          sheetConnectionError = e.name === 'AbortError' ? 'タイムアウト(8秒以内に応答がありませんでした。会社のネットワークのセキュリティソフト等がscript.google.comへの通信をブロックしている可能性があります)' : e.message;
+          return {};
+        });
     }
   }
   return sheetNotesCachePromise;
@@ -791,7 +808,7 @@ async function migrateLocalNotesToSheet() {
   }
   if (!Object.keys(toUpload).length) return;
   try {
-    await fetch(url, {
+    await fetchWithTimeout(url, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -813,6 +830,12 @@ async function restoreNotesIfSaved(notesArea, cacheKey) {
   } catch (e) { /* ignore */ }
 }
 
+// ローカル保存(即時・同期)とスプレッドシートへの同期(ネットワーク・数秒かかる
+// ことがある)を分離する。以前はスプレッドシートへのPOSTを待ってから戻っていた
+// ため、ノート保存ボタンや画面遷移(ヘッダーロゴクリック)がApps Scriptの応答を
+// 待つ間ずっと固まって見える原因になっていた。ローカル保存が完了した時点で
+// 即座に返し、スプレッドシート同期はバックグラウンドで進める(no-corsで送信
+// している以上、待っても成功/失敗はどのみち判別できないため、待つ意味も薄い)。
 async function saveAllVisibleNotes() {
   const areas = document.querySelectorAll('.notes-area[data-notes-key]');
   const notesMap = {};
@@ -823,20 +846,19 @@ async function saveAllVisibleNotes() {
   const count = areas.length;
   const url = getSheetUrl();
   if (url && count > 0) {
-    try {
-      // mode:'no-cors'で送る: Apps ScriptのレスポンスはCORSヘッダーが無く読み取れない
-      // ことがあるが、no-corsなら読み取れなくてもリクエスト自体は送信され、Apps Script
-      // 側では正常に保存処理が実行される(応答の中身を見る必要が無い保存処理なので
-      // これで問題ない)。
-      await fetch(url, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify({ action: 'saveNotes', notes: notesMap })
-      });
+    // mode:'no-cors'で送る: Apps ScriptのレスポンスはCORSヘッダーが無く読み取れない
+    // ことがあるが、no-corsなら読み取れなくてもリクエスト自体は送信され、Apps Script
+    // 側では正常に保存処理が実行される(応答の中身を見る必要が無い保存処理なので
+    // これで問題ない)。あえてawaitしない(下記コメント参照)。
+    fetchWithTimeout(url, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action: 'saveNotes', notes: notesMap })
+    }).then(async () => {
       const cache = await getSheetNotesCache();
       Object.assign(cache, notesMap);
-    } catch (e) { /* オフライン等は無視。localStorageには保存済み */ }
+    }).catch(e => { /* オフライン等は無視。localStorageには保存済み */ });
     // ノートと同じタイミングで、回答履歴・学習時間などの進捗データも一緒に
     // スプレッドシートへ書き出す(画面遷移を待たせないよう結果は待たない)。
     saveProgressToSheet();
@@ -3166,7 +3188,7 @@ async function saveProgressToSheet() {
   const url = getSheetUrl();
   if (!url) return;
   try {
-    await fetch(url, {
+    await fetchWithTimeout(url, {
       method: 'POST',
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -3183,7 +3205,7 @@ async function syncProgressFromSheet() {
   const url = getSheetUrl();
   if (!url) return;
   try {
-    const res = await fetch(`${url}?action=getProgress`);
+    const res = await fetchWithTimeout(`${url}?action=getProgress`);
     const data = await res.json();
     const remote = (data && data.progress) || {};
     mergeAttempts(remote.attempts);
