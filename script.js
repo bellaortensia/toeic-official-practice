@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v136';
+const BUILD_VERSION = 'v137';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -3468,25 +3468,16 @@ async function collectReviewableNotes() {
   const historyItems = buildAnswerHistoryList();
 
   // まず、ノートが存在しうる「ページ」(baseKey + 文書番号)を、一般ノート欄と
-  // 翻訳ノート欄の両方のキーから重複無く洗い出す。
+  // 翻訳ノート欄のキーから重複無く洗い出す(AIへの質問キーは設問ごとの個別キーで
+  // 文書番号を持たないため、後の第2パスで扱う)。
   const pages = new Map();
+  const aiOnlyKeys = [];
   for (let i = 0; i < localStorage.length; i++) {
     const lsKey = localStorage.key(i);
     if (!lsKey || lsKey.indexOf(NOTES_LS_PREFIX) !== 0) continue;
     const noteKey = lsKey.slice(NOTES_LS_PREFIX.length);
     if (noteKey.endsWith('-ai')) {
-      // AIへの質問だけがあり、一般ノート・翻訳ノートが無い設問でも見返せるように
-      // する。個々のAIキーは設問ごとの個別キーなので、履歴からグループの共有
-      // ノートキー(baseKey)が分かればそちらへ統合し、分からなければその設問
-      // 番号単独をページ扱いにする。
-      const m = noteKey.slice(0, -3).match(/^(T\d+)-(\d+)-(\d+)$/);
-      if (!m) continue;
-      const histMatch = historyItems.find(it => it.test === m[1] && it.part === Number(m[2]) && it.number === Number(m[3]));
-      const baseKey = histMatch ? histMatch.noteKey : `${m[1]}-${m[2]}-${m[3]}`;
-      const bm = baseKey.match(/^(T\d+)-(\d+)-(\d+)$/);
-      if (!bm) continue;
-      const mapKey = `${baseKey}|`;
-      if (!pages.has(mapKey)) pages.set(mapKey, { baseKey, docIndex: null, test: bm[1], part: Number(bm[2]), number: Number(bm[3]) });
+      aiOnlyKeys.push(noteKey);
       continue;
     }
     const parsed = parseNoteKeyForReview(noteKey);
@@ -3494,6 +3485,27 @@ async function collectReviewableNotes() {
     const mapKey = `${parsed.baseKey}|${parsed.docIndex == null ? '' : parsed.docIndex}`;
     if (!pages.has(mapKey)) pages.set(mapKey, parsed);
   }
+
+  // 第2パス: AIへの質問だけがあり、一般ノート・翻訳ノートが無い設問でも見返せる
+  // ようにする。個々のAIキーは設問ごとの個別キーで文書番号を持たないため、
+  // 履歴からグループの共有ノートキー(baseKey)が分かればそちらへ統合する。
+  // ただし、そのbaseKeyのページ(どの文書番号でもよい)が第1パスで既に見つかって
+  // いる場合はここで新しいページを作らない(下のentries組み立てでは、
+  // questionNumbers経由でこのAIノートが同じbaseKeyの各ページに自動的に含まれる
+  // ため、文書番号なしの別ページを追加すると、Part7で同じ内容が2ページに分かれて
+  // 重複表示される不具合になっていた)。
+  const existingBaseKeys = new Set(Array.from(pages.values()).map(p => p.baseKey));
+  aiOnlyKeys.forEach(noteKey => {
+    const m = noteKey.slice(0, -3).match(/^(T\d+)-(\d+)-(\d+)$/);
+    if (!m) return;
+    const histMatch = historyItems.find(it => it.test === m[1] && it.part === Number(m[2]) && it.number === Number(m[3]));
+    const baseKey = histMatch ? histMatch.noteKey : `${m[1]}-${m[2]}-${m[3]}`;
+    if (existingBaseKeys.has(baseKey)) return;
+    const bm = baseKey.match(/^(T\d+)-(\d+)-(\d+)$/);
+    if (!bm) return;
+    const mapKey = `${baseKey}|`;
+    if (!pages.has(mapKey)) pages.set(mapKey, { baseKey, docIndex: null, test: bm[1], part: Number(bm[2]), number: Number(bm[3]) });
+  });
 
   const entries = await Promise.all(Array.from(pages.values()).map(async page => {
     const { baseKey, docIndex, test, part, number } = page;
