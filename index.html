@@ -110,18 +110,35 @@ function _getAllRows(sheet) {
   return result;
 }
 
-function _setRowValue(sheet, key, value) {
+// 複数キーをまとめて書き込む。以前の_setRowValueは1キー保存するたびに
+// シートの全行を読み直して該当キーを探していたため、ノートの件数が増える
+// ほど「全行スキャン×保存件数」で遅くなっていった(特に、通信が一時的に
+// ブロックされた後にまとめて再送信するときに顕著)。ここでは全行のキー列を
+// 最初に1回だけ読んでキー→行番号の対応表を作り、既存キーの更新はキーごとに
+// 1回のsetValues、新規キーはまとめて1回のappendで済ませる(件数が増えても
+// 全行スキャンの回数は増えない)。
+function _batchSetRows(sheet, updates) {
   var last = sheet.getLastRow();
+  var keyToRow = {};
   if (last >= 2) {
-    var data = sheet.getRange(2, 1, last - 1, 1).getValues();
-    for (var i = 0; i < data.length; i++) {
-      if (data[i][0] === key) {
-        sheet.getRange(i + 2, 2, 1, 2).setValues([[value, new Date()]]);
-        return;
-      }
+    var keys = sheet.getRange(2, 1, last - 1, 1).getValues();
+    for (var i = 0; i < keys.length; i++) {
+      if (keys[i][0]) keyToRow[keys[i][0]] = i + 2;
     }
   }
-  sheet.appendRow([key, value, new Date()]);
+  var now = new Date();
+  var appendRows = [];
+  for (var key in updates) {
+    var row = keyToRow[key];
+    if (row) {
+      sheet.getRange(row, 2, 1, 2).setValues([[updates[key], now]]);
+    } else {
+      appendRows.push([key, updates[key], now]);
+    }
+  }
+  if (appendRows.length) {
+    sheet.getRange(sheet.getLastRow() + 1, 1, appendRows.length, 3).setValues(appendRows);
+  }
 }
 
 function doGet(e) {
@@ -154,20 +171,16 @@ function doGet(e) {
 function doPost(e) {
   var body = JSON.parse(e.postData.contents);
   if (body.action === 'saveNotes') {
-    var notesSheet = _getNotesSheet();
     var notes = body.notes || {};
-    for (var key in notes) {
-      _setRowValue(notesSheet, key, notes[key]);
-    }
+    _batchSetRows(_getNotesSheet(), notes);
     return ContentService.createTextOutput(JSON.stringify({ status: 'ok', count: Object.keys(notes).length }))
       .setMimeType(ContentService.MimeType.JSON);
   }
   if (body.action === 'saveProgress') {
-    var progressSheet = _getProgressSheet();
     var progress = body.progress || {};
-    for (var pkey in progress) {
-      _setRowValue(progressSheet, pkey, JSON.stringify(progress[pkey]));
-    }
+    var toWrite = {};
+    for (var pkey in progress) toWrite[pkey] = JSON.stringify(progress[pkey]);
+    _batchSetRows(_getProgressSheet(), toWrite);
     return ContentService.createTextOutput(JSON.stringify({ status: 'ok' }))
       .setMimeType(ContentService.MimeType.JSON);
   }
