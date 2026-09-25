@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v135';
+const BUILD_VERSION = 'v136';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -725,7 +725,15 @@ const NOTES_LS_PREFIX = 'toeicOfficialPractice.notes.';
 let sheetConnectionStatus = 'unknown';
 let sheetConnectionError = '';
 let sheetNotesCachePromise = null;
-function getSheetNotesCache() {
+// 直近に「本物の」getNotes応答(タイムアウトやエラーで諦めたのではなく、実際に
+// Apps Scriptから正常なJSONが返ってきた)を確認できたノート一覧。ノート保存は
+// mode:'no-cors'で送っているため、POSTのfetch()が成功しても実際にApps Script
+// まで届いたのか、途中でセキュリティソフト等にブロックされて握りつぶされたのか
+// をJS側から見分ける手段が無い。そのため「本当に同期済みか」は、このGETが
+// 実際に成功したときの応答だけを基準に判定する(countPendingLocalNotes参照)。
+let lastConfirmedRemoteNotes = null;
+function getSheetNotesCache(force) {
+  if (force) sheetNotesCachePromise = null;
   if (!sheetNotesCachePromise) {
     const url = getSheetUrl();
     if (!url) {
@@ -747,6 +755,7 @@ function getSheetNotesCache() {
         .then(d => {
           sheetConnectionStatus = 'ok'; sheetConnectionError = '';
           const notes = (d && d.notes) || {};
+          lastConfirmedRemoteNotes = notes;
           // 個別の設問を開かなくても回答履歴のポップアップ等でノートの有無が
           // すぐ分かるよう、取得したノートを一括でこの端末のlocalStorageにも
           // 書き込んでおく(以前は個別に開いたノートしかlocalStorageに残らず、
@@ -766,6 +775,22 @@ function getSheetNotesCache() {
   return sheetNotesCachePromise;
 }
 
+// この端末にのみ保存されていて、スプレッドシート側でまだ実際に確認できて
+// いないノートの件数。lastConfirmedRemoteNotesが一度も取れていない(まだ
+// 一度もgetNotesに成功していない)場合は、判定材料が無いのでnullを返す。
+function countPendingLocalNotes() {
+  if (!lastConfirmedRemoteNotes) return null;
+  let count = 0;
+  for (let i = 0; i < localStorage.length; i++) {
+    const lsKey = localStorage.key(i);
+    if (!lsKey || lsKey.indexOf(NOTES_LS_PREFIX) !== 0) continue;
+    const noteKey = lsKey.slice(NOTES_LS_PREFIX.length);
+    const html = localStorage.getItem(lsKey);
+    if (html && html.trim() && !lastConfirmedRemoteNotes[noteKey]) count++;
+  }
+  return count;
+}
+
 // ページ表示時に一度だけスプレッドシートへの接続を試み、結果に応じて画面上部に
 // 分かりやすいメッセージを出す(URL未設定なのか、接続自体に失敗しているのかで
 // 会社PC等での原因切り分けができるように)。
@@ -773,11 +798,18 @@ async function updateSheetConnectionBanner() {
   const el = document.getElementById('sheetConnectionStatus');
   if (!el) return;
   await getSheetNotesCache();
+  const pending = countPendingLocalNotes();
+  const pendingNote = pending
+    ? ` この端末にのみ保存されていてスプレッドシートへの反映がまだ確認できていないノートが${pending}件あります。3分ごとに自動で再試行します。他の端末で最新の内容を見たい場合は、通信環境の良い場所でこのページを開き直してください。`
+    : '';
   if (sheetConnectionStatus === 'no-url') {
     el.textContent = '⚠ ノート保存用スプレッドシートが未設定です(この端末では「Initial Setup」→「③ ノート保存用スプレッドシート」にURLが入力されていません)。ノートはこの端末のブラウザ内にのみ保存されます。';
     el.style.display = 'block';
   } else if (sheetConnectionStatus === 'error') {
-    el.textContent = `⚠ ノート保存用スプレッドシートへの接続に失敗しました。「Initial Setup」→「③ノート保存用スプレッドシート」のコードが最新版か確認し、古い場合は貼り替えて再デプロイしてください。ノートはこの端末のブラウザ内にのみ保存されます。(詳細: ${sheetConnectionError || '不明なエラー'})`;
+    el.textContent = `⚠ ノート保存用スプレッドシートへの接続に失敗しました。「Initial Setup」→「③ノート保存用スプレッドシート」のコードが最新版か確認し、古い場合は貼り替えて再デプロイしてください。ノートはこの端末のブラウザ内にのみ保存されます。(詳細: ${sheetConnectionError || '不明なエラー'})${pendingNote}`;
+    el.style.display = 'block';
+  } else if (pending) {
+    el.textContent = `⚠${pendingNote}`;
     el.style.display = 'block';
   } else {
     el.style.display = 'none';
@@ -816,6 +848,25 @@ async function migrateLocalNotesToSheet() {
     });
     Object.assign(remoteNotes, toUpload);
   } catch (e) { /* オフライン等は無視 */ }
+  // mode:'no-cors'で送っているため、直前のfetch()が例外を投げなかったからと
+  // いって、Apps Scriptまで実際に届いて保存できたとは限らない(セキュリティ
+  // ソフト等が途中で握りつぶしていても、no-corsのfetch()自体は成功したように
+  // 見えることがある)。少し待ってから実際にgetNotesを取り直し、本当に反映
+  // されたかをlastConfirmedRemoteNotesで確認できる状態にする(countPending
+  // LocalNotes・updateSheetConnectionBannerが使う)。
+  await sleep(1500);
+  await getSheetNotesCache(true);
+  await updateSheetConnectionBanner();
+}
+
+// 定期的にmigrateLocalNotesToSheetを再試行する(タブを開いたままの端末が
+// 会社のネットワーク等でその時だけ通信をブロックされていても、後で自動的に
+// 同期できるようにするため)。単にオフラインなだけの場合はネットワーク
+// 復帰イベントでも即座に再試行する。
+function startNoteSyncRetryLoop() {
+  if (!getSheetUrl()) return;
+  setInterval(() => { migrateLocalNotesToSheet(); }, 3 * 60 * 1000);
+  window.addEventListener('online', () => { migrateLocalNotesToSheet(); });
 }
 
 async function restoreNotesIfSaved(notesArea, cacheKey) {
@@ -858,6 +909,13 @@ async function saveAllVisibleNotes() {
     }).then(async () => {
       const cache = await getSheetNotesCache();
       Object.assign(cache, notesMap);
+      // no-corsのfetch()は途中でブロックされていても成功したように見えることが
+      // あるため、少し待ってから実際にgetNotesを取り直して本当に反映されたかを
+      // 確認し、バナーの「未同期件数」を最新化する(migrateLocalNotesToSheetと
+      // 同じ考え方)。
+      await sleep(1500);
+      await getSheetNotesCache(true);
+      await updateSheetConnectionBanner();
     }).catch(e => { /* オフライン等は無視。localStorageには保存済み */ });
     // ノートと同じタイミングで、回答履歴・学習時間などの進捗データも一緒に
     // スプレッドシートへ書き出す(画面遷移を待たせないよう結果は待たない)。
@@ -4458,6 +4516,7 @@ renderHistorySidebar();
 updateSheetConnectionBanner();
 syncProgressFromSheet();
 migrateLocalNotesToSheet();
+startNoteSyncRetryLoop();
 
 function chunk(arr, size) {
   const out = [];
