@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v137';
+const BUILD_VERSION = 'v138';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -132,13 +132,13 @@ function getSheetUrl() {
   return localStorage.getItem(SHEET_URL_LS) || sheetUrlInput.value.trim();
 }
 
-// Apps Script(スプレッドシート同期)へのfetchには必ずこれを使う。素のfetch()には
+// 外部サービス(Apps Script・Box)へのfetchには必ずこれを使う。素のfetch()には
 // タイムアウトが無いため、会社のネットワークのセキュリティソフト/プロキシが
-// script.google.comへの通信を検知してブロック・保留する環境では、レスポンスが
-// 返ってくるまで(あるいは永久に)待たされてしまい、「ノートを見返す」やノート
-// 保存ボタンが固まったように見える原因になっていた。AbortControllerで一定時間
-// (デフォルト8秒)経過したら強制的に諦め、呼び出し元のtry/catchでlocalStorage
-// のみの動作へフォールバックできるようにする。
+// script.google.comやapi.box.comへの通信を検知してブロック・保留する環境では、
+// レスポンスが返ってくるまで(あるいは永久に)待たされてしまい、「ノートを
+// 見返す」・ノート保存ボタン・「前回学習した問題」の再生ボタンが固まって
+// (⏳のまま)見える原因になっていた。AbortControllerで一定時間(デフォルト8秒)
+// 経過したら強制的に諦め、呼び出し元のtry/catchでフォールバックできるようにする。
 function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
@@ -1920,7 +1920,7 @@ async function startLogin() {
 
 async function exchangeCodeForToken(code) {
   const verifier = localStorage.getItem('box_pkce_verifier');
-  const res = await fetch('https://api.box.com/oauth2/token', {
+  const res = await fetchWithTimeout('https://api.box.com/oauth2/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -1939,7 +1939,7 @@ async function exchangeCodeForToken(code) {
 async function refreshToken() {
   const refresh_token = localStorage.getItem('box_refresh_token');
   if (!refresh_token) return false;
-  const res = await fetch('https://api.box.com/oauth2/token', {
+  const res = await fetchWithTimeout('https://api.box.com/oauth2/token', {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -2006,7 +2006,7 @@ async function updateStatus() {
   updateButtons();
   try {
     const token = await getValidAccessToken();
-    const res = await fetch('https://api.box.com/2.0/users/me?fields=name,login', {
+    const res = await fetchWithTimeout('https://api.box.com/2.0/users/me?fields=name,login', {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (res.ok) {
@@ -2059,7 +2059,7 @@ async function getAudioIndex(folderId) {
     guard++;
     // 何らかの理由でtotal_countが正しく取得できずループが終わらない場合の保険。
     if (guard > 50) throw new Error('音声ファイル一覧の取得回数が上限を超えました');
-    const res = await fetch(
+    const res = await fetchWithTimeout(
       `https://api.box.com/2.0/folders/${folderId}/items?fields=name&limit=200&offset=${offset}`,
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -2107,9 +2107,11 @@ async function getAudioUrl(filename, folderId) {
   for (let attempt = 1; attempt <= AUDIO_FETCH_MAX_ATTEMPTS; attempt++) {
     try {
       const token = await getValidAccessToken();
-      const res = await fetch(`https://api.box.com/2.0/files/${id}/content`, {
+      // 音声ファイルは数MBあることがあり、一覧取得等の小さなJSON応答より時間が
+      // かかりうるため、タイムアウトを長め(20秒)にする。
+      const res = await fetchWithTimeout(`https://api.box.com/2.0/files/${id}/content`, {
         headers: { Authorization: `Bearer ${token}` }
-      });
+      }, 20000);
       if (!res.ok) {
         lastAudioError = `音声のダウンロードに失敗しました(HTTP ${res.status})。会社のネットワークがBoxからのファイルダウンロードをブロックしている可能性があります。`;
         // 4xx(権限・認証・見つからない等)は再試行しても直らないため即諦める。
@@ -3956,7 +3958,7 @@ async function playStudySequence(tracks, loop, onEnd, onError, onReady) {
     if (onEnd) onEnd();
     return;
   }
-  if (ok.length < filenames.length && onError) {
+  if (ok.length < tracks.length && onError) {
     onError('一部の音声を取得できなかったため、取得できた分のみ再生します。');
   }
 
