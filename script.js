@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v138';
+const BUILD_VERSION = 'v139';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -722,6 +722,12 @@ const NOTES_LS_PREFIX = 'toeicOfficialPractice.notes.';
 // 先頭部分)を入れる。「JSONでない応答」の場合はApps Scriptの公開設定(アクセス権
 // 「全員」になっているか等)が原因のことが多いので、そのまま画面に出して原因
 // 切り分けに使えるようにする。
+// Apps Script(スプレッドシート同期)は、実測でも正常時に5〜14秒、時には
+// それ以上かかることがある(Google側のコールドスタート・同じスプレッドシートへの
+// 同時アクセスによる直列化などが原因と見られる)。Box等の軽いAPI呼び出しより
+// 大幅に長めのタイムアウトを設定し、正常だが遅いだけの応答を誤ってエラー扱い
+// しないようにする。
+const SHEET_FETCH_TIMEOUT_MS = 20000;
 let sheetConnectionStatus = 'unknown';
 let sheetConnectionError = '';
 let sheetNotesCachePromise = null;
@@ -745,7 +751,7 @@ function getSheetNotesCache(force) {
       // 警戒され、ブロックされる原因になっていた(姉妹アプリdecode-toeicは同じ
       // Apps Script方式でも素のfetch()を使っており、そちらは問題なく通ることが
       // 確認できたため、fetch()に統一した)。
-      sheetNotesCachePromise = fetchWithTimeout(`${url}?action=getNotes`)
+      sheetNotesCachePromise = fetchWithTimeout(`${url}?action=getNotes`, {}, SHEET_FETCH_TIMEOUT_MS)
         .then(async r => {
           const bodyText = await r.text();
           if (!r.ok) throw new Error(`HTTP ${r.status}: ${bodyText.slice(0, 300)}`);
@@ -767,7 +773,7 @@ function getSheetNotesCache(force) {
         })
         .catch(e => {
           sheetConnectionStatus = 'error';
-          sheetConnectionError = e.name === 'AbortError' ? 'タイムアウト(8秒以内に応答がありませんでした。会社のネットワークのセキュリティソフト等がscript.google.comへの通信をブロックしている可能性があります)' : e.message;
+          sheetConnectionError = e.name === 'AbortError' ? `タイムアウト(${SHEET_FETCH_TIMEOUT_MS / 1000}秒以内に応答がありませんでした。回線状況やGoogle側の混雑で遅いだけの場合もあれば、会社のネットワークのセキュリティソフト等がscript.google.comへの通信をブロックしている場合もあります)` : e.message;
           return {};
         });
     }
@@ -806,7 +812,15 @@ async function updateSheetConnectionBanner() {
     el.textContent = '⚠ ノート保存用スプレッドシートが未設定です(この端末では「Initial Setup」→「③ ノート保存用スプレッドシート」にURLが入力されていません)。ノートはこの端末のブラウザ内にのみ保存されます。';
     el.style.display = 'block';
   } else if (sheetConnectionStatus === 'error') {
-    el.textContent = `⚠ ノート保存用スプレッドシートへの接続に失敗しました。「Initial Setup」→「③ノート保存用スプレッドシート」のコードが最新版か確認し、古い場合は貼り替えて再デプロイしてください。ノートはこの端末のブラウザ内にのみ保存されます。(詳細: ${sheetConnectionError || '不明なエラー'})${pendingNote}`;
+    // タイムアウトは「コードが古い」とは限らない(実測でも正常時に数秒〜十数秒
+    // かかることがある)ため、コード更新を促す文言はタイムアウト以外の異常
+    // (HTTPエラー・想定外の応答形式など、コード側に原因がある可能性が高いもの)
+    // のときだけ表示する。
+    const isTimeout = (sheetConnectionError || '').startsWith('タイムアウト');
+    const suggestion = isTimeout
+      ? '応答が遅いか、通信がブロックされている可能性があります。'
+      : '「Initial Setup」→「③ノート保存用スプレッドシート」のコードが最新版か確認し、古い場合は貼り替えて再デプロイしてください。';
+    el.textContent = `⚠ ノート保存用スプレッドシートへの接続に失敗しました。${suggestion}ノートはこの端末のブラウザ内にのみ保存されます。(詳細: ${sheetConnectionError || '不明なエラー'})${pendingNote}`;
     el.style.display = 'block';
   } else if (pending) {
     el.textContent = `⚠${pendingNote}`;
@@ -845,7 +859,7 @@ async function migrateLocalNotesToSheet() {
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'saveNotes', notes: toUpload })
-    });
+    }, SHEET_FETCH_TIMEOUT_MS);
     Object.assign(remoteNotes, toUpload);
   } catch (e) { /* オフライン等は無視 */ }
   // mode:'no-cors'で送っているため、直前のfetch()が例外を投げなかったからと
@@ -906,7 +920,7 @@ async function saveAllVisibleNotes() {
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'saveNotes', notes: notesMap })
-    }).then(async () => {
+    }, SHEET_FETCH_TIMEOUT_MS).then(async () => {
       const cache = await getSheetNotesCache();
       Object.assign(cache, notesMap);
       // no-corsのfetch()は途中でブロックされていても成功したように見えることが
@@ -3253,7 +3267,7 @@ async function saveProgressToSheet() {
       mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
       body: JSON.stringify({ action: 'saveProgress', progress: collectLocalProgress() })
-    });
+    }, SHEET_FETCH_TIMEOUT_MS);
   } catch (e) { /* オフライン等は無視。ローカルには保存済み */ }
 }
 
@@ -3265,7 +3279,7 @@ async function syncProgressFromSheet() {
   const url = getSheetUrl();
   if (!url) return;
   try {
-    const res = await fetchWithTimeout(`${url}?action=getProgress`);
+    const res = await fetchWithTimeout(`${url}?action=getProgress`, {}, SHEET_FETCH_TIMEOUT_MS);
     const data = await res.json();
     const remote = (data && data.progress) || {};
     mergeAttempts(remote.attempts);
@@ -4527,10 +4541,17 @@ function buildLandingNav() {
 buildLandingNav();
 renderStatsDashboard();
 renderHistorySidebar();
-updateSheetConnectionBanner();
-syncProgressFromSheet();
-migrateLocalNotesToSheet();
-startNoteSyncRetryLoop();
+// 同じApps Scriptへ複数のリクエストを同時に送ると、SpreadsheetAppが同じ
+// スプレッドシートへの同時アクセスをサーバー側で直列化することがあり、
+// かえって1件あたりの応答が遅くなる(数十秒待たされることもある)。ページ
+// 読み込み時にgetNotes(ノート確認)とgetProgress(進捗確認)を同時に撃たず、
+// 順番に実行することでこれを避ける。
+(async () => {
+  await updateSheetConnectionBanner();
+  await syncProgressFromSheet();
+  await migrateLocalNotesToSheet();
+  startNoteSyncRetryLoop();
+})();
 
 function chunk(arr, size) {
   const out = [];
