@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v139';
+const BUILD_VERSION = 'v140';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -2066,6 +2066,15 @@ const audioIndexCacheByFolder = {};
 async function getAudioIndex(folderId) {
   if (audioIndexCacheByFolder[folderId]) return audioIndexCacheByFolder[folderId];
   const token = await getValidAccessToken();
+  // Box連携は端末ごとではなく「ブラウザ/アプリごと」にログイン状態が独立している
+  // (トークンはlocalStorageに保存され、同じ端末でも別のブラウザとは共有されない)。
+  // 例えばPCとスマホのSleipnirでログイン済みでも、同じスマホのChromeでは未ログインの
+  // ままということがあり、その場合getValidAccessToken()はnullを返す。ここで気づかず
+  // 「Bearer null」のままBoxへ送ると分かりにくいHTTPエラーになるため、先に明確な
+  // メッセージで弾く。
+  if (!token) {
+    throw new Error('Boxにログインしていません。このブラウザ/アプリではまだBox連携が行われていない可能性があります(ログイン状態はブラウザ/アプリごとに別々に保存されるため、他のブラウザでログイン済みでも別のブラウザでは未ログインになります)。上部の「Initial Setup」→「① Box連携」から、このブラウザでログインし直してください。');
+  }
   const map = {};
   let offset = 0;
   let guard = 0;
@@ -2114,7 +2123,17 @@ async function getAudioUrl(filename, folderId) {
   lastAudioError = '';
   const cacheKey = folderId + '|' + filename;
   if (audioUrlCache[cacheKey]) return audioUrlCache[cacheKey];
-  const index = await getAudioIndex(folderId);
+  let index;
+  try {
+    index = await getAudioIndex(folderId);
+  } catch (e) {
+    // ここで捕まえてlastAudioErrorに残しておかないと、呼び出し元
+    // (playStudySequence)のPromise.allのcatchで理由ごと握りつぶされ、
+    // 「音声を取得できませんでした。ネットワーク環境をご確認ください。」という
+    // 原因不明の汎用メッセージしか画面に出せなくなってしまう。
+    lastAudioError = e.message;
+    return null;
+  }
   const id = index[filename];
   if (!id) { lastAudioError = `音声ファイルが見つかりませんでした(${filename})。(一覧の総数: ${Object.keys(index).length}件)`; return null; }
 
