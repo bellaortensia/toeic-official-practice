@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v140';
+const BUILD_VERSION = 'v141';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -1457,6 +1457,7 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
   // 日本語でラベルの見た目・文字数が違っても2行目以降のずれが起きない。
   const SPEAKER_LABEL_RE = /^([^\s:：]{1,6}[:：])\s*/;
 
+  const lineCounters = new Map();
   function createTranscriptLine(col) {
     const line = document.createElement('div');
     line.className = 'transcript-line';
@@ -1464,21 +1465,36 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
     body.className = 'transcript-line-body';
     line.appendChild(body);
     col.appendChild(line);
-    return { line, body, labelChecked: false };
+    const idx = lineCounters.get(col) || 0;
+    lineCounters.set(col, idx + 1);
+    return { line, body, labelChecked: false, idx };
   }
   // 行の最初のチャンクに対してだけ、話者ラベルの有無を判定して切り出す
   // (2つめ以降のチャンクではlabelCheckedが立っているので何もしない)。
-  function extractLineLabel(lineObj, text) {
+  // AIが作る和訳は、まれに話者ラベル(「W：」等)を落とすことがある。その行だけ
+  // ラベルも字下げも無いまま左端に飛び出して見えてしまうため、ラベルが無い
+  // 日本語行は、同じ行番号の英語行のラベルを借りて補う(コロンは全角にする)。
+  function extractLineLabel(lineObj, text, borrowFromEn) {
     if (lineObj.labelChecked) return text;
     lineObj.labelChecked = true;
     const m = SPEAKER_LABEL_RE.exec(text);
-    if (!m) return text;
+    let labelText = null;
+    let rest = text;
+    if (m) {
+      labelText = m[1];
+      rest = text.slice(m[0].length);
+    } else if (borrowFromEn) {
+      const enLine = enCol.children[lineObj.idx];
+      const enLabel = enLine && enLine.querySelector(':scope > .transcript-label');
+      if (enLabel) labelText = enLabel.textContent.replace(/:$/, '：');
+    }
+    if (!labelText) return text;
     lineObj.line.classList.add('transcript-line-indent');
     const label = document.createElement('span');
     label.className = 'transcript-label';
-    label.textContent = m[1];
+    label.textContent = labelText;
     lineObj.line.insertBefore(label, lineObj.body);
-    return text.slice(m[0].length);
+    return rest;
   }
 
   // 文単位のデータ(naturalSentences)は、意訳モードのJA表示だけでなく、直訳モード
@@ -1540,7 +1556,7 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
       const jaSpan = document.createElement('span');
       jaSpan.className = 'chunk-seg';
       jaSpan.dataset.seg = i;
-      const cleanJa = extractLineLabel(curJaLine, seg.ja.trim());
+      const cleanJa = extractLineLabel(curJaLine, seg.ja.trim(), true);
       jaSpan.textContent = cleanJa + ' ';
       curJaLine.body.appendChild(jaSpan);
       jaSpans.push(jaSpan);
@@ -1558,11 +1574,16 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
       jaCol.innerHTML = '<p class="translate-error">意訳データがありません。「翻訳を再取得」をお試しください。</p>';
     } else {
       let curNaturalLine = createTranscriptLine(jaCol);
+      // 英語行と日本語行の行数が一致するときだけ、行番号でラベルを借りる
+      // (行数がずれていると別の話者のラベルを借りてしまうため)。
+      const enLineCount = 1 + segEffectiveLineBreak.slice(0, -1).filter(Boolean).length;
+      const jaLineCount = 1 + sentences.slice(0, -1).filter(s => s.lineBreak).length;
+      const canBorrowLabel = enLineCount === jaLineCount;
       sentences.forEach((s, i) => {
         const jaSpan = document.createElement('span');
         jaSpan.className = 'natural-seg';
         jaSpan.dataset.seg = i;
-        const cleanJa = extractLineLabel(curNaturalLine, s.ja.trim());
+        const cleanJa = extractLineLabel(curNaturalLine, s.ja.trim(), canBorrowLabel);
         jaSpan.textContent = cleanJa + ' ';
         curNaturalLine.body.appendChild(jaSpan);
         naturalJaSpans.push(jaSpan);
