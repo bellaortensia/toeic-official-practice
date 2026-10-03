@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v143';
+const BUILD_VERSION = 'v144';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -2432,6 +2432,11 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
   restartBtn.addEventListener('click', () => playFromStart());
 
   if (autoplay && list.length) playFromStart();
+
+  // 外から「頭出しして再生」を呼べるようにする(リスニング問題で、回答して解説が
+  // 出たタイミングに音声を自動で流し直すため。採点ボタンのクリック処理の中で同期的に
+  // 呼べば、スマホ等の「ユーザー操作に紐付いた再生」の制限にも引っかからない)。
+  outerWrap.playFromStart = () => { if (list.length) playFromStart(); };
 
   return outerWrap;
 }
@@ -5130,7 +5135,8 @@ function renderPart1or2() {
     wrap.appendChild(img);
   }
 
-  wrap.appendChild(createAudioPlayerWidget(q.audio, { autoplay: !explainMode, sticky: true }));
+  const audioWidget = createAudioPlayerWidget(q.audio, { autoplay: !explainMode, sticky: true });
+  wrap.appendChild(audioWidget);
 
   const choiceTexts = isPart1 ? q.statements : q.responses;
   const letters = Object.keys(choiceTexts);
@@ -5170,6 +5176,8 @@ function renderPart1or2() {
   nextBtn.addEventListener('click', () => {
     if (!revealed.done) {
       revealed.done = true;
+      // 解説が出るタイミングで音声を頭から流し直す(解説・ノートモードでは流さない)。
+      if (!explainMode) audioWidget.playFromStart();
       const buttons = choicesDiv.querySelectorAll('.choice');
       buttons.forEach((b, i) => {
         b.disabled = true;
@@ -5257,7 +5265,8 @@ function renderPart3or4() {
   audioLabel.className = 'audio-label';
   audioLabel.textContent = `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`;
   wrap.appendChild(audioLabel);
-  wrap.appendChild(createAudioPlayerWidget([g.audioConversation || g.audioTalk, g.audioQuestions], { autoplay: !explainMode, sticky: true }));
+  const audioWidget = createAudioPlayerWidget([g.audioConversation || g.audioTalk, g.audioQuestions], { autoplay: !explainMode, sticky: true });
+  wrap.appendChild(audioWidget);
 
   // Part7と同様、本文(この段階では未公開なので「音声を聞いてください」の
   // プレースホルダー)をメイン列、設問・選択肢・解説・回答履歴を右のサイド
@@ -5341,6 +5350,9 @@ function renderPart3or4() {
       revealed.done = true;
       nextBtn.disabled = true;
       nextBtn.textContent = '採点中...';
+      // 解説が出るタイミングで音声を頭から流し直す(解説・ノートモードでは流さない)。
+      // 解説の生成(通信)を待たず、クリックの直後に同期的に呼ぶ。
+      if (!explainMode) audioWidget.playFromStart();
       g.items.forEach(item => {
         const { choicesDiv, explainDiv, letters } = blocks[item.number];
         const isCorrect = p34.selections[item.number] === item.answer;
