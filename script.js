@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v141';
+const BUILD_VERSION = 'v142';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -271,18 +271,37 @@ const EXPLAIN_PROMPT_PART5 = `あなたはTOEIC対策の講師です。以下の
 }`;
 const EXPLAIN_PROMPT_PART5_VERSION = 'v2';
 
+// 解説の「選択肢の日本語訳」(▲(A) 日本語…の青字行)に、英語の選択肢そのものを
+// 付け足して「(A) 英語」+字下げした日本語訳の2段表示にする。英語はAIに書かせず
+// 設問データ(questionTextの「選択肢: (A) … (B) …」行)から確実に取る。キャッシュ
+// 済みの旧形式の解説にも後から適用できるよう、保存済みHTMLではなく返す直前に
+// 変換する(キャッシュ自体は書き換えない)。
+function addEnglishChoicesToExplainHtml(html, questionText) {
+  const m = /選択肢: (.*)\n/.exec(questionText || '');
+  if (!m) return html;
+  const parts = m[1].split(/\(([A-D])\) /);
+  const en = {};
+  for (let i = 1; i + 1 < parts.length; i += 2) en[parts[i]] = parts[i + 1].trim();
+  const style = 'color:#2f5fa8;font-weight:600';
+  return html.replace(/<div><span style="color:#2f5fa8;font-weight:600">\(([A-D])\) ([^<]*)<\/span><\/div>/g, (whole, letter, ja) => {
+    if (!en[letter]) return whole;
+    return `<div><span style="${style}">(${letter}) ${escapeHtml(en[letter])}</span></div>` +
+      `<div style="padding-left:2.2em"><span style="${style}">${ja}</span></div>`;
+  });
+}
+
 async function getRichExplanation(cacheKey, questionText, promptOverride, versionOverride) {
   const prompt = promptOverride || EXPLAIN_PROMPT_READING;
   const version = versionOverride || EXPLAIN_PROMPT_READING_VERSION;
   const lsKey = 'toeicRichExplain.' + version + '.' + cacheKey;
   const cached = localStorage.getItem(lsKey);
-  if (cached) return cached;
+  if (cached) return addEnglishChoicesToExplainHtml(cached, questionText);
   const outText = await callGemini(prompt, questionText, { responseMimeType: 'application/json', maxOutputTokens: 2048 });
   let parsed;
   try { parsed = JSON.parse(outText); } catch (e) { parsed = { explainText: outText, keyPhraseQuotes: [] }; }
   const html = formatRichExplainHtml(parsed.explainText || outText, parsed.keyPhraseQuotes || []);
   try { localStorage.setItem(lsKey, html); } catch (e) { /* 保存容量オーバー等は無視 */ }
-  return html;
+  return addEnglishChoicesToExplainHtml(html, questionText);
 }
 
 // AI解説の取得に失敗した場合、無言でエラー文を出したまま終わらせるのではなく
@@ -420,6 +439,7 @@ const TRANSLATE_PROMPT = `あなたは英語学習者向けの解析エンジン
 3) 原文中でそのチャンクの直後に改行(\\n)がある場合(会話の話者交代や段落の変わり目、文書の見出し行の区切りなど)は、そのチャンクに "lineBreak": true を付けてください(改行が無ければ省略またはfalseでよい)。
 4) 英文全体を文単位(ピリオド・感嘆符・疑問符などの文末記号まで)に区切り、それぞれの原文(en、一字一句そのまま抜粋)と、自然な日本語の語順・言い回しでの意訳(ja)のペアをnaturalSentencesに入れてください。長すぎない限り1文=1要素とすること。原文中でその文の直後に改行がある場合は、segmentsと同様に"lineBreak": trueを付けてください。
 5) 重要: 原文中に(131)_____のような「数字+アンダースコア」の空欄記号(Part6の穴埋め問題)がある場合、その記号は翻訳せず一字一句そのまま(例: "(131)_____")残すこと。segmentsのjaとnaturalSentencesのjaのどちらでも、その空欄に入る語句を勝手に推測して自然な訳文に埋め込んでしまってはならない(直訳・意訳のどちらであっても、空欄記号自体をそのまま訳文中に残す)。
+6) 重要: "At its best, [名詞]"(例: "At its best, technology facilitates smoother human interactions")という言い回しは、「最良の形において、テクノロジーは〜」のように直訳せず、「[名詞]は、本来うまく機能すれば、〜」(例: 「テクノロジーは、本来うまく機能すれば、人と人とのやり取りをより円滑にしてくれます」)と訳すこと。naturalSentencesのjaでは必ずこの形にし、segmentsのjaでも「〜は、本来うまく機能すれば、」の趣旨で訳すこと。引用符つきの発言(「〜」と述べた)の場合も、発言内容そのものは自然な話し言葉の日本語にすること。
 出力は必ず次のJSON形式のみを返し、説明文やコードフェンスは一切含めないこと。
 {
   "segments": [
