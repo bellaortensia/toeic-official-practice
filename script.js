@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v142';
+const BUILD_VERSION = 'v143';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -408,7 +408,7 @@ function speakerBadgesHtml(speakers) {
   return `<span class="speaker-badges">${parts.join('<span class="speaker-arrow">→</span>')}</span>`;
 }
 
-function buildP12ExplainHtml(q, isPart1, choiceTexts, jaTexts, letters, selectedLetter) {
+function buildP12ExplainHtml(q, isPart1, choiceTexts, jaTexts, letters, selectedLetter, bannerHtml) {
   let markup = '';
   // Part2は設問=speakers[0](質問者)、選択肢=speakers[1](応答者)が読み上げる。
   // Part1は選択肢(4つの文)を単一のspeakerが読み上げる。
@@ -424,7 +424,7 @@ function buildP12ExplainHtml(q, isPart1, choiceTexts, jaTexts, letters, selected
   markup += '■選択肢\n';
   markup += letters.map(l => `▲(${l}) ${choiceTexts[l] || ''}\n　　${jaTexts[l] || ''}`).join('\n') + '\n\n';
   markup += `■根拠・解説\n正解は(${q.answer})です。\n${q.explanation || ''}`;
-  let html = correctBannerHtml(selectedLetter === q.answer) + formatRichExplainHtml(markup, []);
+  let html = (bannerHtml || correctBannerHtml(selectedLetter === q.answer)) + formatRichExplainHtml(markup, []);
   if (questionFlagsHtml) html = html.replace('<strong>設問文</strong>', `<strong>設問文</strong> ${questionFlagsHtml}`);
   if (choicesFlagsHtml) html = html.replace('<strong>選択肢</strong>', `<strong>選択肢</strong> ${choicesFlagsHtml}`);
   return html;
@@ -2541,10 +2541,60 @@ function buildPdfExplainWidget(test, questionNumber) {
 
 const state = { test: null, part: null, data: null, index: 0 };
 
-// 回答履歴の「解説を見る」から飛んできた場合にtrueにする。各Partのrender関数が
-// これを見て、正解の選択肢を自動でクリック→採点まで自動で進め、解説をすぐ
-// 表示する(素の問題画面だけでは意味が無いため)。一度使ったら必ずfalseに戻す。
-let pendingAutoReveal = false;
+// 「解説・ノートモード」: 問題を解かずに、解説とノートだけを見るモード。
+// 問題一覧の「解説・ノート」ボタン・回答履歴/ノート見返しの「解説を見る」から入る。
+// trueの間は、各Partのrender関数が画面を描いた直後に正解の選択肢を自動で
+// クリック→採点まで進めて解説をすぐ表示し(素の問題画面だけでは意味が無いため)、
+// 前後の矢印・「次へ」も次の「問題」ではなく次の「解説」を開く。
+// このモードでは回答履歴・挑戦回数・正誤・学習時間・「前回学習した問題」を一切
+// 記録しない(実際に解いたときだけ変わるようにするため)。通常の「解く」操作
+// (jumpToUnit)や、ヘッダーの「解説・ノートモード」ラベルを押すとfalseに戻る。
+let explainMode = false;
+
+// 解説・ノートモードでの正誤表示は、今回の回答ではなく過去の記録(最後に解いたときの
+// 正誤)に基づく。一度も解いていない問題はlastCorrectがnullなので「未回答」にする。
+function explainModeLastCorrect(number) {
+  const key = state.part >= 6
+    ? `${state.test}-${state.part}-${number}-correct`
+    : `${state.test}-${state.part}-${number}`;
+  return getAttemptEntry(key).lastCorrect;
+}
+function unansweredBannerHtml() {
+  return '<div><strong style="color:#c2410c">未回答の問題です。</strong></div><div><br></div>';
+}
+// 解説の上部バナー。通常モードは今回の採点結果、解説・ノートモードは過去の記録。
+function explainBannerHtml(number, isCorrect) {
+  if (!explainMode) return correctBannerHtml(isCorrect);
+  const last = explainModeLastCorrect(number);
+  return last === null ? unansweredBannerHtml() : correctBannerHtml(last);
+}
+// 解説生成中に先に出しておく文言(バナーと同じ判定)。
+function explainStatusText(number, isCorrect) {
+  if (!explainMode) return isCorrect ? '正解です!\n\n' : '不正解です。\n\n';
+  const last = explainModeLastCorrect(number);
+  if (last === null) return '未回答の問題です。\n\n';
+  return last ? '正解です!\n\n' : '不正解です。\n\n';
+}
+// 解説ボックスを「不正解」色にするか。
+function explainIsWrong(number, isCorrect) {
+  if (!explainMode) return !isCorrect;
+  return explainModeLastCorrect(number) === false;
+}
+// 解説・ノートモードでは「あなたの回答」が無い(自動で正解を選んで開いているだけ)
+// ので、AIへ渡す設問文からその行を取り除く。
+function withoutUserAnswer(questionText) {
+  return explainMode ? questionText.replace(/\nあなたの回答:[^\n]*$/, '') : questionText;
+}
+// 解説本文の取得。通常モードは従来どおり(回答した選択肢ごとにキャッシュ)。解説・
+// ノートモードは、過去にその問題で表示した解説が保存されていればそれをそのまま
+// 使い(間違えたときの「なぜその選択肢が誤りか」入りの解説も残る)、無ければ
+// 回答なしの設問文で新しく生成して保存する(次回以降はそれが再利用される)。
+async function getExplanationFor(number, cacheKey, questionText, prompt, version) {
+  if (!explainMode) return getRichExplanation(cacheKey, questionText, prompt, version);
+  const cached = findRichExplanationHtml(state.test, state.part, number);
+  if (cached) return addEnglishChoicesToExplainHtml(cached, questionText);
+  return getRichExplanation(`${state.test}-${state.part}-${number}-x`, questionText, prompt, version);
+}
 
 const practiceEl = document.getElementById('practice');
 const emptyStateEl = document.getElementById('empty-state');
@@ -4261,7 +4311,7 @@ const PART_LABELS = {
 // 「グループユニット」として返す(buildGroupedUnitRowで括弧付きの個別行として描画する)。
 function buildUnitList(test, part, data) {
   if (part === 1 || part === 2) {
-    return data.questions.map((q, i) => ({ key: `${test}-${part}-${q.number}`, label: `Q${q.number}`, unitIndex: i }));
+    return data.questions.map((q, i) => ({ key: `${test}-${part}-${q.number}`, label: `Q${q.number}`, number: q.number, unitIndex: i }));
   }
   if (part === 3 || part === 4) {
     return data.groups.map((g, i) => ({
@@ -4291,6 +4341,7 @@ function buildUnitList(test, part, data) {
 }
 
 async function jumpToUnit(test, part, unitIndex) {
+  explainMode = false;
   state.test = test;
   state.part = part;
   state.index = 0;
@@ -4320,8 +4371,9 @@ async function jumpToUnit(test, part, unitIndex) {
 // ジャンプする。jumpToUnitは「何番目のユニットか」で指定するが、ユニット構成
 // (Part3/4は会話グループ単位、Part5は5問バッチ単位、Part6/7はパッセージ単位)は
 // データを読み込むまで分からないため、先にデータを読み込んでから該当ユニットを探す。
-// autoReveal=trueなら、画面が描画された直後に正解の選択肢を自動でクリック→採点まで
-// 自動で進め、素の問題画面ではなく解説が出た状態まで一気に見せる。
+// autoReveal=trueなら「解説・ノートモード」(explainMode)で開く。画面が描画された
+// 直後に正解の選択肢を自動でクリック→採点まで自動で進め、素の問題画面ではなく
+// 解説が出た状態まで一気に見せる(履歴・挑戦回数などは記録しない)。
 async function jumpToQuestionNumber(test, part, number, autoReveal) {
   state.test = test;
   state.part = part;
@@ -4358,7 +4410,7 @@ async function jumpToQuestionNumber(test, part, number, autoReveal) {
   } else {
     p67 = { idx: unitIndex, phase: 'question', selections: {} };
   }
-  if (autoReveal) pendingAutoReveal = true;
+  explainMode = !!autoReveal;
   renderPractice();
 }
 
@@ -4449,8 +4501,22 @@ function buildMeterEl(key, colorKey) {
   return meter;
 }
 
-// 1行1ユニット: リンク(ジャンプ)+挑戦回数メーター。
-function buildUnitRow(container, u, onJump) {
+// 「解説・ノート」ボタン: 解かずに、その問題の解説とノートだけを見るモードで開く。
+function buildExplainOnlyBtn(onExplain) {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'unit-explain-btn';
+  btn.textContent = '解説・ノート';
+  btn.addEventListener('click', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    onExplain();
+  });
+  return btn;
+}
+
+// 1行1ユニット: リンク(ジャンプ)+「解説・ノート」ボタン+挑戦回数メーター。
+function buildUnitRow(container, u, onJump, onExplain) {
   const row = document.createElement('div');
   row.className = 'unit-row';
 
@@ -4463,6 +4529,7 @@ function buildUnitRow(container, u, onJump) {
     onJump();
   });
   row.appendChild(a);
+  if (onExplain) row.appendChild(buildExplainOnlyBtn(onExplain));
   row.appendChild(buildMeterEl(u.key));
 
   container.appendChild(row);
@@ -4471,7 +4538,7 @@ function buildUnitRow(container, u, onJump) {
 // Part3/4/5用: 1ユニット(まとめて採点される複数問題)を、括弧でグループ化しつつ
 // 問題番号ごとの個別行(個別メーター)として描画する。どの問題番号をクリックしても
 // 同じユニット(セット全体)にジャンプする。
-function buildGroupedUnitRow(container, u, onJump) {
+function buildGroupedUnitRow(container, u, onJump, onExplain) {
   const group = document.createElement('div');
   group.className = 'unit-group';
   if (u.label) {
@@ -4492,6 +4559,7 @@ function buildGroupedUnitRow(container, u, onJump) {
       onJump();
     });
     row.appendChild(a);
+    if (onExplain) row.appendChild(buildExplainOnlyBtn(() => onExplain(q.number)));
     row.appendChild(buildMeterEl(q.key, q.colorKey));
     group.appendChild(row);
   });
@@ -4524,8 +4592,8 @@ async function showPartOverview(test, part) {
   const half = Math.ceil(units.length / 2);
   units.forEach((u, i) => {
     const col = i < half ? colLeft : colRight;
-    if (grouped) buildGroupedUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex));
-    else buildUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex));
+    if (grouped) buildGroupedUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex), n => jumpToQuestionNumber(test, part, n, true));
+    else buildUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex), () => jumpToQuestionNumber(test, part, u.number, true));
   });
 }
 
@@ -4586,8 +4654,8 @@ function buildLandingNav() {
         const half = Math.ceil(units.length / 2);
         units.forEach((u, i) => {
           const col = i < half ? colLeft : colRight;
-          if (grouped) buildGroupedUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex));
-          else buildUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex));
+          if (grouped) buildGroupedUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex), n => jumpToQuestionNumber(test, part, n, true));
+          else buildUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex), () => jumpToQuestionNumber(test, part, u.number, true));
         });
         unitsDiv.style.display = 'flex';
       });
@@ -4720,9 +4788,18 @@ function updateHeaderNav() {
   footerPrevBtn.disabled = unitIdx <= 0;
   footerNextBtn.disabled = unitIdx >= unitCount - 1;
   partJumpSelectEl.value = `${state.test}-${state.part}`;
+  explainModeLabelEl.style.display = explainMode ? 'inline-block' : 'none';
   stopAllAudio();
   resetAndStartStopwatch();
 }
+
+// ヘッダーの「解説・ノートモード」ラベル(モード表示を兼ねたボタン)。押すと、いま
+// 見ている問題を通常の「解く」モードで開き直す。
+const explainModeLabelEl = document.getElementById('explainModeLabel');
+explainModeLabelEl.addEventListener('click', () => {
+  explainMode = false;
+  goToAdjacentUnit(0);
+});
 
 // ---------- Part別レンダリング ----------
 
@@ -5053,7 +5130,7 @@ function renderPart1or2() {
     wrap.appendChild(img);
   }
 
-  wrap.appendChild(createAudioPlayerWidget(q.audio, { autoplay: true, sticky: true }));
+  wrap.appendChild(createAudioPlayerWidget(q.audio, { autoplay: !explainMode, sticky: true }));
 
   const choiceTexts = isPart1 ? q.statements : q.responses;
   const letters = Object.keys(choiceTexts);
@@ -5100,15 +5177,15 @@ function renderPart1or2() {
         else if (letters[i] === p12.selected) b.classList.add('wrong');
       });
       const jaTexts = isPart1 ? q.statementsJa : q.responsesJa;
-      explainDiv.innerHTML = buildP12ExplainHtml(q, isPart1, choiceTexts, jaTexts, letters, p12.selected);
-      explainDiv.classList.toggle('explain-box-wrong', p12.selected !== q.answer);
+      explainDiv.innerHTML = buildP12ExplainHtml(q, isPart1, choiceTexts, jaTexts, letters, p12.selected, explainBannerHtml(q.number, p12.selected === q.answer));
+      explainDiv.classList.toggle('explain-box-wrong', explainIsWrong(q.number, p12.selected === q.answer));
       explainDiv.style.display = 'block';
       const noteKey = `${state.test}-${state.part}-${q.number}`;
       notesSlot.appendChild(buildNotesWidget(noteKey));
       const questionContext = `Q${q.number}\n` + letters.map(l => `(${l}) ${choiceTexts[l]}`).join('\n') + `\n正解: (${q.answer})`;
       askAiSlot.appendChild(buildAskAiWidget(questionContext, noteKey));
       pdfSlot.appendChild(buildPdfExplainWidget(state.test, q.number));
-      incrementAttempt(noteKey, p12.selected === q.answer);
+      if (!explainMode) incrementAttempt(noteKey, p12.selected === q.answer);
       nextBtn.textContent = '次へ';
     } else {
       p12.qIdx++;
@@ -5129,8 +5206,7 @@ function renderPart1or2() {
   practiceBodyEl.innerHTML = '';
   practiceBodyEl.appendChild(wrap);
 
-  if (pendingAutoReveal) {
-    pendingAutoReveal = false;
+  if (explainMode) {
     const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${q.answer})`);
     if (correctBtn) correctBtn.click();
     nextBtn.click();
@@ -5181,7 +5257,7 @@ function renderPart3or4() {
   audioLabel.className = 'audio-label';
   audioLabel.textContent = `Q${g.questions[0]}-${g.questions[g.questions.length - 1]}`;
   wrap.appendChild(audioLabel);
-  wrap.appendChild(createAudioPlayerWidget([g.audioConversation || g.audioTalk, g.audioQuestions], { autoplay: true, sticky: true }));
+  wrap.appendChild(createAudioPlayerWidget([g.audioConversation || g.audioTalk, g.audioQuestions], { autoplay: !explainMode, sticky: true }));
 
   // Part7と同様、本文(この段階では未公開なので「音声を聞いてください」の
   // プレースホルダー)をメイン列、設問・選択肢・解説・回答履歴を右のサイド
@@ -5275,23 +5351,25 @@ function renderPart3or4() {
           else if (letters[i] === p34.selections[item.number]) b.classList.add('wrong');
         });
         explainDiv.style.display = 'block';
-        explainDiv.classList.toggle('explain-box-wrong', !isCorrect);
-        explainDiv.textContent = (isCorrect ? '正解です!\n\n' : '不正解です。\n\n') + '解説を生成中...';
+        explainDiv.classList.toggle('explain-box-wrong', explainIsWrong(item.number, isCorrect));
+        explainDiv.textContent = explainStatusText(item.number, isCorrect) + '解説を生成中...';
       });
       const transcriptText = g.conversationText || g.talkText;
       for (const item of g.items) {
         const { explainDiv, askAiSlot, pdfSlot } = blocks[item.number];
         const isCorrect = p34.selections[item.number] === item.answer;
-        const prefixHtml = correctBannerHtml(isCorrect);
-        const questionText = `${transcriptText ? `会話・トークの原文:\n${transcriptText}\n\n` : ''}${item.number}. ${item.text}\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}\nあなたの回答: (${p34.selections[item.number]}) ${item.choices[p34.selections[item.number]]}`;
+        const prefixHtml = explainBannerHtml(item.number, isCorrect);
+        const questionText = withoutUserAnswer(`${transcriptText ? `会話・トークの原文:\n${transcriptText}\n\n` : ''}${item.number}. ${item.text}\n選択肢: ${Object.entries(item.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${item.answer}) ${item.choices[item.answer]}\nあなたの回答: (${p34.selections[item.number]}) ${item.choices[p34.selections[item.number]]}`);
         await renderExplanationWithRetry(explainDiv, prefixHtml, () =>
-          getRichExplanation(`${state.test}-${state.part}-${item.number}-${p34.selections[item.number]}`, questionText));
+          getExplanationFor(item.number, `${state.test}-${state.part}-${item.number}-${p34.selections[item.number]}`, questionText));
         askAiSlot.appendChild(buildAskAiWidget(questionText, `${state.test}-${state.part}-${item.number}`));
         pdfSlot.appendChild(buildPdfExplainWidget(state.test, item.number));
       }
-      g.items.forEach(item => {
-        incrementAttempt(`${state.test}-${state.part}-${item.number}`, p34.selections[item.number] === item.answer, `${state.test}-${state.part}-${g.questions[0]}`);
-      });
+      if (!explainMode) {
+        g.items.forEach(item => {
+          incrementAttempt(`${state.test}-${state.part}-${item.number}`, p34.selections[item.number] === item.answer, `${state.test}-${state.part}-${g.questions[0]}`);
+        });
+      }
       placeholder.remove();
       const fullText = g.conversationText || g.talkText;
       if (fullText) {
@@ -5322,8 +5400,7 @@ function renderPart3or4() {
   practiceBodyEl.innerHTML = '';
   practiceBodyEl.appendChild(wrap);
 
-  if (pendingAutoReveal) {
-    pendingAutoReveal = false;
+  if (explainMode) {
     g.items.forEach(item => {
       const { choicesDiv } = blocks[item.number];
       const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${item.answer}) ${item.choices[item.answer]}`);
@@ -5395,31 +5472,32 @@ function renderPart5() {
         else if (letters[i] === selections[q.number]) b.classList.add('wrong');
       });
       explainDiv.style.display = 'block';
-      explainDiv.classList.toggle('explain-box-wrong', selections[q.number] !== q.answer);
+      explainDiv.classList.toggle('explain-box-wrong', explainIsWrong(q.number, selections[q.number] === q.answer));
       explainDiv.textContent = '解説を生成中...';
     });
     gradeBtn.remove();
     for (const q of batch) {
       const { explainDiv, askAiSlot, pdfSlot } = blocks[q.number];
       const isCorrect = selections[q.number] === q.answer;
-      const prefixHtml = correctBannerHtml(isCorrect);
-      const questionText = `${q.number}. ${q.sentence}\n選択肢: ${Object.entries(q.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${q.answer}) ${q.choices[q.answer]}\nあなたの回答: (${selections[q.number]}) ${q.choices[selections[q.number]]}`;
+      const prefixHtml = explainBannerHtml(q.number, isCorrect);
+      const questionText = withoutUserAnswer(`${q.number}. ${q.sentence}\n選択肢: ${Object.entries(q.choices).map(([l, txt]) => `(${l}) ${txt}`).join(' ')}\n正解: (${q.answer}) ${q.choices[q.answer]}\nあなたの回答: (${selections[q.number]}) ${q.choices[selections[q.number]]}`);
       await renderExplanationWithRetry(explainDiv, prefixHtml, () =>
-        getRichExplanation(`${state.test}-5-${q.number}-${selections[q.number]}`, questionText, EXPLAIN_PROMPT_PART5, EXPLAIN_PROMPT_PART5_VERSION));
+        getExplanationFor(q.number, `${state.test}-5-${q.number}-${selections[q.number]}`, questionText, EXPLAIN_PROMPT_PART5, EXPLAIN_PROMPT_PART5_VERSION));
       askAiSlot.appendChild(buildAskAiWidget(questionText, `${state.test}-5-${q.number}`));
       pdfSlot.appendChild(buildPdfExplainWidget(state.test, q.number));
     }
-    batch.forEach(q => {
-      incrementAttempt(`${state.test}-5-${q.number}`, selections[q.number] === q.answer, `${state.test}-5-${batch[0].number}`);
-    });
+    if (!explainMode) {
+      batch.forEach(q => {
+        incrementAttempt(`${state.test}-5-${q.number}`, selections[q.number] === q.answer, `${state.test}-5-${batch[0].number}`);
+      });
+    }
     wrap.appendChild(buildNotesWidget(`${state.test}-5-${batch[0].number}`));
   });
   wrap.appendChild(gradeBtn);
 
   practiceBodyEl.appendChild(wrap);
 
-  if (pendingAutoReveal) {
-    pendingAutoReveal = false;
+  if (explainMode) {
     batch.forEach(q => {
       const { choicesDiv } = blocks[q.number];
       const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${q.answer}) ${q.choices[q.answer]}`);
@@ -5525,23 +5603,26 @@ async function p67RevealAndExplain(items, blocks, nextBtn, questionTextBuilder, 
       else if (letters[i] === p67.selections[item.number]) b.classList.add('wrong');
     });
     explainDiv.style.display = 'block';
-    explainDiv.classList.toggle('explain-box-wrong', !isCorrect);
-    explainDiv.textContent = (isCorrect ? '正解です!\n\n' : '不正解です。\n\n') + '解説を生成中...';
+    explainDiv.classList.toggle('explain-box-wrong', explainIsWrong(item.number, isCorrect));
+    explainDiv.textContent = explainStatusText(item.number, isCorrect) + '解説を生成中...';
   });
   for (const item of items) {
     const { explainDiv, askAiSlot, pdfSlot } = blocks[item.number];
     const isCorrect = p67.selections[item.number] === item.answer;
-    const prefixHtml = correctBannerHtml(isCorrect);
+    const prefixHtml = explainBannerHtml(item.number, isCorrect);
+    const questionText = withoutUserAnswer(questionTextBuilder(item));
     await renderExplanationWithRetry(explainDiv, prefixHtml, () =>
-      getRichExplanation(cacheKeyBuilder(item), questionTextBuilder(item)));
-    askAiSlot.appendChild(buildAskAiWidget(questionTextBuilder(item), `${state.test}-${state.part}-${item.number}`));
+      getExplanationFor(item.number, cacheKeyBuilder(item), questionText));
+    askAiSlot.appendChild(buildAskAiWidget(questionText, `${state.test}-${state.part}-${item.number}`));
     pdfSlot.appendChild(buildPdfExplainWidget(state.test, item.number));
   }
-  const allCorrect = items.every(item => p67.selections[item.number] === item.answer);
-  incrementAttempt(attemptKey, allCorrect);
-  items.forEach(item => {
-    recordCorrectness(`${state.test}-${state.part}-${item.number}-correct`, p67.selections[item.number] === item.answer, attemptKey);
-  });
+  if (!explainMode) {
+    const allCorrect = items.every(item => p67.selections[item.number] === item.answer);
+    incrementAttempt(attemptKey, allCorrect);
+    items.forEach(item => {
+      recordCorrectness(`${state.test}-${state.part}-${item.number}-correct`, p67.selections[item.number] === item.answer, attemptKey);
+    });
+  }
   nextBtn.disabled = false;
   nextBtn.textContent = '次へ';
 }
@@ -5665,8 +5746,7 @@ function renderPart6() {
   practiceBodyEl.innerHTML = '';
   practiceBodyEl.appendChild(layout);
 
-  if (pendingAutoReveal) {
-    pendingAutoReveal = false;
+  if (explainMode) {
     p.items.forEach(item => {
       const { choicesDiv } = blocks[item.number];
       const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${item.answer}) ${item.choices[item.answer]}`);
@@ -5785,8 +5865,7 @@ function renderPart7() {
   practiceBodyEl.innerHTML = '';
   practiceBodyEl.appendChild(layout);
 
-  if (pendingAutoReveal) {
-    pendingAutoReveal = false;
+  if (explainMode) {
     p.items.forEach(item => {
       const { choicesDiv } = blocks[item.number];
       const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${item.answer}) ${item.choices[item.answer]}`);

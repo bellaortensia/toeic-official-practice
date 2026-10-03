@@ -1107,6 +1107,26 @@ audio{
   min-width:0;
 }
 .unit-row:hover .unit-link{color:var(--accent-2);}
+/* 問題一覧の「解説・ノート」ボタン(解かずに解説とノートだけを見るモードで開く)。 */
+.unit-explain-btn{
+  flex:0 0 auto;
+  background:#fff;color:var(--accent-2);
+  border:1px solid var(--accent-2);border-radius:999px;
+  padding:1px 9px;font-size:11px;line-height:1.6;cursor:pointer;
+  font-family:'Noto Sans JP',sans-serif;
+}
+.unit-explain-btn:hover{background:var(--accent-2);color:#fff;filter:none;}
+/* 練習画面ヘッダーの「解説・ノートモード」表示(押すと通常モードに戻る)。 */
+.explain-mode-label{
+  position:absolute;left:calc(50% + 120px);top:50%;transform:translateY(-50%);
+  background:#fff3e6;color:#c2410c;border:1px solid #f0b88a;border-radius:999px;
+  padding:2px 10px;font-size:11px;line-height:1.6;cursor:pointer;white-space:nowrap;
+  font-family:'Noto Sans JP',sans-serif;
+}
+.explain-mode-label:hover{background:#c2410c;color:#fff;filter:none;}
+@media (max-width:640px){
+  .explain-mode-label{position:static;transform:none;margin-left:10px;}
+}
 
 .attempt-meter{
   display:flex;
