@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v144';
+const BUILD_VERSION = 'v145';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -283,10 +283,15 @@ function addEnglishChoicesToExplainHtml(html, questionText) {
   const en = {};
   for (let i = 1; i + 1 < parts.length; i += 2) en[parts[i]] = parts[i + 1].trim();
   const style = 'color:#2f5fa8;font-weight:600';
+  // 「(A)」を固定幅(LABEL_W)の列にし、英語は折り返してもその右に揃う(ぶら下げ
+  // インデント)、日本語訳は同じ幅だけ字下げして、英語の語頭と日本語訳の文頭を
+  // 縦にぴったり揃える。以前は日本語側の字下げ量を固定のemで決めていたため、
+  // 「(A)」の実際の文字幅と合わず少しずれていた。
+  const LABEL_W = '2em';
   return html.replace(/<div><span style="color:#2f5fa8;font-weight:600">\(([A-D])\) ([^<]*)<\/span><\/div>/g, (whole, letter, ja) => {
     if (!en[letter]) return whole;
-    return `<div><span style="${style}">(${letter}) ${escapeHtml(en[letter])}</span></div>` +
-      `<div style="padding-left:2.2em"><span style="${style}">${ja}</span></div>`;
+    return `<div style="display:flex;${style}"><span style="flex:0 0 ${LABEL_W}">(${letter})</span><span style="min-width:0">${escapeHtml(en[letter])}</span></div>` +
+      `<div style="padding-left:${LABEL_W}"><span style="${style}">${ja}</span></div>`;
   });
 }
 
