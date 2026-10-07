@@ -485,6 +485,8 @@ audio{
 .transcript-line{
   margin:0;
 }
+/* 原文で空行が入っている箇所(段落の切れ目)を、翻訳表示でも空けるためのスペーサー。 */
+.transcript-gap{height:0.9em;}
 /* 「M: 」「W: 」「男性：」「女性：」のような話者ラベルで始まる行は、ラベルを
    独立した要素(transcript-label)として切り出し、残りの本文(transcript-line-body)
    と横並びのflexにする。text-indentの固定em幅方式だと、ラベルの実際の文字幅が
@@ -652,10 +654,17 @@ audio{
   background:#faf7ee;border:1px solid var(--line);border-radius:10px;
   padding:12px 21px;margin:6px 6px 6px 0;
 }
-.audio-player-sticky{
+/* stickyは、背の高い親(画面全体)の中を動けるよう外枠(.audio-player-sticky-wrap)に付ける。
+   プレーヤー本体(.audio-player-sticky)に付けても、親がプレーヤー1個ぶんの高さしか
+   無いので張り付かずに一緒にスクロールして消えてしまう。Part6/7は解答後に
+   プレーヤーを入れる枠(.audio-slot-sticky)自体を張り付かせる。 */
+.audio-player-sticky-wrap,
+.audio-slot-sticky{
   position:sticky;
   top:var(--audio-sticky-top-h, 130px);
   z-index:20;
+}
+.audio-player-sticky{
   box-shadow:0 4px 10px rgba(0,0,0,.1);
 }
 .player-restart{

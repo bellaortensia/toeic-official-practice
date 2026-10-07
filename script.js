@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v145';
+const BUILD_VERSION = 'v146';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -440,6 +440,7 @@ function buildP12ExplainHtml(q, isPart1, choiceTexts, jaTexts, letters, selected
 const TRANSLATE_PROMPT = `あなたは英語学習者向けの解析エンジンです。与えられた英文全体を解析してください。
 1) 最初の1文字から最後の1文字まで省略せず、意味のまとまり(チャンク)ごとに分割し、各チャンクに英語の語順のまま前から順番に理解できる「直訳調」の日本語訳を付けてください(自然な日本語の語順に並べ替えないこと)。1チャンクは必ず英単語3〜8語程度に収めること。8語を超えそうな場合は、接続詞・関係詞・前置詞句の前やカンマの後など意味の区切りで必ずさらに分割すること。どんなに短い文でも、1文をまるごと1つのチャンクにするのは禁止(主語のまとまりと動詞以降のまとまりなど、最低2つ以上に分けること)。
 1.5) 重要: 原文中に改行(\\n)がある箇所では、必ずその改行の直前でチャンクを区切ること。改行をまたいで複数行分のテキストを1つのチャンクにまとめてはならない。これは"From: 〜"「To: 〜」「Date: 〜」のようなラベル付きの見出し行に限らず、ビジネスレターの差出人・宛先の住所ブロック(会社名・番地・市区町村・国名などがラベル無しで1行ずつ短く続くもの。例: "Nakaima Industries" "10 4-1262, Makiku Yoshitsubo" "Joetsu-shi, Niigata" "Japan" のような並び)や日付単独の行、"Dear 〜,"のような書き出しの行など、短い行が連続する箇所すべてに当てはまる。3〜8語という基準より、改行で区切ることの方を必ず優先する(1語だけ、あるいは会社名や地名だけの行でも構わない)。原文中の改行の数と、区切ったチャンクの数・位置が一致しているか、出力前に必ず自己チェックすること。
+1.6) 時刻・日付・数字の途中ではチャンクを区切らないこと。例えば"8:00-9:45 A.M."、"10:00-11:45"、"$100.00"、"well-known"のように、空白を挟まずに続いている1語(トークン)の途中で切って、"8:"と"00-9:45"のように分けてはならない。
 2) 各チャンクの中にTOEIC頻出の単語・熟語・言い回しがあれば、その語句を一字一句原文のまま抜き出し、keyTermsに追加してください(該当が無いチャンクではkeyTermsを空配列にする)。
 3) 原文中でそのチャンクの直後に改行(\\n)がある場合(会話の話者交代や段落の変わり目、文書の見出し行の区切りなど)は、そのチャンクに "lineBreak": true を付けてください(改行が無ければ省略またはfalseでよい)。
 4) 英文全体を文単位(ピリオド・感嘆符・疑問符などの文末記号まで)に区切り、それぞれの原文(en、一字一句そのまま抜粋)と、自然な日本語の語順・言い回しでの意訳(ja)のペアをnaturalSentencesに入れてください。長すぎない限り1文=1要素とすること。原文中でその文の直後に改行がある場合は、segmentsと同様に"lineBreak": trueを付けてください。
@@ -1462,10 +1463,36 @@ function showChunkPopup(seg, anchorEl, notesArea, clauseText, bottleneckLabel, d
 // ・意訳: 文単位、常時表示。チャンク単位で正確に対応する箇所をハイライトするのは
 //   難しいため背景ハイライトはしないが、今EN側でハイライトされているチャンクが
 //   含まれる文だけに下線を引き、ホイール操作と連動させる(常時全文下線にはしない)。
-function renderTranslateColumns(container, data, mode, notesArea, slash, bottleneckLabel, cacheKey = null) {
+function renderTranslateColumns(container, data, mode, notesArea, slash, bottleneckLabel, cacheKey = null, sourceText = '') {
   container.innerHTML = '';
   const segments = data.segments || [];
   let curSeg = -1;
+
+  // 原文(sourceText)の改行を、本文表示(画像→テキスト表示)と同じ見た目に近づける。
+  // ・原文で行の間に空行(改行2つ以上)がある箇所は、翻訳表示でも1行ぶんの空きを入れる。
+  //   (今までは改行1つぶんの区切りにしかならず、段落の切れ目が分からなかった)
+  // ・AIが「8:」「00-9:45」のように時刻や数字の途中でチャンクを区切ると、つなぎ目に
+  //   余計な空白が入って「8: 00-9:45」と表示されていたため、原文でその2つの間に
+  //   空白が無い場合は空白を入れずにつなぐ。
+  function hasBlankLineAfter(endIdx) {
+    if (!sourceText || !(endIdx > 0)) return false;
+    let i = endIdx, newlines = 0;
+    while (i < sourceText.length && /\s/.test(sourceText[i])) {
+      if (sourceText[i] === '\n') newlines++;
+      i++;
+    }
+    return newlines >= 2 && i < sourceText.length;
+  }
+  function joinsNextWithoutSpace(i) {
+    const seg = segments[i], next = segments[i + 1];
+    if (!sourceText || !next || !(seg.end > seg.start) || next.start !== seg.end) return false;
+    return /\S/.test(sourceText[seg.end - 1] || '') && /\S/.test(sourceText[next.start] || '');
+  }
+  function appendGap(col) {
+    const gap = document.createElement('div');
+    gap.className = 'transcript-gap';
+    col.appendChild(gap);
+  }
 
   const wideWrap = document.createElement('div');
   wideWrap.className = 'translate-wide';
@@ -1480,7 +1507,10 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
   // (transcript-line-body)と横並びのflexにする(詳細はCSS側のコメント参照)。
   // EN・JAそれぞれの実際のテキストからラベルを判定・抽出するので、英語と
   // 日本語でラベルの見た目・文字数が違っても2行目以降のずれが起きない。
-  const SPEAKER_LABEL_RE = /^([^\s:：]{1,6}[:：])\s*/;
+  // 数字で始まるもの("8:00-9:45"の"8:"、"10:00"の"10:"など時刻)は話者ラベルではない。
+  // 以前は時刻の「8:」を話者ラベルと誤認して別要素に切り出し、「8: 00-9:45」のように
+  // 数字の間に余計な隙間が空いて表示されていた。
+  const SPEAKER_LABEL_RE = /^([^\s:：\d][^\s:：]{0,5}[:：])\s*/;
 
   const lineCounters = new Map();
   function createTranscriptLine(col) {
@@ -1509,7 +1539,7 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
       labelText = m[1];
       rest = text.slice(m[0].length);
     } else if (borrowFromEn) {
-      const enLine = enCol.children[lineObj.idx];
+      const enLine = enCol.querySelectorAll(':scope > .transcript-line')[lineObj.idx];
       const enLabel = enLine && enLine.querySelector(':scope > .transcript-label');
       if (enLabel) labelText = enLabel.textContent.replace(/:$/, '：');
     }
@@ -1558,7 +1588,7 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
   let curJaLine = mode === 'literal' ? createTranscriptLine(jaCol) : null;
 
   function renderEnSpan(enSpan, seg, lineBreak, cleanEn, segIdx) {
-    const trailing = lineBreak ? ' ' : (slash ? ' / ' : ' ');
+    const trailing = lineBreak ? ' ' : (joinsNextWithoutSpace(segIdx) ? '' : (slash ? ' / ' : ' '));
     const marks = cacheKey ? getBottleneckMarksForSegment(cacheKey, segIdx) : [];
     enSpan.innerHTML = buildHighlightedHtml(cleanEn, new Set(marks)) + escapeHtml(trailing);
   }
@@ -1587,8 +1617,13 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
       jaSpans.push(jaSpan);
     }
     if (lineBreak) {
+      const gap = i < segments.length - 1 && hasBlankLineAfter(seg.end);
+      if (gap) appendGap(enCol);
       curEnLine = createTranscriptLine(enCol);
-      if (mode === 'literal') curJaLine = createTranscriptLine(jaCol);
+      if (mode === 'literal') {
+        if (gap) appendGap(jaCol);
+        curJaLine = createTranscriptLine(jaCol);
+      }
     }
   });
 
@@ -1612,7 +1647,10 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
         jaSpan.textContent = cleanJa + ' ';
         curNaturalLine.body.appendChild(jaSpan);
         naturalJaSpans.push(jaSpan);
-        if (s.lineBreak) curNaturalLine = createTranscriptLine(jaCol);
+        if (s.lineBreak) {
+          if (i < sentences.length - 1 && hasBlankLineAfter(s.end)) appendGap(jaCol);
+          curNaturalLine = createTranscriptLine(jaCol);
+        }
       });
     }
   }
@@ -1890,7 +1928,7 @@ function buildTranslatableBlock(text, cacheKey, speakers, bottleneckLabel, defau
     box.appendChild(buildPassageAskAiRow(notesArea, text, askAiHistory));
 
     function renderCurrentMode() {
-      renderTranslateColumns(contentContainer, data, mode, notesArea, slash, bottleneckLabel, cacheKey);
+      renderTranslateColumns(contentContainer, data, mode, notesArea, slash, bottleneckLabel, cacheKey, text);
     }
 
     modeBtn.onclick = () => { mode = mode === 'literal' ? 'natural' : 'literal'; refreshModeUI(); renderCurrentMode(); };
@@ -2266,6 +2304,10 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
 
   const player = document.createElement('div');
   player.className = 'audio-player' + (sticky ? ' audio-player-sticky' : '');
+  // position:stickyは「親要素の枠の中」でしか張り付かない。プレーヤー本体(player)の
+  // 親は、プレーヤーとエラー表示だけを入れた小さな外枠(outerWrap)なので、本体に
+  // stickyを付けても動ける範囲が無く、ページをスクロールすると一緒に流れて消えて
+  // いた。stickyは背の高い画面全体を親に持つ外枠(outerWrap)の側に付ける(CSS参照)。
   const restartBtn = document.createElement('button');
   restartBtn.className = 'player-restart';
   restartBtn.textContent = '⏮';
@@ -2359,6 +2401,7 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
   errorEl.className = 'audio-player-error';
   errorEl.style.display = 'none';
   const outerWrap = document.createElement('div');
+  if (sticky) outerWrap.className = 'audio-player-sticky-wrap';
   outerWrap.appendChild(player);
   outerWrap.appendChild(errorEl);
 
@@ -5729,6 +5772,7 @@ function renderPart6() {
   });
 
   const audioSlot = document.createElement('div');
+  audioSlot.className = 'audio-slot-sticky';
   audioSlot.style.display = 'none';
   main.appendChild(audioSlot);
 
@@ -5841,6 +5885,7 @@ function renderPart7() {
   });
 
   const audioSlot = document.createElement('div');
+  audioSlot.className = 'audio-slot-sticky';
   audioSlot.style.display = 'none';
   main.appendChild(audioSlot);
 
