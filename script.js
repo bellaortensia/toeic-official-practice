@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v146';
+const BUILD_VERSION = 'v147';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -1455,6 +1455,39 @@ function showChunkPopup(seg, anchorEl, notesArea, clauseText, bottleneckLabel, d
   chunkPopupEl.classList.add('show');
 }
 
+// 「M: 」「W: 」「男性：」のような話者ラベル(行頭のラベル)を見分ける正規表現。
+// 数字で始まるもの("8:00-9:45"の"8:"、"10:00"の"10:"など時刻)は話者ラベルではない。
+// 以前は時刻の「8:」を話者ラベルと誤認して別要素に切り出し、「8: 00-9:45」のように
+// 数字の間に余計な隙間が空いて表示されていた。
+const SPEAKER_LABEL_RE = /^([^\s:：\d][^\s:：]{0,5}[:：])\s*/;
+
+// segments/naturalSentencesはAIが別々に分割するため、原文中の文字位置(start/end)
+// を突き合わせて、各チャンクがどの文(naturalSentences)に属するかを求める。
+function computeSegToSentenceIdx(segments, sentences) {
+  return segments.map(seg => {
+    if (!sentences.length) return -1;
+    let idx = sentences.findIndex(s => seg.start >= s.start && seg.start < s.end);
+    if (idx === -1) idx = sentences.findIndex(s => seg.start < s.end);
+    if (idx === -1) idx = sentences.length - 1;
+    return idx;
+  });
+}
+// チャンク単位の分割(segments)は3〜8語区切りのため、AIが話者交代等の改行を
+// またぐチャンクを作ってしまうと、reconcileLineBreaks側では改行の直前で
+// 終わるチャンクが存在せず、EN側だけ改行が付かないことがあった(JA側の
+// 意訳(naturalSentences)は文単位で改行位置を検出しやすく、正しく改行される
+// ことが多い)。そのズレを防ぐため、あるチャンクがその文の最後のチャンクで、
+// かつその文自体にlineBreak:trueが付いている場合は、チャンク側にも改行を
+// 適用する(意訳側の改行検出結果をチャンク側にも反映させる)。
+function computeSegEffectiveLineBreaks(segments, sentences, segToSentenceIdx) {
+  return segments.map((seg, i) => {
+    if (seg.lineBreak) return true;
+    const sentIdx = segToSentenceIdx[i];
+    if (sentIdx === -1 || !sentences[sentIdx] || !sentences[sentIdx].lineBreak) return false;
+    return i === segments.length - 1 || segToSentenceIdx[i + 1] !== sentIdx;
+  });
+}
+
 // EN列は直訳・意訳どちらのモードでも常にチャンク単位で表示する(スラッシュ区切り、
 // マウスホイールの上下でハイライト位置(curSeg)を送り、クリックでポップアップ。
 // 実際のカーソル位置とは無関係)。JA列はモードで表示を切り替える:
@@ -1507,10 +1540,6 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
   // (transcript-line-body)と横並びのflexにする(詳細はCSS側のコメント参照)。
   // EN・JAそれぞれの実際のテキストからラベルを判定・抽出するので、英語と
   // 日本語でラベルの見た目・文字数が違っても2行目以降のずれが起きない。
-  // 数字で始まるもの("8:00-9:45"の"8:"、"10:00"の"10:"など時刻)は話者ラベルではない。
-  // 以前は時刻の「8:」を話者ラベルと誤認して別要素に切り出し、「8: 00-9:45」のように
-  // 数字の間に余計な隙間が空いて表示されていた。
-  const SPEAKER_LABEL_RE = /^([^\s:：\d][^\s:：]{0,5}[:：])\s*/;
 
   const lineCounters = new Map();
   function createTranscriptLine(col) {
@@ -1558,26 +1587,8 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
   // segments/naturalSentencesはAIが別々に分割するため、原文中の文字位置(start/end)
   // を突き合わせないと対応関係が分からない。
   const sentences = data.naturalSentences || [];
-  const segToSentenceIdx = segments.map(seg => {
-    if (!sentences.length) return -1;
-    let idx = sentences.findIndex(s => seg.start >= s.start && seg.start < s.end);
-    if (idx === -1) idx = sentences.findIndex(s => seg.start < s.end);
-    if (idx === -1) idx = sentences.length - 1;
-    return idx;
-  });
-  // チャンク単位の分割(segments)は3〜8語区切りのため、AIが話者交代等の改行を
-  // またぐチャンクを作ってしまうと、reconcileLineBreaks側では改行の直前で
-  // 終わるチャンクが存在せず、EN側だけ改行が付かないことがあった(JA側の
-  // 意訳(naturalSentences)は文単位で改行位置を検出しやすく、正しく改行される
-  // ことが多い)。そのズレを防ぐため、あるチャンクがその文の最後のチャンクで、
-  // かつその文自体にlineBreak:trueが付いている場合は、チャンク側にも改行を
-  // 適用する(意訳側の改行検出結果をチャンク側にも反映させる)。
-  const segEffectiveLineBreak = segments.map((seg, i) => {
-    if (seg.lineBreak) return true;
-    const sentIdx = segToSentenceIdx[i];
-    if (sentIdx === -1 || !sentences[sentIdx] || !sentences[sentIdx].lineBreak) return false;
-    return i === segments.length - 1 || segToSentenceIdx[i + 1] !== sentIdx;
-  });
+  const segToSentenceIdx = computeSegToSentenceIdx(segments, sentences);
+  const segEffectiveLineBreak = computeSegEffectiveLineBreaks(segments, sentences, segToSentenceIdx);
 
   const enSpans = [];
   const jaSpans = []; // 直訳モードのみ使用
@@ -3327,6 +3338,16 @@ function stripHtmlToText(html) {
   return (div.textContent || '').replace(/\s+/g, ' ').trim();
 }
 
+// stripHtmlToTextは<div>どうしを区切りなしでつなげるため、ノートの「■語句」の次の行の
+// 「意味」とくっついて「■availability空き状況」のように読めなくなる。AIコーチに
+// 渡すときは、行(div/p/li/br)の切れ目を「 / 」にして、語句と意味の対応が分かるようにする。
+function stripHtmlToTextWithBreaks(html) {
+  const withBreaks = (html || '').replace(/<\/(div|p|li)>|<br\s*\/?>/gi, '$&\n');
+  const div = document.createElement('div');
+  div.innerHTML = withBreaks;
+  return (div.textContent || '').split('\n').map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean).join(' / ');
+}
+
 // ---------- AIコーチメッセージ(1日1回、その日初めてトップを開いた時に自動生成) ----------
 
 const COACH_HISTORY_LS = 'toeicOfficialPractice.coachHistory';
@@ -3463,15 +3484,16 @@ const COACH_PROMPT = `あなたは、TOEICの得点アップを目指して勉�
 - このメッセージは、学習者がその日の勉強を「これから始める」タイミングで読む(前回勉強した内容の振り返り)。「今日もお疲れ様でした」のような、その日の勉強が終わったことを労うトーン・締めくくりの表現は使わないこと。これから始める・取り組む学習者を送り出す・後押しするトーンにすること。
 - 「自己ベスト◯点」「◯点の壁を突破するために」のような、点数・スコアの話から書き始めたり、点数そのものをメッセージの中心に据えたりしないこと(渡された記録に点数の情報は含まれていない)。
 - 中心に据えるのは、渡された「これらの問題を解くために必要だった文法・語彙・表現」と、学習者自身が書いたノートの内容。これらに具体的に触れながら、学習者が「おそらく身についた・理解できたであろう内容」と「おそらくまだ曖昧・知らなかったであろう内容」をリマインドすること。抽象的な精神論だけで終わらせないこと。
-- ノートの中に「■ボトルネックポイント」または(旧仕様の)「■聞き取れなかった単語」という見出しの記録があれば、そこに書かれている単語・フレーズをそのまま挙げて、次に聞き取るためのコツ(リンキング・音の変化・弱形など、その単語特有の聞き取りづらさに応じた具体的なアドバイス)を必ず添えること。
+- 「翻訳画面で青太字にした箇所」の記録(またはノート内の「■ボトルネックポイント」「■聞き取れなかった単語」という見出しの記録)があれば、その語句を挙げること。挙げるときは、語句だけを単独で示さず、渡された「前後の文脈」から該当部分を少し長めに(その語句の前後数語〜1文程度)英語のまま引用し、その語句が含まれる箇所の意味を、その引用の直後に全角のカッコ（）で日本語で添えること。例: "This puts us behind schedule"（これだと予定より遅れてしまう）。そのうえで、次に聞き取る(読む)ためのコツ(リンキング・音の変化・弱形など、その語句特有の聞き取りづらさに応じた具体的なアドバイス)を必ず添えること。聞き取れなかった語句(Part1〜4)と読みで引っかかった語句(Part6/7)は、混同せずそれぞれ「聞き取り」「読み」として扱うこと。
 - ノートの中に単語・熟語の意味やコアイメージを書き写した記録(「■{語句}」「語句：」「コアイメージ：」等の形式)があれば、それは学習者がまだ知らなかった単語としてメモしたものなので、その語句をそのまま挙げて「これを復習しましょう」という趣旨で伝えること。
+- ノートに書かれた英単語・英熟語・言い回しを挙げるときは、必ずその直後に日本語の意味を全角のカッコ（）で添えること(例: availability（空き状況）、keep up with（〜に遅れずについていく））。意味はノートに書かれているものを優先し、書かれていなければ文脈に合った一般的な意味を簡潔に書く。
 - 英単語・英熟語に言及する際は、必ず記録にある表記のまま半角アルファベットで書くこと(例: "availability"、"corrosion")。「アベイラビリティ」「コロージョン」のようにカタカナ発音表記に変換して書いてはならない。
 - 冒頭は励ましの言葉から始め、努力を続けていることを労い、無理なく続けられるよう背中を押すトーンにすること。プレッシャーをかけすぎないこと。
 - 時々(毎回でなくてよい)、TOEIC学習を長く続けるためのちょっとした工夫・ライフハックを、誰かのエピソード風に軽く一言添えてよい(説教くさくならない程度に、さらっと触れる程度)。
 - 説教くさくならず、専属コーチとして自然に語りかける文体にすること。
 - 話題が変わるところ(励ましの導入→具体的な振り返り→締めの一言、など)で必ず改行し、段落ごとに空行を1行はさむこと。1つの段落に内容を詰め込みすぎず、3〜5文程度で区切ること。
 - 学習者の年齢・性別・勉強を始めてからの年数など、記録に含まれていない個人属性には一切触れないこと。
-- 全体で日本語400〜500字程度に収めること。
+- 全体で日本語500〜650字程度に収めること(英語の引用と意味のカッコ書きが入るぶん、以前より少し長くてよい)。
 - Markdown記号(**など)や見出し記号、箇条書き記号は使わず、プレーンテキストの文章のみを書くこと(段落を分けるための改行・空行は使ってよい)。`;
 
 const COACH_PROMPT_NO_DATA = `あなたは、TOEICの得点アップを目指して勉強を続けている学習者専属のコーチです。
@@ -3506,6 +3528,64 @@ function findRichExplanationHtml(test, part, number) {
   return null;
 }
 
+// 翻訳画面で青太字(ボトルネックポイント)にした語句を、その語句を含む文(前後の文脈)
+// と一緒に取り出す。強調位置は「チャンク番号→話者ラベルを除いた英文の単語番号」
+// で保存されているため、翻訳キャッシュのチャンクから同じ規則で単語を復元する。
+// 対象はその日に取り組んだ問題(studiedKeys)のものだけ。Part1〜4は聞き取り、
+// Part6/7は読みでの引っかかりとして区別して渡す。
+function buildBottleneckContextLines(studiedKeys) {
+  const store = getBottleneckMarksStore();
+  const lines = [];
+  Object.keys(store).forEach(cacheKey => {
+    const base = cacheKey.replace(/-doc\d+$/, '');
+    if (!studiedKeys.includes(base)) return;
+    const pm = base.match(/^T\d+-(\d+)-\d+$/);
+    const kind = pm && Number(pm[1]) >= 6 ? '読みで引っかかった' : '聞き取れなかった';
+    const raw = localStorage.getItem('toeicTranslate.' + TRANSLATE_PROMPT_VERSION + '.' + cacheKey);
+    if (!raw) return;
+    let data;
+    try { data = JSON.parse(raw); } catch (e) { return; }
+    const segments = Array.isArray(data.segments) ? data.segments : [];
+    const sentences = Array.isArray(data.naturalSentences) ? data.naturalSentences : [];
+    const toSent = computeSegToSentenceIdx(segments, sentences);
+    const lineBreaks = computeSegEffectiveLineBreaks(segments, sentences, toSent);
+    const marks = (store[cacheKey] && store[cacheKey].marks) || {};
+    Object.keys(marks).forEach(segKey => {
+      const i = Number(segKey);
+      const seg = segments[i];
+      if (!seg) return;
+      // 画面に表示されている英文(話者ラベルは行頭のチャンクだけ取り除かれる)と同じにする。
+      let clean = seg.en.trim();
+      if (i === 0 || lineBreaks[i - 1]) {
+        const lm = SPEAKER_LABEL_RE.exec(clean);
+        if (lm) clean = clean.slice(lm[0].length);
+      }
+      const tokens = clean.split(/\s+/).filter(Boolean);
+      const idxs = [...new Set(marks[segKey])].filter(n => n >= 0 && n < tokens.length).sort((a, b) => a - b);
+      if (!idxs.length) return;
+      // 連続して選ばれた単語は1つのフレーズにまとめる。
+      const phrases = [];
+      let run = [];
+      idxs.forEach(n => {
+        if (run.length && n !== run[run.length - 1] + 1) { phrases.push(run); run = []; }
+        run.push(n);
+      });
+      if (run.length) phrases.push(run);
+      const phraseTexts = phrases.map(r => r.map(n => stripPunct(tokens[n]) || tokens[n]).join(' '));
+      // 前後の文脈: そのチャンクを含む文。短い文なら、直前の文も添える。
+      const sIdx = toSent[i];
+      let context = clean;
+      if (sIdx >= 0 && sentences[sIdx] && sentences[sIdx].en) {
+        const strip = t => { const l = SPEAKER_LABEL_RE.exec(t.trim()); return l ? t.trim().slice(l[0].length) : t.trim(); };
+        context = strip(sentences[sIdx].en);
+        if (context.length < 40 && sIdx > 0 && sentences[sIdx - 1].en) context = strip(sentences[sIdx - 1].en) + ' ' + context;
+      }
+      lines.push(`[${base}] ${kind}語句: ${phraseTexts.map(t => `"${t}"`).join(', ')} / 前後の文脈: "${context.slice(0, 220)}"`);
+    });
+  });
+  return lines;
+}
+
 function buildCoachContext(studyDateKey) {
   const log = getDailyQuestionsLog();
   const dayLog = log[studyDateKey] || {};
@@ -3516,15 +3596,15 @@ function buildCoachContext(studyDateKey) {
   const noteLines = [];
   const keyElementLines = [];
   keys.forEach(k => {
-    const note = stripHtmlToText(localStorage.getItem(NOTES_LS_PREFIX + k));
+    const note = stripHtmlToTextWithBreaks(localStorage.getItem(NOTES_LS_PREFIX + k));
     if (note) noteLines.push(`[${k}] ${note.slice(0, 300)}`);
     // 翻訳ウィジェット内の専用ノート欄(「この文を解説」「用語を解説」「聞き取れ
     // なかった単語」の書き写し先)。Part3/4/6/7ではグループの先頭設問番号を
     // キーに使っているため、kがそれと一致する場合だけヒットする(グループを
     // 解いた日はほぼ必ず先頭設問のkeyも記録されているので実用上は十分)。
-    const translateNote = stripHtmlToText(localStorage.getItem(NOTES_LS_PREFIX + k + '-translate-notes'));
+    const translateNote = stripHtmlToTextWithBreaks(localStorage.getItem(NOTES_LS_PREFIX + k + '-translate-notes'));
     if (translateNote) noteLines.push(`[${k}の翻訳ノート] ${translateNote.slice(0, 500)}`);
-    const aiNote = stripHtmlToText(localStorage.getItem(NOTES_LS_PREFIX + k + '-ai'));
+    const aiNote = stripHtmlToTextWithBreaks(localStorage.getItem(NOTES_LS_PREFIX + k + '-ai'));
     if (aiNote) noteLines.push(`[${k}のAI質問履歴] ${aiNote.slice(0, 300)}`);
     const parsed = parseAttemptKey(k);
     if (parsed) {
@@ -3537,6 +3617,8 @@ function buildCoachContext(studyDateKey) {
   let text = `学習日: ${studyDateKey}\n取り組んだ問題数: ${keys.length}問(正解 ${correctCount} / 不正解 ${incorrectKeys.length})\n`;
   if (incorrectKeys.length) text += `不正解だった問題番号: ${incorrectKeys.join(', ')}\n`;
   if (keyElementLines.length) text += `\nこれらの問題を解くために必要だった文法・語彙・表現:\n${keyElementLines.slice(0, 20).join('\n')}\n`;
+  const bottleneckLines = buildBottleneckContextLines(keys);
+  if (bottleneckLines.length) text += `\n翻訳画面で青太字にした箇所(聞き取れなかった・読みで引っかかった語句)と、その前後の文脈:\n${bottleneckLines.slice(0, 15).join('\n')}\n`;
   if (noteLines.length) text += `\n書いたノート・AIへの質問:\n${noteLines.slice(0, 20).join('\n')}`;
   return text;
 }
@@ -3545,7 +3627,7 @@ async function generateCoachMessage() {
   const studyDateKey = getMostRecentStudyDateKey();
   if (!studyDateKey) return await callGemini(COACH_PROMPT_NO_DATA, 'まだ記録がありません。', { maxOutputTokens: 500 });
   const context = buildCoachContext(studyDateKey);
-  return await callGemini(COACH_PROMPT, context, { maxOutputTokens: 700 });
+  return await callGemini(COACH_PROMPT, context, { maxOutputTokens: 1200 });
 }
 
 let coachGenerationInFlight = null;
