@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v148';
+const BUILD_VERSION = 'v149';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -271,17 +271,30 @@ const EXPLAIN_PROMPT_PART5 = `あなたはTOEIC対策の講師です。以下の
 }`;
 const EXPLAIN_PROMPT_PART5_VERSION = 'v2';
 
+// 解説の「選択肢」の一覧で、正解の選択肢(英語+日本語訳の2行)を、緑の枠・緑の文字・
+// 「✓ 正解」バッジで囲んで目立たせる。正解/不正解の解説ボックスの背景(緑/ピンク)の
+// どちらの上でも見えるよう、白地にする。enHtml/jaHtmlは<div>1つぶんずつのHTML文字列。
+function wrapCorrectChoiceHtml(enHtml, jaHtml) {
+  const badge = '<span style="margin-left:8px;padding:0 8px;border-radius:999px;background:#2f9e4f;color:#fff;font-size:11px;font-weight:700;white-space:nowrap;align-self:center">✓ 正解</span>';
+  const en = enHtml.replace(/<\/div>$/, badge + '</div>').replace(/#2f5fa8/g, '#1b7a3a');
+  const ja = jaHtml.replace(/#2f5fa8/g, '#1b7a3a');
+  return `<div style="background:#fff;border:1px solid #2f9e4f;border-left:5px solid #2f9e4f;border-radius:6px;padding:4px 10px;margin:4px 0">${en}${ja}</div>`;
+}
+
 // 解説の「選択肢の日本語訳」(▲(A) 日本語…の青字行)に、英語の選択肢そのものを
 // 付け足して「(A) 英語」+字下げした日本語訳の2段表示にする。英語はAIに書かせず
 // 設問データ(questionTextの「選択肢: (A) … (B) …」行)から確実に取る。キャッシュ
 // 済みの旧形式の解説にも後から適用できるよう、保存済みHTMLではなく返す直前に
-// 変換する(キャッシュ自体は書き換えない)。
+// 変換する(キャッシュ自体は書き換えない)。正解の選択肢(questionTextの「正解: (X)」)
+// は、wrapCorrectChoiceHtmlで目立たせる。
 function addEnglishChoicesToExplainHtml(html, questionText) {
   const m = /選択肢: (.*)\n/.exec(questionText || '');
   if (!m) return html;
   const parts = m[1].split(/\(([A-D])\) /);
   const en = {};
   for (let i = 1; i + 1 < parts.length; i += 2) en[parts[i]] = parts[i + 1].trim();
+  const correctMatch = /\n正解: \(([A-D])\)/.exec(questionText || '');
+  const correctLetter = correctMatch ? correctMatch[1] : null;
   const style = 'color:#2f5fa8;font-weight:600';
   // 「(A)」を固定幅(LABEL_W)の列にし、英語は折り返してもその右に揃う(ぶら下げ
   // インデント)、日本語訳は同じ幅だけ字下げして、英語の語頭と日本語訳の文頭を
@@ -290,8 +303,9 @@ function addEnglishChoicesToExplainHtml(html, questionText) {
   const LABEL_W = '2em';
   return html.replace(/<div><span style="color:#2f5fa8;font-weight:600">\(([A-D])\) ([^<]*)<\/span><\/div>/g, (whole, letter, ja) => {
     if (!en[letter]) return whole;
-    return `<div style="display:flex;${style}"><span style="flex:0 0 ${LABEL_W}">(${letter})</span><span style="min-width:0">${escapeHtml(en[letter])}</span></div>` +
-      `<div style="padding-left:${LABEL_W}"><span style="${style}">${ja}</span></div>`;
+    const enHtml = `<div style="display:flex;${style}"><span style="flex:0 0 ${LABEL_W}">(${letter})</span><span style="min-width:0">${escapeHtml(en[letter])}</span></div>`;
+    const jaHtml = `<div style="padding-left:${LABEL_W}"><span style="${style}">${ja}</span></div>`;
+    return letter === correctLetter ? wrapCorrectChoiceHtml(enHtml, jaHtml) : enHtml + jaHtml;
   });
 }
 
@@ -432,6 +446,11 @@ function buildP12ExplainHtml(q, isPart1, choiceTexts, jaTexts, letters, selected
   let html = (bannerHtml || correctBannerHtml(selectedLetter === q.answer)) + formatRichExplainHtml(markup, []);
   if (questionFlagsHtml) html = html.replace('<strong>設問文</strong>', `<strong>設問文</strong> ${questionFlagsHtml}`);
   if (choicesFlagsHtml) html = html.replace('<strong>選択肢</strong>', `<strong>選択肢</strong> ${choicesFlagsHtml}`);
+  // 正解の選択肢(英語の行+日本語訳の行)を目立たせる。
+  html = html.replace(
+    new RegExp(`(<div><span style="color:#2f5fa8;font-weight:600">\\(${q.answer}\\) [^<]*</span></div>)(<div>(?:<br>|[^<]*)</div>)`),
+    (whole, enHtml, jaHtml) => wrapCorrectChoiceHtml(enHtml, jaHtml)
+  );
   return html;
 }
 
