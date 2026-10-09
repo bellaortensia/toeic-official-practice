@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v147';
+const BUILD_VERSION = 'v148';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -1836,7 +1836,10 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
 // defaultWideは初期表示時のワイドモードの状態(省略時はtrue=ワイドモード)。
 // Part3/4は会話・トークが短く、ワイドモードだと逆に読みにくいとの要望により
 // falseを渡して最初から解除された状態にする。
-function buildTranslatableBlock(text, cacheKey, speakers, bottleneckLabel, defaultWide = true) {
+// legacyNoteKeyは、以前この設問で使っていた「一般ノート欄」のキー(Part1/2)。
+// 翻訳ウィジェットのノート欄に一本化したため、翻訳ノートがまだ空のときだけ、その
+// 過去のノートを引き継いで表示する(過去に書いた内容が見えなくならないように)。
+function buildTranslatableBlock(text, cacheKey, speakers, bottleneckLabel, defaultWide = true, legacyNoteKey = null) {
   const wrap = document.createElement('div');
   wrap.className = 'translate-block';
 
@@ -1933,7 +1936,14 @@ function buildTranslatableBlock(text, cacheKey, speakers, bottleneckLabel, defau
     // 以前は同じキーを共有しており、画面上に両方のノート欄が同時に存在する状態で
     // saveAllVisibleNotes()が呼ばれると、後からDOM順で保存された方がもう一方を
     // 上書きしてしまい、一般ノート欄に書いた内容が消えてしまうバグがあった。
-    restoreNotesIfSaved(notesArea, cacheKey + '-translate-notes');
+    const notesRestored = restoreNotesIfSaved(notesArea, cacheKey + '-translate-notes');
+    if (legacyNoteKey) {
+      notesRestored.then(() => {
+        if (stripHtmlToText(notesArea.innerHTML)) return;
+        const legacy = localStorage.getItem(NOTES_LS_PREFIX + legacyNoteKey);
+        if (legacy && stripHtmlToText(legacy)) notesArea.innerHTML = legacy;
+      });
+    }
     // ノート欄のさらに下に「AIに質問する」欄を置く。回答はノート欄自体の末尾に
     // 追記され(赤字太字の質問+黒字の回答)、ノートの自動保存にそのまま乗る。
     box.appendChild(buildPassageAskAiRow(notesArea, text, askAiHistory));
@@ -3771,8 +3781,12 @@ async function collectReviewableNotes() {
   const entries = await Promise.all(Array.from(pages.values()).map(async page => {
     const { baseKey, docIndex, test, part, number } = page;
     const docSuffix = docIndex == null ? '' : `-doc${docIndex}`;
-    const generalNote = docIndex == null ? localStorage.getItem(NOTES_LS_PREFIX + baseKey) : null;
+    let generalNote = docIndex == null ? localStorage.getItem(NOTES_LS_PREFIX + baseKey) : null;
     const translateNote = localStorage.getItem(NOTES_LS_PREFIX + baseKey + docSuffix + '-translate-notes');
+    // Part1/2はノート欄を翻訳ウィジェットのものに一本化し、過去の一般ノートは翻訳ノート欄へ
+    // 引き継いで表示している。引き継ぎ後は同じ内容が両方のキーに残るため、翻訳ノートに
+    // 含まれている一般ノートは重複して表示しない。
+    if (part <= 2 && generalNote && translateNote && stripHtmlToText(translateNote).includes(stripHtmlToText(generalNote))) generalNote = null;
     const matches = historyItems.filter(it => it.noteKey === baseKey);
     // AIへの質問は設問ごとの個別キーで保存されているため、このグループに属する
     // 設問番号(履歴から分かる分。無ければbaseKey自身の番号のみ)すべてを確認する。
@@ -5247,8 +5261,9 @@ function renderPart1or2() {
   const isPart1 = state.part === 1;
   const groupQuestions = p12CurrentGroup();
   const q = groupQuestions[p12.qIdx];
+  // Part3/4と同じ左右2カラム: 左=写真(Part1)+翻訳エリア(解答後に表示)、右=選択肢・
+  // 解説・AI質問・PDF解説ボタン・次へ。タイトルと音声プレーヤーは両カラムの上。
   const wrap = document.createElement('div');
-  wrap.className = 'q-block';
 
   // 話者の国旗バッジは、設問文の段階ではまだ出さず、解説が表示された時点で
   // 初めて出す(buildP12ExplainHtml側で■設問文/■選択肢の見出し横に付与している)。
@@ -5257,16 +5272,31 @@ function renderPart1or2() {
   title.textContent = `Q${q.number}`;
   wrap.appendChild(title);
 
+  const audioWidget = createAudioPlayerWidget(q.audio, { autoplay: !explainMode, sticky: true });
+  wrap.appendChild(audioWidget);
+
+  const main = document.createElement('div');
   if (isPart1 && q.image) {
     const img = document.createElement('img');
     img.src = q.image;
     img.alt = `Q${q.number}の写真`;
     img.className = 'question-photo';
-    wrap.appendChild(img);
+    main.appendChild(img);
   }
+  // 写真が無い左カラムは、解答前に空白になってしまうのでPart3/4と同じ案内を出す。
+  let placeholder = null;
+  if (!(isPart1 && q.image)) {
+    placeholder = document.createElement('div');
+    placeholder.className = 'doc-box reading-placeholder';
+    placeholder.textContent = '🔊 音声を聞いてください';
+    main.appendChild(placeholder);
+  }
+  const translateSlot = document.createElement('div');
+  translateSlot.style.display = 'none';
+  main.appendChild(translateSlot);
 
-  const audioWidget = createAudioPlayerWidget(q.audio, { autoplay: !explainMode, sticky: true });
-  wrap.appendChild(audioWidget);
+  const side = document.createElement('div');
+  side.className = 'q-block';
 
   const choiceTexts = isPart1 ? q.statements : q.responses;
   const letters = Object.keys(choiceTexts);
@@ -5283,19 +5313,17 @@ function renderPart1or2() {
     });
     choicesDiv.appendChild(btn);
   });
-  wrap.appendChild(choicesDiv);
+  side.appendChild(choicesDiv);
 
   const explainDiv = document.createElement('div');
   explainDiv.className = 'explain-box';
   explainDiv.style.display = 'none';
-  wrap.appendChild(explainDiv);
+  side.appendChild(explainDiv);
 
-  const notesSlot = document.createElement('div');
-  wrap.appendChild(notesSlot);
   const askAiSlot = document.createElement('div');
-  wrap.appendChild(askAiSlot);
+  side.appendChild(askAiSlot);
   const pdfSlot = document.createElement('div');
-  wrap.appendChild(pdfSlot);
+  side.appendChild(pdfSlot);
 
   const nextBtn = document.createElement('button');
   nextBtn.textContent = '次へ';
@@ -5319,7 +5347,13 @@ function renderPart1or2() {
       explainDiv.classList.toggle('explain-box-wrong', explainIsWrong(q.number, p12.selected === q.answer));
       explainDiv.style.display = 'block';
       const noteKey = `${state.test}-${state.part}-${q.number}`;
-      notesSlot.appendChild(buildNotesWidget(noteKey));
+      // 音声で読まれる英文(Part2は質問+3つの応答、Part1は4つの文)を翻訳エリアに出す。
+      // 聞き取れなかった箇所をクリックでメモ(ボトルネック)できるようにするため。
+      // ノート欄は翻訳エリア内のものに一本化(過去の一般ノートは自動で引き継ぐ)。
+      if (placeholder) placeholder.remove();
+      const transcriptText = (isPart1 ? '' : `${q.question}\n\n`) + letters.map(l => `(${l}) ${choiceTexts[l]}`).join('\n');
+      translateSlot.style.display = 'block';
+      translateSlot.appendChild(buildTranslatableBlock(transcriptText, noteKey, isPart1 ? q.speaker : q.speakers, 'Listeningボトルネック', false, noteKey));
       const questionContext = `Q${q.number}\n` + letters.map(l => `(${l}) ${choiceTexts[l]}`).join('\n') + `\n正解: (${q.answer})`;
       askAiSlot.appendChild(buildAskAiWidget(questionContext, noteKey));
       pdfSlot.appendChild(buildPdfExplainWidget(state.test, q.number));
@@ -5339,7 +5373,7 @@ function renderPart1or2() {
       renderPart1or2();
     }
   });
-  wrap.appendChild(nextBtn);
+  wrap.appendChild(buildReadingLayout(main, [side, nextBtn]));
 
   practiceBodyEl.innerHTML = '';
   practiceBodyEl.appendChild(wrap);
