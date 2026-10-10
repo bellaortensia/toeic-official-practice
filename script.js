@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v150';
+const BUILD_VERSION = 'v151';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -4797,7 +4797,29 @@ function buildLandingNav() {
     testDetails.className = 'landing-test';
     testDetails.open = true;
     const testSummary = document.createElement('summary');
-    testSummary.textContent = label;
+    const testSummaryLabel = document.createElement('span');
+    testSummaryLabel.className = 'landing-test-label';
+    testSummaryLabel.textContent = label;
+    testSummary.appendChild(testSummaryLabel);
+    // 通しテストの入口(exam.jsが読み込まれている場合のみ動く)。summaryの中にあるので、
+    // 押したときに<details>が開閉しないようpreventDefaultする。
+    const examBtns = document.createElement('span');
+    examBtns.className = 'exam-entry-btns';
+    const mkExamBtn = (text, extraCls, onClick) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'exam-entry-btn ' + extraCls;
+      b.textContent = text;
+      b.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (typeof examOpenStartScreen === 'function') onClick(b);
+      });
+      return b;
+    };
+    examBtns.appendChild(mkExamBtn('全問テスト', 'exam-full-btn', () => examOpenStartScreen(test, 'full')));
+    examBtns.appendChild(mkExamBtn('パート別全問テスト ▾', 'exam-part-btn', b => examShowPartMenu(test, b)));
+    testSummary.appendChild(examBtns);
     testDetails.appendChild(testSummary);
 
     const partsDiv = document.createElement('div');
