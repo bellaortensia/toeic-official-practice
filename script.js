@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v149';
+const BUILD_VERSION = 'v150';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -274,6 +274,9 @@ const EXPLAIN_PROMPT_PART5_VERSION = 'v2';
 // 解説の「選択肢」の一覧で、正解の選択肢(英語+日本語訳の2行)を、緑の枠・緑の文字・
 // 「✓ 正解」バッジで囲んで目立たせる。正解/不正解の解説ボックスの背景(緑/ピンク)の
 // どちらの上でも見えるよう、白地にする。enHtml/jaHtmlは<div>1つぶんずつのHTML文字列。
+// 正解の枠の左端から文字までの距離(左の太線5px+内側の余白10px)。枠の無い選択肢にも
+// 同じ分の字下げを付けて、全選択肢の英語・日本語訳の字頭を縦に揃えるために使う。
+const CHOICE_FRAME_INDENT = '15px';
 function wrapCorrectChoiceHtml(enHtml, jaHtml) {
   const badge = '<span style="margin-left:8px;padding:0 8px;border-radius:999px;background:#2f9e4f;color:#fff;font-size:11px;font-weight:700;white-space:nowrap;align-self:center">✓ 正解</span>';
   const en = enHtml.replace(/<\/div>$/, badge + '</div>').replace(/#2f5fa8/g, '#1b7a3a');
@@ -303,9 +306,12 @@ function addEnglishChoicesToExplainHtml(html, questionText) {
   const LABEL_W = '2em';
   return html.replace(/<div><span style="color:#2f5fa8;font-weight:600">\(([A-D])\) ([^<]*)<\/span><\/div>/g, (whole, letter, ja) => {
     if (!en[letter]) return whole;
-    const enHtml = `<div style="display:flex;${style}"><span style="flex:0 0 ${LABEL_W}">(${letter})</span><span style="min-width:0">${escapeHtml(en[letter])}</span></div>`;
-    const jaHtml = `<div style="padding-left:${LABEL_W}"><span style="${style}">${ja}</span></div>`;
-    return letter === correctLetter ? wrapCorrectChoiceHtml(enHtml, jaHtml) : enHtml + jaHtml;
+    const isCorrect = letter === correctLetter;
+    // 正解の枠がある場合は、枠の無い選択肢も枠の内側の余白と同じだけ右へずらして揃える。
+    const pad = correctLetter && !isCorrect ? `padding-left:${CHOICE_FRAME_INDENT};` : '';
+    const enHtml = `<div style="display:flex;${style};${pad}"><span style="flex:0 0 ${LABEL_W}">(${letter})</span><span style="min-width:0">${escapeHtml(en[letter])}</span></div>`;
+    const jaHtml = `<div style="padding-left:${correctLetter && !isCorrect ? `calc(${CHOICE_FRAME_INDENT} + ${LABEL_W})` : LABEL_W}"><span style="${style}">${ja}</span></div>`;
+    return isCorrect ? wrapCorrectChoiceHtml(enHtml, jaHtml) : enHtml + jaHtml;
   });
 }
 
@@ -446,10 +452,20 @@ function buildP12ExplainHtml(q, isPart1, choiceTexts, jaTexts, letters, selected
   let html = (bannerHtml || correctBannerHtml(selectedLetter === q.answer)) + formatRichExplainHtml(markup, []);
   if (questionFlagsHtml) html = html.replace('<strong>設問文</strong>', `<strong>設問文</strong> ${questionFlagsHtml}`);
   if (choicesFlagsHtml) html = html.replace('<strong>選択肢</strong>', `<strong>選択肢</strong> ${choicesFlagsHtml}`);
-  // 正解の選択肢(英語の行+日本語訳の行)を目立たせる。
+  // 選択肢(英語の行+日本語訳の行)を、「(A)」を固定幅の列にして英語と日本語訳の
+  // 字頭を縦に揃える(AI解説の選択肢一覧と同じ形)。正解の選択肢は目立たせる。
+  const LABEL_W = '2em';
   html = html.replace(
-    new RegExp(`(<div><span style="color:#2f5fa8;font-weight:600">\\(${q.answer}\\) [^<]*</span></div>)(<div>(?:<br>|[^<]*)</div>)`),
-    (whole, enHtml, jaHtml) => wrapCorrectChoiceHtml(enHtml, jaHtml)
+    /<div><span style="color:#2f5fa8;font-weight:600">\(([A-D])\) ([^<]*)<\/span><\/div>(<div>(?:<br>|[^<]*)<\/div>)/g,
+    (whole, letter, enEscaped, jaDiv) => {
+      const isCorrect = letter === q.answer;
+      // 正解の枠(左の太線5px+内側の余白10px)の分だけ、枠の無い選択肢も右へずらし、
+      // 全選択肢の字頭が縦に揃うようにする。
+      const pad = isCorrect ? '' : ';padding-left:' + CHOICE_FRAME_INDENT;
+      const enHtml = `<div style="display:flex;color:#2f5fa8;font-weight:600${pad}"><span style="flex:0 0 ${LABEL_W}">(${letter})</span><span style="min-width:0">${enEscaped}</span></div>`;
+      const jaHtml = `<div style="padding-left:${isCorrect ? LABEL_W : `calc(${CHOICE_FRAME_INDENT} + ${LABEL_W})`}">${jaDiv.replace(/^<div>/, '').replace(/<\/div>$/, '')}</div>`;
+      return isCorrect ? wrapCorrectChoiceHtml(enHtml, jaHtml) : enHtml + jaHtml;
+    }
   );
   return html;
 }
