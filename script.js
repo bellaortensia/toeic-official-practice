@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v153';
+const BUILD_VERSION = 'v154';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -4855,14 +4855,23 @@ function buildUnitRow(container, u, onJump, onExplain) {
 // Part3/4/5用: 1ユニット(まとめて採点される複数問題)を、括弧でグループ化しつつ
 // 問題番号ごとの個別行(個別メーター)として描画する。どの問題番号をクリックしても
 // 同じユニット(セット全体)にジャンプする。
-function buildGroupedUnitRow(container, u, onJump, onExplain) {
+// speedOptsを渡すと(Part7のみ)、グループ見出しの右側に「速読モード」ボタンと
+// READ COUNT(速読回数)を出す。実体はspeedread.jsのbuildSpeedReadGroupControls。
+function buildGroupedUnitRow(container, u, onJump, onExplain, speedOpts) {
   const group = document.createElement('div');
   group.className = 'unit-group';
-  if (u.label) {
+  const speedControls = speedOpts && typeof buildSpeedReadGroupControls === 'function'
+    ? buildSpeedReadGroupControls(speedOpts.test, u.questions[0].number, speedOpts.unitIndex)
+    : null;
+  if (u.label || speedControls) {
+    const head = document.createElement('div');
+    head.className = 'unit-group-head';
     const labelEl = document.createElement('div');
     labelEl.className = 'unit-group-label';
-    labelEl.textContent = u.label.toUpperCase();
-    group.appendChild(labelEl);
+    labelEl.textContent = (u.label || '').toUpperCase();
+    head.appendChild(labelEl);
+    if (speedControls) head.appendChild(speedControls);
+    group.appendChild(head);
   }
   u.questions.forEach(q => {
     const row = document.createElement('div');
@@ -4909,7 +4918,7 @@ async function showPartOverview(test, part) {
   const half = Math.ceil(units.length / 2);
   units.forEach((u, i) => {
     const col = i < half ? colLeft : colRight;
-    if (grouped) buildGroupedUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex), n => jumpToQuestionNumber(test, part, n, true));
+    if (grouped) buildGroupedUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex), n => jumpToQuestionNumber(test, part, n, true), part === 7 ? { test, unitIndex: u.unitIndex } : null);
     else buildUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex), () => jumpToQuestionNumber(test, part, u.number, true));
   });
 }
@@ -4969,7 +4978,7 @@ function buildLandingNav() {
         // 速読モード(speedread.js)の入口。summaryの中にあるのでpreventDefaultで開閉を防ぐ。
         const srBtns = document.createElement('span');
         srBtns.className = 'speedread-entry-btns';
-        [['⚡ 速読モード', 'first'], ['🎲 ランダム', 'random']].forEach(([text, mode]) => {
+        [['⚡ 速読モード', 'first'], ['🔀 速読シャッフル', 'random']].forEach(([text, mode]) => {
           const b = document.createElement('button');
           b.type = 'button';
           b.className = 'speedread-entry-btn';
@@ -5016,7 +5025,7 @@ function buildLandingNav() {
         const half = Math.ceil(units.length / 2);
         units.forEach((u, i) => {
           const col = i < half ? colLeft : colRight;
-          if (grouped) buildGroupedUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex), n => jumpToQuestionNumber(test, part, n, true));
+          if (grouped) buildGroupedUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex), n => jumpToQuestionNumber(test, part, n, true), part === 7 ? { test, unitIndex: u.unitIndex } : null);
           else buildUnitRow(col, u, () => jumpToUnit(test, part, u.unitIndex), () => jumpToQuestionNumber(test, part, u.number, true));
         });
         unitsDiv.style.display = 'flex';

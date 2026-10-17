@@ -130,10 +130,10 @@
     headLeft.appendChild(sel);
     header.appendChild(headLeft);
 
-    // ◀ 3/15 ▶ と ランダム は、ヘッダーの中央に置く。
+    // ◀ 3/15 ▶ と 速読シャッフル は、ヘッダーの中央に置く。
     const headCenter = mk('div', 'sr-head-center');
     headCenter.appendChild(buildNav());
-    const rnd = mk('button', 'sr-random-btn', '🎲 ランダム');
+    const rnd = mk('button', 'sr-random-btn', '🔀 速読シャッフル');
     rnd.type = 'button';
     rnd.addEventListener('click', goRandom);
     headCenter.appendChild(rnd);
@@ -213,7 +213,7 @@
     // 下にも前へ/次へ
     const bottom = mk('div', 'sr-bottom');
     bottom.appendChild(buildNav());
-    const rnd2 = mk('button', 'sr-random-btn', '🎲 ランダム');
+    const rnd2 = mk('button', 'sr-random-btn', '🔀 速読シャッフル');
     rnd2.type = 'button';
     rnd2.addEventListener('click', goRandom);
     bottom.appendChild(rnd2);
@@ -402,6 +402,33 @@
     return box;
   }
 
+  // Part7一覧の各グループ見出しの右側に出す「速読モード」ボタンとREAD COUNT。
+  function buildSpeedReadGroupControls(test, q0, unitIndex) {
+    const key = `${test}-7-${q0}`;
+    const wrap = mk('div', 'sr-group-controls');
+    const go = mk('button', 'speedread-entry-btn sr-group-btn', '⚡ 速読モード');
+    go.type = 'button';
+    go.addEventListener('click', e => { e.preventDefault(); e.stopPropagation(); speedReadStart(test, 'index', unitIndex); });
+    wrap.appendChild(go);
+    const rc = mk('div', 'sr-mini-rc');
+    const num = mk('span', 'sr-rc-number', '0');
+    const minus = mk('button', 'sr-rc-btn', '−');
+    minus.type = 'button';
+    const plus = mk('button', 'sr-rc-btn', '＋');
+    plus.type = 'button';
+    const refresh = () => { num.textContent = String(countOf(key)); };
+    refresh();
+    minus.addEventListener('click', () => { setSpeedReadCount(key, countOf(key) - 1, false); refresh(); scheduleProgressSave(); if (typeof renderSpeedReadHistory === 'function') renderSpeedReadHistory(); });
+    plus.addEventListener('click', () => { setSpeedReadCount(key, countOf(key) + 1, true); refresh(); scheduleProgressSave(); if (typeof renderSpeedReadHistory === 'function') renderSpeedReadHistory(); });
+    rc.appendChild(num);
+    rc.appendChild(mk('span', 'sr-rc-label', 'READ COUNT'));
+    rc.appendChild(minus);
+    rc.appendChild(plus);
+    wrap.appendChild(rc);
+    return wrap;
+  }
+
+  window.buildSpeedReadGroupControls = buildSpeedReadGroupControls;
   window.speedReadStart = speedReadStart;
   window.renderSpeedReadHistory = renderSpeedReadHistory;
   window.buildPreviousSpeedReadSection = buildPreviousSpeedReadSection;
