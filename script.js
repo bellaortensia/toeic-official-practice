@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v154';
+const BUILD_VERSION = 'v155';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -4864,6 +4864,7 @@ function buildGroupedUnitRow(container, u, onJump, onExplain, speedOpts) {
     ? buildSpeedReadGroupControls(speedOpts.test, u.questions[0].number, speedOpts.unitIndex)
     : null;
   if (u.label || speedControls) {
+    if (speedControls) group.classList.add('sr-aligned');
     const head = document.createElement('div');
     head.className = 'unit-group-head';
     const labelEl = document.createElement('div');
