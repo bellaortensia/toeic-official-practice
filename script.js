@@ -11,10 +11,10 @@ const REDIRECT_URI = 'https://bellaortensia.github.io/toeic-official-practice/';
 //   問題集11と12は音声ファイル名が(サンプル問題・トラック番号とも)ほぼ同一のため、
 //   同じBoxフォルダに混在させると衝突するので、問題集ごとにフォルダを分けている。
 const TESTS = [
-  { code: 'T1', folder: 'test1', label: 'Work11-test1', shortLabel: 'W1-T1', audioFolderId: '409318407954' },
-  { code: 'T2', folder: 'test2', label: 'Work11-test2', shortLabel: 'W1-T2', audioFolderId: '409318407954' },
-  { code: 'T3', folder: 'test3', label: 'Work12-test1', shortLabel: 'W2-T1', audioFolderId: '420847557338' },
-  { code: 'T4', folder: 'test4', label: 'Work12-test2', shortLabel: 'W2-T2', audioFolderId: '420847557338' }
+  { code: 'T1', folder: 'test1', label: 'Work11-test1', shortLabel: 'W11-T1', audioFolderId: '409318407954' },
+  { code: 'T2', folder: 'test2', label: 'Work11-test2', shortLabel: 'W11-T2', audioFolderId: '409318407954' },
+  { code: 'T3', folder: 'test3', label: 'Work12-test1', shortLabel: 'W12-T1', audioFolderId: '420847557338' },
+  { code: 'T4', folder: 'test4', label: 'Work12-test2', shortLabel: 'W12-T2', audioFolderId: '420847557338' }
 ];
 function getTestConfig(code) {
   return TESTS.find(t => t.code === code) || TESTS[0];
@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v151';
+const BUILD_VERSION = 'v152';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -564,10 +564,87 @@ function reconcileLineBreaks(segments, sourceText) {
   });
 }
 
+// ---------- 翻訳結果のスプレッドシート保管(端末間共有・API節約) ----------
+// 翻訳(チャンク直訳+意訳)は、AIで一度作ったらこの端末のlocalStorageに加えて、Apps
+// Script経由でスプレッドシートの「Translations」タブにも保存する。別の端末・別の
+// ブラウザで同じ問題を開いたときは、AIを呼ぶ前にそこから取得する(「翻訳を再取得」
+// ボタンを押したときだけは、必ずAIで作り直して、スプレッドシートの内容も上書きする)。
+// Apps Script側が古いコードのままだと(getTranslation/saveTranslationsが未対応)、
+// どちらも黙って失敗するだけで、従来どおりlocalStorageだけで動く。
+const TRANSLATION_UPLOADED_LS = 'toeicOfficialPractice.translationsUploaded';
+function getUploadedTranslationKeys() {
+  try { return new Set(JSON.parse(localStorage.getItem(TRANSLATION_UPLOADED_LS) || '[]')); }
+  catch (e) { return new Set(); }
+}
+function markTranslationKeysUploaded(keys) {
+  const set = getUploadedTranslationKeys();
+  keys.forEach(k => set.add(k));
+  try { localStorage.setItem(TRANSLATION_UPLOADED_LS, JSON.stringify([...set])); } catch (e) { /* ignore */ }
+}
+async function fetchTranslationFromSheet(lsKey) {
+  const url = getSheetUrl();
+  if (!url) return null;
+  try {
+    const res = await fetchWithTimeout(`${url}?action=getTranslation&key=${encodeURIComponent(lsKey)}`, {}, 12000);
+    const data = await res.json();
+    if (!data || !data.translation) return null;
+    const parsed = JSON.parse(data.translation);
+    if (!parsed || !Array.isArray(parsed.segments) || !Array.isArray(parsed.naturalSentences)) return null;
+    return parsed;
+  } catch (e) { return null; }
+}
+function postTranslationsToSheet(map) {
+  const url = getSheetUrl();
+  if (!url) return Promise.resolve(false);
+  return fetchWithTimeout(url, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'saveTranslations', translations: map })
+  }, SHEET_FETCH_TIMEOUT_MS).then(() => true).catch(() => false);
+}
+// この端末にだけある翻訳を、スプレッドシートへまとめてアップロードする。no-corsの
+// POSTは成功したか分からないので、送ったあとに実際に取り直して反映を確認できた
+// ものだけ「アップロード済み」として記録する(古いApps Scriptのままなら確認に失敗
+// するので、次回また試す)。
+let translationMigrationRunning = false;
+async function migrateLocalTranslationsToSheet() {
+  if (translationMigrationRunning || !getSheetUrl()) return;
+  translationMigrationRunning = true;
+  try {
+    const prefix = 'toeicTranslate.' + TRANSLATE_PROMPT_VERSION + '.';
+    const done = getUploadedTranslationKeys();
+    const pending = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.indexOf(prefix) === 0 && !done.has(k)) pending.push(k);
+    }
+    for (let i = 0; i < pending.length; i += 8) {
+      const batchKeys = pending.slice(i, i + 8);
+      const map = {};
+      batchKeys.forEach(k => { const v = localStorage.getItem(k); if (v) map[k] = v; });
+      if (!Object.keys(map).length) continue;
+      await postTranslationsToSheet(map);
+      await sleep(1500);
+      const probe = Object.keys(map)[0];
+      if (!(await fetchTranslationFromSheet(probe))) return; // 反映を確認できない(古いコード等): 次回に持ち越し
+      markTranslationKeysUploaded(Object.keys(map));
+    }
+  } finally { translationMigrationRunning = false; }
+}
+
 async function getTranslationChunks(cacheKey, text, forceRefresh) {
   const lsKey = 'toeicTranslate.' + TRANSLATE_PROMPT_VERSION + '.' + cacheKey;
   const cached = !forceRefresh && localStorage.getItem(lsKey);
   if (cached) return JSON.parse(cached);
+  if (!forceRefresh) {
+    const remote = await fetchTranslationFromSheet(lsKey);
+    if (remote) {
+      try { localStorage.setItem(lsKey, JSON.stringify(remote)); } catch (e) { /* ignore */ }
+      markTranslationKeysUploaded([lsKey]);
+      return remote;
+    }
+  }
   // Part7の複数文書問題(トリプルパッセージ)などは1文書が300語近くになることがあり、
   // 3〜8語ごとに細かく区切るこの翻訳形式だとJSON出力がかなり長くなる。4096だと
   // 出力が途中で打ち切られ(MAX_TOKENS)、JSON.parseが毎回失敗することがあったため
@@ -583,6 +660,7 @@ async function getTranslationChunks(cacheKey, text, forceRefresh) {
   const naturalSentences = reconcileLineBreaks(Array.isArray(parsed.naturalSentences) ? parsed.naturalSentences : [], text);
   const result = { segments, naturalSentences };
   try { localStorage.setItem(lsKey, JSON.stringify(result)); } catch (e) { /* 保存容量オーバー等は無視 */ }
+  postTranslationsToSheet({ [lsKey]: JSON.stringify(result) }).then(ok => { if (ok) markTranslationKeysUploaded([lsKey]); });
   return result;
 }
 
@@ -3415,13 +3493,63 @@ function saveCoachHistoryEntry(generatedDateKey, entry) {
 // マージする(同期のたびに数値が二重に増えていく事故を避けるため、学習時間・
 // 学習回数は加算ではなく日付ごとの最大値を採用する)。
 
+// ---------- 速読モード(Part7)の回数・履歴 ----------
+// 回答履歴(attempts)とは別に、パッセージ単位の「速読した回数」と、日ごとの
+// 「その日に速読したパッセージ」を持つ。キーは "T3-7-147" (テスト-7-先頭設問番号)。
+const SPEED_READ_COUNTS_LS = 'toeicOfficialPractice.speedReadCounts';
+const SPEED_READ_LOG_LS = 'toeicOfficialPractice.speedReadLog';
+function getSpeedReadCounts() {
+  try { return JSON.parse(localStorage.getItem(SPEED_READ_COUNTS_LS) || '{}'); }
+  catch (e) { return {}; }
+}
+function getSpeedReadLog() {
+  try { return JSON.parse(localStorage.getItem(SPEED_READ_LOG_LS) || '{}'); }
+  catch (e) { return {}; }
+}
+// markRead=trueのときは「その日に読んだ」記録(速読履歴・前回速読した問題の元)にも残す。
+function setSpeedReadCount(key, count, markRead) {
+  const counts = getSpeedReadCounts();
+  const now = Date.now();
+  counts[key] = { count: Math.max(0, Math.min(999, count)), lastAt: now };
+  try { localStorage.setItem(SPEED_READ_COUNTS_LS, JSON.stringify(counts)); } catch (e) { /* ignore */ }
+  if (markRead) {
+    const log = getSpeedReadLog();
+    const dk = localDateKey();
+    if (!log[dk]) log[dk] = {};
+    log[dk][key] = now;
+    try { localStorage.setItem(SPEED_READ_LOG_LS, JSON.stringify(log)); } catch (e) { /* ignore */ }
+  }
+}
+function mergeSpeedReadCounts(remote) {
+  const local = getSpeedReadCounts();
+  const merged = { ...local };
+  Object.keys(remote || {}).forEach(k => {
+    const r = remote[k];
+    if (!local[k] || (r && (r.lastAt || 0) > (local[k].lastAt || 0))) merged[k] = r;
+  });
+  try { localStorage.setItem(SPEED_READ_COUNTS_LS, JSON.stringify(merged)); } catch (e) { /* ignore */ }
+}
+function mergeSpeedReadLog(remote) {
+  const local = getSpeedReadLog();
+  const merged = {};
+  new Set([...Object.keys(remote || {}), ...Object.keys(local)]).forEach(d => {
+    const a = (remote || {})[d] || {}, b = local[d] || {};
+    const m = { ...a };
+    Object.keys(b).forEach(k => { m[k] = Math.max(m[k] || 0, b[k] || 0); });
+    merged[d] = m;
+  });
+  try { localStorage.setItem(SPEED_READ_LOG_LS, JSON.stringify(merged)); } catch (e) { /* ignore */ }
+}
+
 function collectLocalProgress() {
   return {
     attempts: getAttemptsStore(),
     dailyQuestions: getDailyQuestionsLog(),
     studyLog: getStudyLog(),
     coachHistory: getCoachHistory(),
-    bottleneckMarks: getBottleneckMarksStore()
+    bottleneckMarks: getBottleneckMarksStore(),
+    speedReadCounts: getSpeedReadCounts(),
+    speedReadLog: getSpeedReadLog()
   };
 }
 
@@ -3516,8 +3644,11 @@ async function syncProgressFromSheet() {
     mergeStudyLog(remote.studyLog);
     mergeCoachHistory(remote.coachHistory);
     mergeBottleneckMarks(remote.bottleneckMarks);
+    mergeSpeedReadCounts(remote.speedReadCounts);
+    mergeSpeedReadLog(remote.speedReadLog);
     renderStatsDashboard(statsWeekOffset);
     renderHistorySidebar(historyWeekOffset);
+    if (typeof renderSpeedReadHistory === 'function') renderSpeedReadHistory();
     await saveProgressToSheet();
   } catch (e) { /* ignore, ローカルのみで継続 */ }
 }
@@ -4137,6 +4268,7 @@ function renderStatsDashboard(weekOffset = 0) {
   container.appendChild(buildCoachBox());
   container.appendChild(buildNotesReviewSection());
   container.appendChild(buildPreviousStudySection());
+  if (typeof buildPreviousSpeedReadSection === 'function') container.appendChild(buildPreviousSpeedReadSection());
 }
 
 // ---------- 「前回学習した問題」欄(専属コーチメッセージの下) ----------
@@ -4828,7 +4960,30 @@ function buildLandingNav() {
       const partDetails = document.createElement('details');
       partDetails.className = 'landing-part';
       const partSummary = document.createElement('summary');
-      partSummary.textContent = PART_LABELS[part];
+      if (part === 7) {
+        const lbl = document.createElement('span');
+        lbl.className = 'landing-part-label';
+        lbl.textContent = PART_LABELS[part];
+        partSummary.appendChild(lbl);
+        // 速読モード(speedread.js)の入口。summaryの中にあるのでpreventDefaultで開閉を防ぐ。
+        const srBtns = document.createElement('span');
+        srBtns.className = 'speedread-entry-btns';
+        [['⚡ 速読モード', 'first'], ['🎲 ランダム', 'random']].forEach(([text, mode]) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'speedread-entry-btn';
+          b.textContent = text;
+          b.addEventListener('click', e => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (typeof speedReadStart === 'function') speedReadStart(test, mode);
+          });
+          srBtns.appendChild(b);
+        });
+        partSummary.appendChild(srBtns);
+      } else {
+        partSummary.textContent = PART_LABELS[part];
+      }
       partDetails.appendChild(partSummary);
 
       const unitsDiv = document.createElement('div');
@@ -4884,6 +5039,7 @@ renderHistorySidebar();
   await updateSheetConnectionBanner();
   await syncProgressFromSheet();
   await migrateLocalNotesToSheet();
+  await migrateLocalTranslationsToSheet();
   startNoteSyncRetryLoop();
 })();
 

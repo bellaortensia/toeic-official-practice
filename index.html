@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Noto+Sans+JP:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css?v=63">
+<link rel="stylesheet" href="style.css?v=66">
 </head>
 <body>
 <div class="wrap">
@@ -97,6 +97,30 @@ function _getNotesSheet() { return _getSheet('Notes', ['key', 'html', 'updatedAt
 // の固定5種、json列にその中身をJSON文字列で1つだけ格納する。このApps Script自体は
 // key名を特に限定しない汎用の実装なので、今後さらに種類が増えてもコード変更は不要)。
 function _getProgressSheet() { return _getSheet('Progress', ['key', 'json', 'updatedAt']); }
+// Translationsタブ: AIで作った翻訳(チャンク直訳+意訳のJSON)を問題ごとに1行で保存する。
+// 1セルの上限(5万文字)に収まるよう、長い翻訳は40000文字ごとに複数行へ分けて保存する。
+function _getTranslationsSheet() { return _getSheet('Translations', ['key', 'json', 'updatedAt']); }
+var TR_CHUNK = 40000;
+function _readTranslation(sheet, key) {
+  var last = sheet.getLastRow();
+  if (last < 2) return null;
+  var keys = sheet.getRange(2, 1, last - 1, 1).getValues();
+  var rowOf = {};
+  for (var i = 0; i < keys.length; i++) { if (keys[i][0]) rowOf[keys[i][0]] = i + 2; }
+  var r = rowOf[key];
+  if (!r) return null;
+  var v = String(sheet.getRange(r, 2).getValue());
+  var m = /^@@CHUNKS:(\d+)$/.exec(v);
+  if (!m) return v;
+  var n = Number(m[1]);
+  var out = '';
+  for (var j = 0; j < n; j++) {
+    var rr = rowOf[key + '@@' + j];
+    if (!rr) return null;
+    out += String(sheet.getRange(rr, 2).getValue());
+  }
+  return out;
+}
 
 function _getAllRows(sheet) {
   var last = sheet.getLastRow();
@@ -154,6 +178,8 @@ function doGet(e) {
       try { progress[key] = JSON.parse(rows[key]); } catch (err) { /* 壊れた値は無視 */ }
     }
     result = { progress: progress };
+  } else if (action === 'getTranslation') {
+    result = { translation: _readTranslation(_getTranslationsSheet(), e.parameter.key) };
   } else {
     result = { error: 'unknown action' };
   }
@@ -182,6 +208,23 @@ function doPost(e) {
     for (var pkey in progress) toWrite[pkey] = JSON.stringify(progress[pkey]);
     _batchSetRows(_getProgressSheet(), toWrite);
     return ContentService.createTextOutput(JSON.stringify({ status: 'ok' }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+  if (body.action === 'saveTranslations') {
+    var tr = body.translations || {};
+    var toWriteTr = {};
+    for (var tkey in tr) {
+      var tv = String(tr[tkey]);
+      if (tv.length <= TR_CHUNK) {
+        toWriteTr[tkey] = tv;
+      } else {
+        var cnt = Math.ceil(tv.length / TR_CHUNK);
+        toWriteTr[tkey] = '@@CHUNKS:' + cnt;
+        for (var c = 0; c < cnt; c++) toWriteTr[tkey + '@@' + c] = tv.substr(c * TR_CHUNK, TR_CHUNK);
+      }
+    }
+    _batchSetRows(_getTranslationsSheet(), toWriteTr);
+    return ContentService.createTextOutput(JSON.stringify({ status: 'ok', count: Object.keys(tr).length }))
       .setMimeType(ContentService.MimeType.JSON);
   }
   return ContentService.createTextOutput(JSON.stringify({ error: 'unknown action' }))
@@ -232,11 +275,15 @@ function doPost(e) {
         <aside class="history-sidebar">
           <div class="history-sidebar-title">📝 回答履歴</div>
           <div class="history-sidebar-list" id="historySidebarList"></div>
+          <div class="history-sidebar-title speedread-history-title">⚡ 速読履歴</div>
+          <div class="history-sidebar-list" id="speedReadHistoryList"></div>
         </aside>
       </div>
     </section>
 
     <section id="exam" class="panel" style="display:none;"></section>
+
+    <section id="speedread" class="panel" style="display:none;"></section>
 
     <section id="part-overview" class="panel" style="display:none;">
       <div class="part-overview-header">
@@ -249,7 +296,8 @@ function doPost(e) {
   <div class="build-tag" id="buildTag" title="このページの版。PCで公開した最新版の番号と一致していれば、最新のコードが読み込まれています。" style="text-align:center;color:#8a94a0;font-size:11px;font-family:monospace;padding:14px 0 22px;">build …</div>
 </div>
 
-  <script src="script.js?v=151"></script>
+  <script src="script.js?v=152"></script>
   <script src="exam.js?v=151"></script>
+  <script src="speedread.js?v=152"></script>
 </body>
 </html>

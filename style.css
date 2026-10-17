@@ -1697,3 +1697,39 @@ audio{
   .exam-entry-btns{margin-left:0;width:100%;}
   .exam-pal-btn{width:34px;}
 }
+
+/* ---------- 速読モード(speedread.js) ---------- */
+.landing-part summary:has(.speedread-entry-btns){display:flex;align-items:center;flex-wrap:wrap;gap:6px 10px;}
+.speedread-entry-btns{display:inline-flex;gap:8px;margin-left:auto;}
+.speedread-entry-btn{
+  font-family:'Noto Sans JP',sans-serif;font-size:12.5px;font-weight:700;
+  padding:4px 12px;border-radius:999px;cursor:pointer;
+  border:1px solid var(--accent-2);background:#fff;color:var(--accent-2);
+}
+.speedread-entry-btn:first-child{background:var(--accent-2);color:#fff;}
+.speedread-entry-btn:hover{filter:brightness(0.95);}
+#speedread{padding:0;}
+.sr-loading{padding:30px;text-align:center;color:var(--text-soft);}
+.sr-header{
+  position:sticky;top:var(--sticky-top-h, 80px);z-index:30;background:var(--paper-2);
+  display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;
+  padding:8px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--line);
+}
+.sr-top-btn,.sr-random-btn{
+  font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:700;
+  padding:6px 12px;border-radius:8px;cursor:pointer;border:1px solid var(--accent-2);background:#fff;color:var(--accent-2);
+}
+.sr-select{position:static;transform:none;max-width:min(440px,100%);font-size:13px;}
+.sr-nav{display:inline-flex;align-items:center;gap:10px;}
+.sr-counter{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:13px;}
+.sr-counter-label{font-weight:700;color:var(--accent-2);}
+.sr-counter-num{min-width:42px;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;}
+.sr-counter-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--accent-2);background:#fff;color:var(--accent-2);cursor:pointer;font-size:16px;font-weight:700;line-height:1;padding:0;}
+.sr-body{width:100%;}
+.sr-bottom{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line);}
+.sr-history-count{color:var(--accent-2);font-weight:700;white-space:nowrap;}
+.speedread-history-title{margin-top:18px;}
+@media (max-width:600px){
+  .speedread-entry-btns{margin-left:0;width:100%;}
+  .sr-counter{margin-left:0;}
+}
