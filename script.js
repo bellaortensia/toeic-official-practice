@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v152';
+const BUILD_VERSION = 'v153';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -1952,7 +1952,8 @@ function renderTranslateColumns(container, data, mode, notesArea, slash, bottlen
 // legacyNoteKeyは、以前この設問で使っていた「一般ノート欄」のキー(Part1/2)。
 // 翻訳ウィジェットのノート欄に一本化したため、翻訳ノートがまだ空のときだけ、その
 // 過去のノートを引き継いで表示する(過去に書いた内容が見えなくならないように)。
-function buildTranslatableBlock(text, cacheKey, speakers, bottleneckLabel, defaultWide = true, legacyNoteKey = null) {
+// defaultModeは最初に表示する訳('natural'=意訳 / 'literal'=直訳)。省略時は意訳。
+function buildTranslatableBlock(text, cacheKey, speakers, bottleneckLabel, defaultWide = true, legacyNoteKey = null, defaultMode = 'natural') {
   const wrap = document.createElement('div');
   wrap.className = 'translate-block';
 
@@ -2007,7 +2008,7 @@ function buildTranslatableBlock(text, cacheKey, speakers, bottleneckLabel, defau
   wrap.appendChild(box);
 
   let data = null;
-  let mode = 'natural'; // 'literal' | 'natural'(デフォルトは意訳)
+  let mode = defaultMode; // 'literal' | 'natural'(デフォルトは意訳)
   let wide = defaultWide;
   let tall = false; // デフォルトではトールモードは解除された状態
   let slash = false; // デフォルトではスラッシュ非表示(押して初めてチャンク間に/が入る)

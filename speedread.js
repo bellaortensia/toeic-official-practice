@@ -111,10 +111,11 @@
 
     // ---- ヘッダー(上に張り付く) ----
     const header = mk('div', 'sr-header');
+    const headLeft = mk('div', 'sr-head-left');
     const topBtn = mk('button', 'sr-top-btn', '← トップへ');
     topBtn.type = 'button';
     topBtn.addEventListener('click', leave);
-    header.appendChild(topBtn);
+    headLeft.appendChild(topBtn);
 
     const sel = mk('select', 'part-jump-select sr-select');
     sr.passages.forEach((pp, i) => {
@@ -126,14 +127,17 @@
       sel.appendChild(o);
     });
     sel.addEventListener('change', () => goTo(Number(sel.value)));
-    header.appendChild(sel);
+    headLeft.appendChild(sel);
+    header.appendChild(headLeft);
 
-    header.appendChild(buildNav());
-
+    // ◀ 3/15 ▶ と ランダム は、ヘッダーの中央に置く。
+    const headCenter = mk('div', 'sr-head-center');
+    headCenter.appendChild(buildNav());
     const rnd = mk('button', 'sr-random-btn', '🎲 ランダム');
     rnd.type = 'button';
     rnd.addEventListener('click', goRandom);
-    header.appendChild(rnd);
+    headCenter.appendChild(rnd);
+    header.appendChild(headCenter);
 
     // 速読カウンター(DECODE TOEICのREAD COUNTと同じデザイン。−/＋で手動調整もできる)
     const counter = mk('div', 'sr-rc');
@@ -171,11 +175,13 @@
       // ラベルと「閉じる」ボタンの行(画像・原文を畳んで、翻訳だけ読みたいとき用)
       const headRow = mk('div', 'doc-header-row');
       headRow.appendChild(mk('div', 'doc-label', doc.label || ''));
-      const collapseBtn = mk('button', 'doc-collapse-btn reveal-btn', '▼ 閉じる');
+      // 速読モードでは、画像(原文)は最初から閉じておく(必要なときだけ「開く」)。
+      const collapseBtn = mk('button', 'doc-collapse-btn reveal-btn', '▶ 開く');
       collapseBtn.type = 'button';
       headRow.appendChild(collapseBtn);
       docDiv.appendChild(headRow);
       const content = mk('div');
+      content.style.display = 'none';
       if (doc.image) {
         docDiv.classList.add('has-photo');
         content.appendChild(buildPassageImageWithTextToggle(doc.image, doc.label || '文書', doc.text));
@@ -200,7 +206,7 @@
     p.documents.forEach((doc, di) => {
       const slot = mk('div');
       // 解説・ノートモードと同じキー(翻訳キャッシュ・ノート・AIへの質問)を使う。
-      slot.appendChild(buildTranslatableBlock(doc.text, `${key}-doc${di}`, null, 'Readingボトルネック'));
+      slot.appendChild(buildTranslatableBlock(doc.text, `${key}-doc${di}`, null, 'Readingボトルネック', false, null, 'literal'));
       main.appendChild(slot);
     });
 
