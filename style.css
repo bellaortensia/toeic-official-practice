@@ -1713,7 +1713,7 @@ audio{
 .sr-header{
   position:sticky;top:var(--sticky-top-h, 80px);z-index:30;background:var(--paper-2);
   display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;
-  padding:8px 0 12px;margin-bottom:14px;border-bottom:1px solid var(--line);
+  padding:10px 16px 12px;margin-bottom:14px;border-bottom:1px solid var(--line);
 }
 .sr-top-btn,.sr-random-btn{
   font-family:'Noto Sans JP',sans-serif;font-size:13px;font-weight:700;
@@ -1721,15 +1721,27 @@ audio{
 }
 .sr-select{position:static;transform:none;max-width:min(440px,100%);font-size:13px;}
 .sr-nav{display:inline-flex;align-items:center;gap:10px;}
-.sr-counter{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:13px;}
-.sr-counter-label{font-weight:700;color:var(--accent-2);}
-.sr-counter-num{min-width:42px;text-align:center;font-family:'JetBrains Mono',monospace;font-weight:700;}
-.sr-counter-btn{width:28px;height:28px;border-radius:50%;border:1px solid var(--accent-2);background:#fff;color:var(--accent-2);cursor:pointer;font-size:16px;font-weight:700;line-height:1;padding:0;}
-.sr-body{width:100%;}
+/* 速読カウンター: DECODE TOEICのREAD COUNT行と同じデザイン */
+.sr-rc{
+  margin-left:auto;display:flex;align-items:center;gap:10px;min-width:0;
+  background:#10151b;border:1px solid #333f4b;border-radius:8px;padding:7px 14px;
+}
+.sr-rc-number{font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:700;color:var(--accent);min-width:32px;text-align:right;}
+.sr-rc-label{font-family:'JetBrains Mono',monospace;font-size:11px;color:#9aa6b0;white-space:nowrap;letter-spacing:.04em;}
+.sr-rc-btn{
+  background:none;border:1px solid #333f4b;color:var(--paper);border-radius:6px;
+  width:26px;height:26px;font-size:15px;line-height:1;cursor:pointer;flex:0 0 auto;padding:0;
+}
+.sr-rc-btn:hover{border-color:var(--accent-2);color:var(--accent-2);}
+.sr-rc-track{width:120px;height:10px;background:#232b34;border-radius:6px;overflow:hidden;flex:0 0 auto;}
+.sr-rc-fill{height:100%;background:var(--accent-2);width:0%;transition:width .2s ease;}
+/* 本文の枠は、ヘッダーの問題ドロップダウンと同じくらいの余白を左右に残して狭める。 */
+.sr-body{width:100%;padding:0 clamp(12px, 7vw, 76px);}
 .sr-bottom{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line);}
 .sr-history-count{color:var(--accent-2);font-weight:700;white-space:nowrap;}
 .speedread-history-title{margin-top:18px;}
 @media (max-width:600px){
   .speedread-entry-btns{margin-left:0;width:100%;}
-  .sr-counter{margin-left:0;}
+  .sr-rc{margin-left:0;}
+  .sr-rc-track{width:80px;}
 }

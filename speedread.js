@@ -7,6 +7,7 @@
 (function () {
   'use strict';
 
+  const SR_GOAL = 20; // カウンターのバーが満タンになる回数(DECODE TOEICのREAD_GOALと同じ)
   const COUNT_AFTER_MS = 15 * 1000; // 1つの本文を15秒以上表示していたら「1回読んだ」とする
   let sr = null; // { test, passages, idx, countTimer }
   let saveDebounce = null;
@@ -134,18 +135,28 @@
     rnd.addEventListener('click', goRandom);
     header.appendChild(rnd);
 
-    // 速読カウンター(−/＋で手動調整もできる)
-    const counter = mk('div', 'sr-counter');
-    counter.appendChild(mk('span', 'sr-counter-label', '速読'));
-    const minus = mk('button', 'sr-counter-btn', '−');
+    // 速読カウンター(DECODE TOEICのREAD COUNTと同じデザイン。−/＋で手動調整もできる)
+    const counter = mk('div', 'sr-rc');
+    const num = mk('span', 'sr-rc-number', '0');
+    const minus = mk('button', 'sr-rc-btn', '−');
     minus.type = 'button';
-    const num = mk('span', 'sr-counter-num', `${countOf(key)}回`);
-    const plus = mk('button', 'sr-counter-btn', '＋');
+    const track = mk('div', 'sr-rc-track');
+    const fill = mk('div', 'sr-rc-fill');
+    track.appendChild(fill);
+    const plus = mk('button', 'sr-rc-btn', '＋');
     plus.type = 'button';
-    minus.addEventListener('click', () => { setSpeedReadCount(key, countOf(key) - 1, false); num.textContent = `${countOf(key)}回`; scheduleProgressSave(); });
-    plus.addEventListener('click', () => { setSpeedReadCount(key, countOf(key) + 1, true); num.textContent = `${countOf(key)}回`; scheduleProgressSave(); });
-    counter.appendChild(minus);
+    const refreshCounter = () => {
+      const c = countOf(key);
+      num.textContent = String(c);
+      fill.style.width = Math.min(100, Math.round(c / SR_GOAL * 100)) + '%';
+    };
+    refreshCounter();
+    minus.addEventListener('click', () => { setSpeedReadCount(key, countOf(key) - 1, false); refreshCounter(); scheduleProgressSave(); });
+    plus.addEventListener('click', () => { setSpeedReadCount(key, countOf(key) + 1, true); refreshCounter(); scheduleProgressSave(); });
     counter.appendChild(num);
+    counter.appendChild(mk('span', 'sr-rc-label', 'READ COUNT'));
+    counter.appendChild(minus);
+    counter.appendChild(track);
     counter.appendChild(plus);
     header.appendChild(counter);
     root.appendChild(header);
@@ -157,13 +168,26 @@
     // 複数文書のとき、画像と翻訳が交互にならないよう、先に全文書の画像を並べる。
     p.documents.forEach(doc => {
       const docDiv = mk('div', 'doc-box');
-      if (doc.label) docDiv.appendChild(mk('div', 'doc-label', doc.label));
+      // ラベルと「閉じる」ボタンの行(画像・原文を畳んで、翻訳だけ読みたいとき用)
+      const headRow = mk('div', 'doc-header-row');
+      headRow.appendChild(mk('div', 'doc-label', doc.label || ''));
+      const collapseBtn = mk('button', 'doc-collapse-btn reveal-btn', '▼ 閉じる');
+      collapseBtn.type = 'button';
+      headRow.appendChild(collapseBtn);
+      docDiv.appendChild(headRow);
+      const content = mk('div');
       if (doc.image) {
         docDiv.classList.add('has-photo');
-        docDiv.appendChild(buildPassageImageWithTextToggle(doc.image, doc.label || '文書', doc.text));
+        content.appendChild(buildPassageImageWithTextToggle(doc.image, doc.label || '文書', doc.text));
       } else {
-        docDiv.appendChild(mk('div', '', doc.text));
+        content.appendChild(mk('div', '', doc.text));
       }
+      docDiv.appendChild(content);
+      collapseBtn.addEventListener('click', () => {
+        const collapsed = content.style.display === 'none';
+        content.style.display = collapsed ? '' : 'none';
+        collapseBtn.textContent = collapsed ? '▼ 閉じる' : '▶ 開く';
+      });
       main.appendChild(docDiv);
     });
 
@@ -194,7 +218,7 @@
     sr.countTimer = setTimeout(() => {
       if (!sr || sr.passages[sr.idx] !== p) return;
       setSpeedReadCount(key, countOf(key) + 1, true);
-      num.textContent = `${countOf(key)}回`;
+      refreshCounter();
       if (typeof recordStudyActivity === 'function') recordStudyActivity();
       scheduleProgressSave();
     }, COUNT_AFTER_MS);
