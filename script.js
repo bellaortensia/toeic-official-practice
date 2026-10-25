@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v155';
+const BUILD_VERSION = 'v156';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -2739,6 +2739,19 @@ const state = { test: null, part: null, data: null, index: 0 };
 // (jumpToUnit)や、ヘッダーの「解説・ノートモード」ラベルを押すとfalseに戻る。
 let explainMode = false;
 
+// 通しテストの結果から解説・ノートモードを開いたときは、そのテストで自分が選んだ
+// 選択肢を選んだ状態で解説を開く(不正解なら自分の選択肢が赤、正解が緑で出る)。
+// 通常の解説・ノートモードは、自動で正解を選んで開く。exam.jsが設定し、「解く」
+// モードへ切り替えるとき(jumpToUnit・ヘッダーの解説・ノートモードラベル)に解除する。
+let examReviewAnswers = null; // { test, answers: { 設問番号: 'A'〜'D' } }
+function reviewChoiceFor(number, correctLetter) {
+  if (explainMode && examReviewAnswers && examReviewAnswers.test === state.test) {
+    const l = examReviewAnswers.answers[number];
+    if (l) return l;
+  }
+  return correctLetter;
+}
+
 // 解説・ノートモードでの正誤表示は、今回の回答ではなく過去の記録(最後に解いたときの
 // 正誤)に基づく。一度も解いていない問題はlastCorrectがnullなので「未回答」にする。
 function explainModeLastCorrect(number) {
@@ -4659,6 +4672,7 @@ function buildUnitList(test, part, data) {
 
 async function jumpToUnit(test, part, unitIndex) {
   explainMode = false;
+  examReviewAnswers = null;
   state.test = test;
   state.part = part;
   state.index = 0;
@@ -5171,6 +5185,7 @@ function updateHeaderNav() {
 const explainModeLabelEl = document.getElementById('explainModeLabel');
 explainModeLabelEl.addEventListener('click', () => {
   explainMode = false;
+  examReviewAnswers = null;
   goToAdjacentUnit(0);
 });
 
@@ -5603,7 +5618,8 @@ function renderPart1or2() {
   practiceBodyEl.appendChild(wrap);
 
   if (explainMode) {
-    const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${q.answer})`);
+    const autoLetter = reviewChoiceFor(q.number, q.answer);
+    const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${autoLetter})`);
     if (correctBtn) correctBtn.click();
     nextBtn.click();
   }
@@ -5803,7 +5819,8 @@ function renderPart3or4() {
   if (explainMode) {
     g.items.forEach(item => {
       const { choicesDiv } = blocks[item.number];
-      const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${item.answer}) ${item.choices[item.answer]}`);
+      const autoLetter = reviewChoiceFor(item.number, item.answer);
+      const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${autoLetter}) ${item.choices[autoLetter]}`);
       if (correctBtn) correctBtn.click();
     });
     nextBtn.click();
@@ -5900,7 +5917,8 @@ function renderPart5() {
   if (explainMode) {
     batch.forEach(q => {
       const { choicesDiv } = blocks[q.number];
-      const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${q.answer}) ${q.choices[q.answer]}`);
+      const autoLetter = reviewChoiceFor(q.number, q.answer);
+      const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${autoLetter}) ${q.choices[autoLetter]}`);
       if (correctBtn) correctBtn.click();
     });
     gradeBtn.click();
@@ -6150,7 +6168,8 @@ function renderPart6() {
   if (explainMode) {
     p.items.forEach(item => {
       const { choicesDiv } = blocks[item.number];
-      const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${item.answer}) ${item.choices[item.answer]}`);
+      const autoLetter = reviewChoiceFor(item.number, item.answer);
+      const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${autoLetter}) ${item.choices[autoLetter]}`);
       if (correctBtn) correctBtn.click();
     });
     nextBtn.click();
@@ -6270,7 +6289,8 @@ function renderPart7() {
   if (explainMode) {
     p.items.forEach(item => {
       const { choicesDiv } = blocks[item.number];
-      const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${item.answer}) ${item.choices[item.answer]}`);
+      const autoLetter = reviewChoiceFor(item.number, item.answer);
+      const correctBtn = Array.from(choicesDiv.querySelectorAll('.choice')).find(b => b.textContent.trim() === `(${autoLetter}) ${item.choices[autoLetter]}`);
       if (correctBtn) correctBtn.click();
     });
     nextBtn.click();

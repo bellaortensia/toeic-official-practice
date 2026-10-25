@@ -748,19 +748,27 @@
       b.id = 'examBackBtn';
       b.type = 'button';
       b.addEventListener('click', backToResult);
-      const header = document.querySelector('.practice-header');
-      if (header) header.appendChild(b);
+      // ヘッダー(◀ 15/25 ▶ や「解説・ノートモード」ラベル)と重ならないよう、
+      // 練習画面の一番上に専用の行を作って置く。
+      const bar = el('div', 'exam-back-bar');
+      bar.id = 'examBackBar';
+      bar.appendChild(b);
+      practiceEl.insertBefore(bar, practiceEl.firstChild);
     }
     return b;
   }
-  function hideBackBtn() {
-    const b = document.getElementById('examBackBtn');
-    if (b) b.style.display = 'none';
+  function setBackBarVisible(visible) {
+    const bar = document.getElementById('examBackBar');
+    if (bar) bar.style.display = visible ? 'block' : 'none';
   }
+  function hideBackBtn() { setBackBarVisible(false); }
   function openExplanation(result, n) {
     window.examReturnId = result.id;
     examEl.style.display = 'none';
-    ensureBackBtn().style.display = 'inline-block';
+    ensureBackBtn();
+    setBackBarVisible(true);
+    // 解説は、このテストで自分が選んだ選択肢を選んだ状態で開く。
+    examReviewAnswers = { test: result.test, answers: result.answers || {} };
     jumpToQuestionNumber(result.test, result.qParts[n], n, true);
   }
   function backToResult() {

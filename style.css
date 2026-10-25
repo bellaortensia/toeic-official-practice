@@ -1695,7 +1695,8 @@ audio{
 .exam-all-cell.ng{background:#fdeaea;border-color:var(--danger);}
 .exam-all-cell.blank{background:#eef0f2;}
 .exam-resume-banner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#fff6dc;border:1px solid var(--accent);border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:14px;}
-.exam-back-btn{margin-left:8px;padding:6px 12px;font-size:13px;}
+.exam-back-bar{margin-bottom:10px;}
+.exam-back-btn{padding:6px 12px;font-size:13px;}
 @media (max-width:600px){
   #exam{padding:12px 10px;}
   .exam-entry-btns{margin-left:0;width:100%;}
