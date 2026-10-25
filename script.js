@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v156';
+const BUILD_VERSION = 'v157';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -2436,6 +2436,10 @@ function buildSpeakerBadges(speakers) {
 function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false } = {}) {
   const list = (Array.isArray(filenames) ? filenames : [filenames]).filter(Boolean);
   let currentAudio = null;
+  // 解説・ノートモードで、画面上下の◀▶で前後の問題へ移動してきたときは、音声を
+  // 自動で流し、リピート(↻)もONにしておく。
+  const arrowAuto = explainMode && explainArrowAudio;
+  if (arrowAuto) autoplay = true;
 
   const player = document.createElement('div');
   player.className = 'audio-player' + (sticky ? ' audio-player-sticky' : '');
@@ -2459,9 +2463,9 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
   toggleBtn.textContent = '▶';
   // 問題文(先頭トラック)だけを繰り返し再生するボタン。設問トラックがある場合は
   // そちらへは進んだ後ループしない(問題文のみ繰り返す)。
-  let loopFirst = false;
+  let loopFirst = arrowAuto;
   const loopBtn = document.createElement('button');
-  loopBtn.className = 'player-loop';
+  loopBtn.className = 'player-loop' + (loopFirst ? ' active' : '');
   loopBtn.textContent = '↻';
   loopBtn.title = '問題文を繰り返し再生';
   loopBtn.addEventListener('click', () => {
@@ -2743,6 +2747,9 @@ let explainMode = false;
 // 選択肢を選んだ状態で解説を開く(不正解なら自分の選択肢が赤、正解が緑で出る)。
 // 通常の解説・ノートモードは、自動で正解を選んで開く。exam.jsが設定し、「解く」
 // モードへ切り替えるとき(jumpToUnit・ヘッダーの解説・ノートモードラベル)に解除する。
+// 解説・ノートモードで画面上下の◀▶を押して移動したあとは、その画面の音声を自動で
+// リピート再生する。一覧などから開き直す(jumpToUnit/jumpToQuestionNumber)と解除。
+let explainArrowAudio = false;
 let examReviewAnswers = null; // { test, answers: { 設問番号: 'A'〜'D' } }
 function reviewChoiceFor(number, correctLetter) {
   if (explainMode && examReviewAnswers && examReviewAnswers.test === state.test) {
@@ -4672,6 +4679,7 @@ function buildUnitList(test, part, data) {
 
 async function jumpToUnit(test, part, unitIndex) {
   explainMode = false;
+  explainArrowAudio = false;
   examReviewAnswers = null;
   state.test = test;
   state.part = part;
@@ -4742,6 +4750,7 @@ async function jumpToQuestionNumber(test, part, number, autoReveal) {
     p67 = { idx: unitIndex, phase: 'question', selections: {} };
   }
   explainMode = !!autoReveal;
+  explainArrowAudio = false;
   renderPractice();
 }
 
@@ -5126,6 +5135,7 @@ function goToAdjacentUnit(delta) {
     p67.phase = 'question';
     p67.selections = {};
   }
+  explainArrowAudio = delta !== 0;
   renderPractice();
 }
 
