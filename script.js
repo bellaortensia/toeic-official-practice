@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v157';
+const BUILD_VERSION = 'v158';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -2436,6 +2436,14 @@ function buildSpeakerBadges(speakers) {
 function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false } = {}) {
   const list = (Array.isArray(filenames) ? filenames : [filenames]).filter(Boolean);
   let currentAudio = null;
+  // いま流れているトラックの番号(-1=未再生/再生終了)。リピート(↻)は先頭トラック(0)
+  // にしか効かないので、再生中にリピートを切り替えたとき、流れているのが先頭トラック
+  // かどうかを知る必要がある。
+  let currentIdx = -1;
+  // playFromStart()のたびに進める「再生の世代」。音声データの取得(通信)待ちの途中で
+  // 頭出しし直されたとき、待っていた古い再生処理があとから割り込んで二重に鳴らない
+  // ようにするため(playIndex内で、待ち終わったあとに世代が変わっていたら中止する)。
+  let playToken = 0;
   // 解説・ノートモードで、画面上下の◀▶で前後の問題へ移動してきたときは、音声を
   // 自動で流し、リピート(↻)もONにしておく。
   const arrowAuto = explainMode && explainArrowAudio;
@@ -2468,10 +2476,18 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
   loopBtn.className = 'player-loop' + (loopFirst ? ' active' : '');
   loopBtn.textContent = '↻';
   loopBtn.title = '問題文を繰り返し再生';
-  loopBtn.addEventListener('click', () => {
-    loopFirst = !loopFirst;
+  // リピートのON/OFFを切り替える。ボタンのクリックだけでなく、外からも
+  // (回答後に音声を流し直すときにONにしておくため)呼べるよう関数にしてある。
+  // 先頭トラックの繰り返しはaudio要素ネイティブのloopで行う(曲が終わるたびに
+  // 新しいAudioを作り直して再生する方式だと、iPhone/iPadでは2周目以降が「ユーザー
+  // 操作に紐付かない再生」としてブロックされ、リピートが止まってしまうため)。
+  // 再生中に切り替えたときも、いま流れているのが先頭トラックならすぐ反映する。
+  function setLoop(on) {
+    loopFirst = !!on;
     loopBtn.classList.toggle('active', loopFirst);
-  });
+    if (currentAudio && currentIdx === 0) currentAudio.loop = loopFirst;
+  }
+  loopBtn.addEventListener('click', () => setLoop(!loopFirst));
   const curTimeEl = document.createElement('span');
   curTimeEl.className = 'player-time';
   curTimeEl.textContent = '0:00';
@@ -2568,11 +2584,14 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
   // その場でまず空のAudio要素に対してplay()を一度呼んでおき(primedAudio)、通信完了後は
   // 新しいAudio要素を作らずこの同じ要素にsrcを設定してplay()し直す(iOSはタップ済みの
   // 同じ要素であれば、後から遅れてのplay()も許可する)。
-  async function playIndex(i, primedAudio) {
-    if (i >= list.length) { currentAudio = null; resetUI(); return; }
+  async function playIndex(i, primedAudio, token = playToken) {
+    if (i >= list.length) { currentAudio = null; currentIdx = -1; resetUI(); return; }
     toggleBtn.disabled = true;
     errorEl.style.display = 'none';
     const url = await getAudioUrl(list[i], getTestConfig(state.test).audioFolderId);
+    // 通信を待っている間に頭出しし直された(playFromStartが呼ばれた)なら、この古い
+    // 再生は中止する。中止しないと、新しい再生と同時に鳴って二重になってしまう。
+    if (token !== playToken) return;
     toggleBtn.disabled = false;
     if (!url) {
       errorEl.textContent = '⚠ ' + (lastAudioError || '音声の読み込みに失敗しました。');
@@ -2581,13 +2600,19 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
       return;
     }
     currentAudio = primedAudio || new Audio();
+    currentIdx = i;
     currentAudio.src = url;
     currentAudio.playbackRate = playbackRate;
+    // 先頭トラックだけ、リピートONならネイティブのloopで繰り返す(設問トラックは繰り返さない)。
+    currentAudio.loop = (i === 0 && loopFirst);
     globalAudio.current = currentAudio;
     attachEvents(currentAudio);
+    // ネイティブのloopが効いている間はendedは発火しない。リピートをOFFにした/loopが
+    // 効いていなかった場合に、次のトラックへ進む(念のためリピートONなら先頭へ戻す)。
     currentAudio.addEventListener('ended', () => {
-      if (i === 0 && loopFirst) playIndex(0);
-      else playIndex(i + 1);
+      if (token !== playToken) return;
+      if (i === 0 && loopFirst) playIndex(0, undefined, token);
+      else playIndex(i + 1, undefined, token);
     });
     currentAudio.play().then(() => {
       toggleBtn.textContent = '❚❚';
@@ -2599,11 +2624,13 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
   }
 
   function playFromStart() {
+    playToken++;
     if (currentAudio) { currentAudio.pause(); currentAudio = null; }
+    currentIdx = -1;
     resetUI();
     const primed = new Audio();
     primed.play().catch(() => {});
-    playIndex(0, primed);
+    playIndex(0, primed, playToken);
   }
 
   toggleBtn.addEventListener('click', () => {
@@ -2624,6 +2651,9 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
   // 出たタイミングに音声を自動で流し直すため。採点ボタンのクリック処理の中で同期的に
   // 呼べば、スマホ等の「ユーザー操作に紐付いた再生」の制限にも引っかからない)。
   outerWrap.playFromStart = () => { if (list.length) playFromStart(); };
+  // 外からリピート(↻)のON/OFFを指定できるようにする(回答後の流し直しでONにするため。
+  // ボタンの見た目と実際の動作の両方が切り替わる)。
+  outerWrap.setLoop = setLoop;
 
   return outerWrap;
 }
@@ -5765,8 +5795,13 @@ function renderPart3or4() {
       nextBtn.disabled = true;
       nextBtn.textContent = '採点中...';
       // 解説が出るタイミングで音声を頭から流し直す(解説・ノートモードでは流さない)。
+      // 解説を読みながら会話・トークを何度も聞き直せるよう、リピート(↻)もONにしてから
+      // 流す(先頭の会話・トークだけを繰り返し、設問の音声へは進まない)。
       // 解説の生成(通信)を待たず、クリックの直後に同期的に呼ぶ。
-      if (!explainMode) audioWidget.playFromStart();
+      if (!explainMode) {
+        audioWidget.setLoop(true);
+        audioWidget.playFromStart();
+      }
       g.items.forEach(item => {
         const { choicesDiv, explainDiv, letters } = blocks[item.number];
         const isCorrect = p34.selections[item.number] === item.answer;
