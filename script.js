@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v158';
+const BUILD_VERSION = 'v159';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -61,7 +61,14 @@ let activePlayCtrl = null;
 // 「前回学習した問題」欄の再生用に、複数の音声ファイルを1本に連結して作った
 // object URL。作り直す/停止する際に古いものを解放する。
 let studyLoopUrl = null;
+// stopAllAudio()のたびに進める「停止の世代」。音声プレーヤー(createAudioPlayerWidget)は
+// 音声データの取得(通信)待ちの間は再生中の音声として登録されないため、その最中に画面が
+// 切り替わってstopAllAudio()が呼ばれても止められず、取得が終わってから古い画面の音声が
+// 遅れて鳴り出し、新しい画面の音声と二重になっていた。待ち終わったあとにこの世代が
+// 変わっていたら、その再生は中止する。
+let audioEpoch = 0;
 function stopAllAudio() {
+  audioEpoch++;
   studySequencePlaying = false;
   if (activePlayCtrl) {
     activePlayCtrl.btn.textContent = activePlayCtrl.label;
@@ -2588,10 +2595,13 @@ function createAudioPlayerWidget(filenames, { autoplay = false, sticky = false }
     if (i >= list.length) { currentAudio = null; currentIdx = -1; resetUI(); return; }
     toggleBtn.disabled = true;
     errorEl.style.display = 'none';
+    const epoch = audioEpoch;
     const url = await getAudioUrl(list[i], getTestConfig(state.test).audioFolderId);
-    // 通信を待っている間に頭出しし直された(playFromStartが呼ばれた)なら、この古い
-    // 再生は中止する。中止しないと、新しい再生と同時に鳴って二重になってしまう。
+    // 通信を待っている間に頭出しし直された(playFromStartが呼ばれた)、または画面が
+    // 切り替わってstopAllAudioが呼ばれたなら、この古い再生は中止する。中止しないと、
+    // 新しい再生と同時に鳴って二重になってしまう。
     if (token !== playToken) return;
+    if (epoch !== audioEpoch) { toggleBtn.disabled = false; return; }
     toggleBtn.disabled = false;
     if (!url) {
       errorEl.textContent = '⚠ ' + (lastAudioError || '音声の読み込みに失敗しました。');
