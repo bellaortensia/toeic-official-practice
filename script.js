@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v160';
+const BUILD_VERSION = 'v161';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -3337,7 +3337,10 @@ function buildHistoryRow(item) {
         if (!historyPopupPinnedRow) showHistoryNotePopup(row, noteHtml, onViewExplain);
       });
       row.addEventListener('mouseleave', () => {
-        if (historyPopupPinnedRow !== row) hideHistoryNotePopup();
+        // 何かが固定されている間は閉じない。以前は「この行が固定対象でなければ閉じる」
+        // という条件だったため、行Aを固定したあと、マウスが隣の行Bの上を通過しただけで
+        // Bのmouseleaveが固定中のAのポップアップまで閉じてしまっていた。
+        if (!historyPopupPinnedRow) hideHistoryNotePopup();
       });
       row.addEventListener('click', () => {
         if (historyPopupPinnedRow === row) {
