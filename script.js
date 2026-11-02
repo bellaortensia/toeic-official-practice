@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v159';
+const BUILD_VERSION = 'v160';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -684,54 +684,94 @@ function getCachedNaturalJa(cacheKey) {
 }
 
 // クリックしたチャンクが属する節(clauseText)を対象に、■精読ポイントとして
-// 全文和訳+文構造分析+重要語句をまとめて生成する。プレーンテキストの見出し・
-// 箇条書き(・)のみを使い、Markdown記号(**、- 箇条書き等)は一切使わない。
+// 直訳・意訳+【1.文の構造】【2.重要表現】【3.文法上のポイント】【4.英語の語順のまま
+// 理解する】をまとめて生成する。プレーンテキストの見出し・箇条書き(・)のみを使い、
+// Markdown記号(**、- 箇条書き等)は一切使わない。
 // 1行目が■で始まるため、formatNoteBody()側の「最初の行が■なら赤字太字に
 // する」規則で見出しが自動的に強調表示される。
 const CLAUSE_EXPLAIN_PROMPT_READING = `あなたはTOEIC満点を何度も取得し、初心者指導歴20年以上の英語講師です。
 入力される英文(一文または一節)を、必ず次の形式・見出しどおりに日本語で解説してください。この形式以外の前置き・後書きは一切書かないこと。装飾記号(**など)は使わないこと。
 
 ■精読ポイント
-入力された英文全体を、省略・言い換えせず一字一句そのまま使い、意味のまとまり(3〜8語程度のチャンク)ごとに分割する。各チャンクを「英語チャンク(そのチャンクを英語の語順のまま前から訳した直訳)」の形にし、チャンクとチャンクの間は半角スペース+「/」+半角スペースで区切って、改行せずに1行で書く。
+(1行目)入力された英文を、省略・言い換えせず一字一句そのまま1行で書く。
+(2行目)「直訳：」に続けて、英語の意味を忠実に訳した日本語を「」で囲んで書く。
+(3行目)「意訳：」に続けて、自然で話し言葉に近い日本語を「」で囲んで書く。
 
-～文構造分析～
-入力文を、意味・文法上のまとまり(節・句・接続詞・省略された語を補ったものなど)ごとに分割し、それぞれについて次の形式で解説する。文中に複数の節がある場合はS/V/O/Cに節ごとの通し番号を付ける(例: S1+V1、S2+V2+O2)。各項目は必ず次の2行構成にすること。
-1行目: 半角の中黒"・"で始め、続けて該当箇所の英語(原文のまま。省略されている語があれば(word)のようにカッコ付きで補ってよい)を書き、その直後に半角括弧で文法的な役割(S1+V1のような文型記号、品詞・節の種類、または「修飾語：〜句」のような具体的な種類)を書く。
-2行目: 改行して、字下げや記号は付けずに、その箇所についての文法的な説明(省略されている語があれば明記する、なぜその形になっているか、何を修飾しているか等)を1〜2文で書く。
+【1. 文の構造】
+文を意味のまとまりごとに分け、「・英語：日本語の意味」の形で1行ずつ書く。そのあと空行を入れず、「骨格としては」で始まる行で、文の骨組み(主節と、それに従う節・句の関係。目的語になっている部分は[ ]で囲む)を1〜2行で説明する。
 
-＜重要単語・熟語・言い回し＞
-入力文中にあるTOEIC頻出の単語・熟語・言い回しを、一字一句原文のまま抜き出し、「用語 意味」の形で／区切りで並べる(2〜3行に折り返してよい)。該当する語句が無ければ、この見出しごと省略してよい(無理に単語を挙げないこと)。
+【2. 重要表現】
+文中のTOEICで狙われやすい表現・読み間違えやすい表現を、①②③…と番号を付けて挙げる(多くても4つ程度。無理に増やさない)。各項目は、番号付きの見出し(表現そのもの)→その意味・使われ方・注意点の説明→必要に応じて例文2つ(「・英文」の次の行に「・日本語訳」)の順で書く。単語の意味を分解して示すときは「・語：意味」の形で並べる。多義語は、この文での意味に加えて、他の文脈での意味も一言添える。
 
-出力例(入力文: "as we go."):
+【3. 文法上のポイント】
+この文で特に覚えておきたい文法・構文を、2つ程度に絞って書く。そのあと、紛らわしい点(語の多義性など)があれば補足する。
+
+【4. 英語の語順のまま理解する】
+英語の流れに沿って、①②③…の意味のまとまりごとに、「→」で始まる行にその意味を書く。最後に、TOEICで押さえたいポイントを1〜2文でまとめる。
+
+守ること:
+・見出し【1.】〜【4.】は必ずこの順番・この表記で書く。装飾記号(**など)やMarkdownは使わない。
+・字下げは半角スペースで行う。【】見出しの下の項目は4文字、その下の説明・例文は8文字、例文の訳は10文字分下げる。
+・入力が短い節・句の場合は、該当する内容が無い項目は無理に作らず、この見出しごと省略してよい(【1.】と【4.】は必ず書く)。
+
+出力例(入力文: "I'll see if they can rush the batch since the error was their fault."):
 ■精読ポイント
-as we go.(私たちが進むにつれて)
-～文構造分析～
-・as(接続詞)
-「〜につれて」という意味を表す比例や同時進行を表す接続詞です。
-・we go(S1+V1:主節に従属する副詞節)
-私たちが進むという動作を表す第1文型の節であり、as が導く副詞節を構成しています。
+I'll see if they can rush the batch since the error was their fault.
+直訳：「そのミスは相手側の責任だったので、その一括処理分を急いで対応してもらえるか確認してみます。」
+意訳：「向こうのミスが原因だから、バッチ処理を急いでもらえるか聞いてみます。」
 
-出力例2(入力文: "Since enrolling in our comprehensive motor vehicle insurance four years ago, you have saved an average of $510 per year compared to the cost of policies from leading competitors."):
-■精読ポイント
-Since enrolling in our comprehensive motor vehicle insurance four years ago(4年前に当社の総合自動車保険に加入して以来) / you have saved an average of $510 per year(あなたは年間平均510ドルを節約してきました) / compared to the cost of policies(保険契約の費用と比べて) / from leading competitors.(大手競合他社の)
-～文構造分析～
-・Since enrolling in our comprehensive motor vehicle insurance four years ago(副詞節：分詞構文)
-Since は「〜して以来」という意味の接続詞で、動名詞 enrolling を伴って「加入して以来」という時を表す節を作っています。
-・you have saved(S+V:現在完了形)
-have+過去分詞の現在完了形で、過去から現在まで続く「節約してきた」という結果を表しています。
-・an average of $510 per year(O:目的語)
-saved の目的語で、「年間平均510ドル」という節約額を表します。
-・compared to the cost of policies(修飾語：過去分詞構文)
-compared to 〜で「〜と比較して」という意味を作る過去分詞構文です。
-・from leading competitors(修飾語：前置詞句)
-直前の competitors を修飾し、「大手の」競合他社であることを示しています。
-＜重要単語・熟語・言い回し＞
-Since ～ing ～して以来／enrolling in～ ～に加入すること／comprehensive 総合的な、補償範囲の広い
-／average of ～ ～の平均／compared to ～ ～と比較して`;
+【1. 文の構造】
+    ・I'll see if ～：～かどうか確認してみます
+    ・they can rush the batch：彼らがその一括処理を急いで進められる
+    ・since the error was their fault：そのエラーは彼らの責任だったので
+
+    骨格としては
+    I'll see [if they can rush the batch].…で、if 以下が see の目的語になっています。
+
+【2. 重要表現】
+    ① I'll see if ～
+        「～かどうか確認してみます」「～できるか調べてみます」
+        ここでの see は「見る」ではありません。相手に何かを依頼するときによく使う表現です。
+        ・I'll see if he is available.
+          ・彼が空いているか確認してみます。
+        ・I'll see if we can change the schedule.
+          ・スケジュールを変更できるか確認してみます。
+    ② rush the batch
+        ここがポイントです。
+        ・rush：急がせる、急いで処理する
+        ・batch：一括処理、一まとまりの処理対象
+        IT・業務の文脈では、batch は複数のデータや作業をまとめて処理する「バッチ処理」を指すことがあります。rush the batch は「そのバッチ処理を急いで進める」という意味です。なお、batch は文脈によって「製造ロット」「一まとまりの商品・製品群」という意味にもなります。
+    ③ since the error was their fault
+        ・since：～なので（理由）
+        ・the error：そのエラー、そのミス
+        ・was：～だった
+        ・their fault：彼らの責任、彼らの落ち度
+        be someone's fault で「～の責任である」という意味です。
+        例：
+        ・It was my fault.
+          ・私の責任でした。
+        ・The delay was not our fault.
+          ・遅延は私たちの責任ではありませんでした。
+
+【3. 文法上のポイント】
+    特に覚えておきたいのは、次の2つです。
+    see if ～「～かどうか確認する」
+    be one's fault「～の責任である」
+    また、since は「～以来」という時間の意味だけでなく、「～なので」という理由の意味でも使われます。
+    この文では理由を表しています。
+
+【4. 英語の語順のまま理解する】
+    ① I'll see if
+        → ～かどうか確認してみます
+    ② they can rush the batch
+        → 彼らがそのバッチ処理を急いで進められるか
+    ③ since the error was their fault
+        → そのエラーは彼らの責任だったので
+    TOEICで押さえたいのは I'll see if ～ と be one's fault の2つ。どちらも仕事上の会話やメールで使われる実用的な表現です。`;
 
 async function getClauseExplanation(clauseText) {
-  // ＜重要単語・熟語・言い回し＞の分だけ出力が増える分、余裕を持たせる。
-  return await callGemini(CLAUSE_EXPLAIN_PROMPT_READING, clauseText, { maxOutputTokens: 1500 });
+  // 例文・語順どおりの理解まで含む長い出力になるため、余裕を持たせる。
+  return await callGemini(CLAUSE_EXPLAIN_PROMPT_READING, clauseText, { maxOutputTokens: 4000 });
 }
 
 // 単語ポップアップから「用語を解説」した際に呼ぶ。単語1つの場合だけコアイメージ
@@ -814,7 +854,10 @@ function formatNoteBody(text) {
         out.push('');
       } else if (items) {
         items[items.length - 1] = items[items.length - 1].replace(/<\/li>$/, `<br>${processInline(trimmed)}</li>`);
-      } else if (trimmed === '～文構造分析～' || trimmed.startsWith('・')) {
+      } else if (trimmed === '～文構造分析～' || trimmed.startsWith('【') || /^・/.test(line)) {
+        // 見出し(【1. 文の構造】等)と、旧形式の「～文構造分析～」「・項目見出し」
+        // (字下げなしの・)を太字にする。新形式は・が字下げ付きの箇条書き/例文なので
+        // 太字にしない(/^・/は行頭が・のときだけ=字下げなしのときだけ一致)。
         out.push(`<strong>${processInline(line)}</strong>`);
       } else {
         out.push(processInline(line));
