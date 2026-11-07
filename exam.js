@@ -142,7 +142,10 @@
         data.groups.forEach(g => units.push({
           part, kind: 'group', g, items: g.items, numbers: g.questions,
           audio: [g.audioConversation || g.audioTalk, g.audioQuestions].filter(Boolean),
-          pauseMs: 8000 * g.items.length
+          // 設問の音声ファイルには、本番どおり各設問のあとの約8秒の解答時間が最初から
+          // 録音されている(ファイルサイズから見て会話約30秒+設問約36秒)。ここで
+          // さらに待つと二重になって長くなりすぎるので、次の問題へ移るための余白だけにする。
+          pauseMs: 2000
         }));
       } else if (part === 5) {
         data.questions.forEach(q => units.push({ part, kind: 'p5', q, numbers: [q.number] }));
