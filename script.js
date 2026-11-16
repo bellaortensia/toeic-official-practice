@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v161';
+const BUILD_VERSION = 'v162';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -3739,12 +3739,29 @@ async function saveProgressToSheet() {
 // マージする(この端末だけの記録で終わらせず、他の端末の記録も取り込むため)。
 // マージ後はローカルの状態をそのままスプレッドシートへ書き戻し、他の端末が
 // 古いままにならないようにする。
+// 結果は { ok, reason } で返す(「最新を取得」ボタンの表示と、失敗理由の画面表示に使う)。
+// 以前は失敗しても無言で終わっていたため、他の端末の記録が取り込めていないのに
+// 気づけなかった。失敗したら画面上部に理由を出す。
+let lastProgressSyncAt = 0;
+function showProgressSyncError(msg) {
+  const el = document.getElementById('progressSyncStatus');
+  if (!el) return;
+  if (msg) {
+    el.textContent = `⚠ 他の端末の学習記録(学習時間・回答履歴など)を取得できませんでした(${msg})。この端末の記録だけで表示しています。上の「🔄 最新を取得」で再試行できます。`;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
 async function syncProgressFromSheet() {
   const url = getSheetUrl();
-  if (!url) return;
+  if (!url) return { ok: false, reason: 'スプレッドシートURL未設定' };
+  lastProgressSyncAt = Date.now(); // 成功・失敗にかかわらず試行時刻(失敗時も3分後の再表示で再試行できるように)
   try {
     const res = await fetchWithTimeout(`${url}?action=getProgress`, {}, SHEET_FETCH_TIMEOUT_MS);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+    if (data && data.error) throw new Error(data.error);
     const remote = (data && data.progress) || {};
     mergeAttempts(remote.attempts);
     mergeDailyQuestions(remote.dailyQuestions);
@@ -3756,9 +3773,27 @@ async function syncProgressFromSheet() {
     renderStatsDashboard(statsWeekOffset);
     renderHistorySidebar(historyWeekOffset);
     if (typeof renderSpeedReadHistory === 'function') renderSpeedReadHistory();
+    lastProgressSyncAt = Date.now();
+    showProgressSyncError('');
     await saveProgressToSheet();
-  } catch (e) { /* ignore, ローカルのみで継続 */ }
+    return { ok: true };
+  } catch (e) {
+    // ローカルのみで継続する。理由は画面に出す。
+    const reason = e.name === 'AbortError' ? `${SHEET_FETCH_TIMEOUT_MS / 1000}秒以内に応答がありませんでした` : e.message;
+    showProgressSyncError(reason);
+    return { ok: false, reason };
+  }
 }
+
+// タブを開きっぱなしにしていると、ページを開いた時の1回しか他の端末の記録を取り込まない
+// ため、自宅PCで勉強した分が会社PCの開きっぱなしの画面に反映されなかった。タブが
+// 再び表示されたとき(最後の取得から3分以上たっていれば)、もう一度取り込む。
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  if (!getSheetUrl()) return;
+  if (Date.now() - lastProgressSyncAt < 3 * 60 * 1000) return;
+  syncProgressFromSheet();
+});
 
 const COACH_PROMPT = `あなたは、TOEICの得点アップを目指して勉強を続けている学習者専属のコーチです。
 以下に、学習者が直近に勉強した日の記録(取り組んだ問題数・正誤・その問題を解くために必要だった文法や語彙や表現・書いたノート・AIへの質問)を渡します。これを踏まえて日本語でメッセージを書いてください。
@@ -6421,6 +6456,21 @@ if (saveNotesBtn) {
     }
     saveNotesBtn.disabled = false;
     setTimeout(() => setNotesSaveStatus(''), 3000);
+  });
+}
+
+// 「🔄 最新を取得」: 他の端末(自宅PC・会社PC)の学習時間・回答履歴などを、
+// スプレッドシートから今すぐ取り込む(ページを開いた時の自動取得と同じ処理)。
+const syncNowBtn = document.getElementById('syncNowBtn');
+if (syncNowBtn) {
+  syncNowBtn.addEventListener('click', async () => {
+    syncNowBtn.disabled = true;
+    setNotesSaveStatus('取得中…');
+    const r = await syncProgressFromSheet();
+    if (r.ok) setNotesSaveStatus('取得しました', false, true);
+    else setNotesSaveStatus('取得できませんでした: ' + r.reason, true);
+    syncNowBtn.disabled = false;
+    setTimeout(() => setNotesSaveStatus(''), 5000);
   });
 }
 

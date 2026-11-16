@@ -122,6 +122,25 @@ function _readTranslation(sheet, key) {
   return out;
 }
 
+// 長い値を複数行に分けて保存した項目('@@CHUNKS:N'の行+'キー@@0'〜の行)を元に戻す。
+var PG_CHUNK = 40000;
+function _joinChunks(rows) {
+  var out = {};
+  for (var k in rows) {
+    if (k.indexOf('@@') !== -1) continue;
+    var v = String(rows[k]);
+    var m = /^@@CHUNKS:(\d+)$/.exec(v);
+    if (m) {
+      var s = '';
+      for (var j = 0; j < Number(m[1]); j++) s += String(rows[k + '@@' + j] || '');
+      out[k] = s;
+    } else {
+      out[k] = v;
+    }
+  }
+  return out;
+}
+
 function _getAllRows(sheet) {
   var last = sheet.getLastRow();
   var result = {};
@@ -172,7 +191,7 @@ function doGet(e) {
   if (action === 'getNotes') {
     result = { notes: _getAllRows(_getNotesSheet()) };
   } else if (action === 'getProgress') {
-    var rows = _getAllRows(_getProgressSheet());
+    var rows = _joinChunks(_getAllRows(_getProgressSheet()));
     var progress = {};
     for (var key in rows) {
       try { progress[key] = JSON.parse(rows[key]); } catch (err) { /* 壊れた値は無視 */ }
@@ -205,7 +224,18 @@ function doPost(e) {
   if (body.action === 'saveProgress') {
     var progress = body.progress || {};
     var toWrite = {};
-    for (var pkey in progress) toWrite[pkey] = JSON.stringify(progress[pkey]);
+    for (var pkey in progress) {
+      // 1セルの上限(5万文字)を超える値は、複数行に分けて保存する(超えると保存に失敗し、
+      // 同じ保存処理に含まれる他の項目まで更新されなくなっていた)。
+      var pv = JSON.stringify(progress[pkey]);
+      if (pv.length <= PG_CHUNK) {
+        toWrite[pkey] = pv;
+      } else {
+        var pn = Math.ceil(pv.length / PG_CHUNK);
+        toWrite[pkey] = '@@CHUNKS:' + pn;
+        for (var pc = 0; pc < pn; pc++) toWrite[pkey + '@@' + pc] = pv.substr(pc * PG_CHUNK, PG_CHUNK);
+      }
+    }
     _batchSetRows(_getProgressSheet(), toWrite);
     return ContentService.createTextOutput(JSON.stringify({ status: 'ok' }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -233,12 +263,14 @@ function doPost(e) {
       </details>
     </details>　<span class="rc-save header-save">
       <button id="saveNotesBtn" type="button">この状態を保存</button>
+      <button id="syncNowBtn" type="button" title="他の端末(自宅PC・会社PC)で記録した学習時間や回答履歴を、スプレッドシートから今すぐ取り込みます">🔄 最新を取得</button>
       <span class="save-status" id="notesSaveStatus"></span>
     </span>
   </header>
   </div>
 
   <div id="sheetConnectionStatus" class="sheet-status-banner" style="display:none;"></div>
+  <div id="progressSyncStatus" class="sheet-status-banner" style="display:none;"></div>
 
   <main>
     <section id="practice" class="panel" style="display:none;">
@@ -296,7 +328,7 @@ function doPost(e) {
   <div class="build-tag" id="buildTag" title="このページの版。PCで公開した最新版の番号と一致していれば、最新のコードが読み込まれています。" style="text-align:center;color:#8a94a0;font-size:11px;font-family:monospace;padding:14px 0 22px;">build …</div>
 </div>
 
-  <script src="script.js?v=161"></script>
+  <script src="script.js?v=162"></script>
   <script src="exam.js?v=158"></script>
   <script src="speedread.js?v=155"></script>
 </body>
