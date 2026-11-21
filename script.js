@@ -28,7 +28,7 @@ const IS_TOUCH_DEVICE = matchMedia('(hover: none), (pointer: coarse)').matches;
 // このJSファイルの版。index.htmlの <script src="script.js?v=NN"> の NN と必ず
 // 揃えて更新すること。画面右下に "build vNN" と表示され、スマホ等で「本当に最新の
 // コードが読み込まれているか」を目視確認できる。
-const BUILD_VERSION = 'v162';
+const BUILD_VERSION = 'v163';
 (function showBuildTag() {
   function set() {
     const el = document.getElementById('buildTag');
@@ -3562,6 +3562,20 @@ function getMostRecentStudyDateKey() {
   return dates.length ? dates[dates.length - 1] : null;
 }
 
+// AIコーチが振り返る「前回の学習日」。問題を解いた日(dailyQuestions)に加えて、
+// 速読モードで本文を読んだ日(speedReadLog)も学習日として数える(「前回学習した
+// 問題」欄は従来どおり解いた日だけを見るので、こちらは別関数にしてある)。
+function getMostRecentCoachDateKey() {
+  const today = localDateKey();
+  const dates = new Set();
+  const dq = getDailyQuestionsLog();
+  Object.keys(dq).forEach(d => { if (d < today && Object.keys(dq[d]).length > 0) dates.add(d); });
+  const sr = getSpeedReadLog();
+  Object.keys(sr).forEach(d => { if (d < today && Object.keys(sr[d]).length > 0) dates.add(d); });
+  const sorted = [...dates].sort();
+  return sorted.length ? sorted[sorted.length - 1] : null;
+}
+
 function stripHtmlToText(html) {
   const div = document.createElement('div');
   div.innerHTML = html || '';
@@ -3755,7 +3769,7 @@ function showProgressSyncError(msg) {
 }
 async function syncProgressFromSheet() {
   const url = getSheetUrl();
-  if (!url) return { ok: false, reason: 'スプレッドシートURL未設定' };
+  if (!url) { markInitialSyncDone(); return { ok: false, reason: 'スプレッドシートURL未設定' }; }
   lastProgressSyncAt = Date.now(); // 成功・失敗にかかわらず試行時刻(失敗時も3分後の再表示で再試行できるように)
   try {
     const res = await fetchWithTimeout(`${url}?action=getProgress`, {}, SHEET_FETCH_TIMEOUT_MS);
@@ -3770,6 +3784,7 @@ async function syncProgressFromSheet() {
     mergeBottleneckMarks(remote.bottleneckMarks);
     mergeSpeedReadCounts(remote.speedReadCounts);
     mergeSpeedReadLog(remote.speedReadLog);
+    markInitialSyncDone(); // 取り込み完了。以降のコーチメッセージ作成は、取り込んだ記録を使う
     renderStatsDashboard(statsWeekOffset);
     renderHistorySidebar(historyWeekOffset);
     if (typeof renderSpeedReadHistory === 'function') renderSpeedReadHistory();
@@ -3781,6 +3796,7 @@ async function syncProgressFromSheet() {
     // ローカルのみで継続する。理由は画面に出す。
     const reason = e.name === 'AbortError' ? `${SHEET_FETCH_TIMEOUT_MS / 1000}秒以内に応答がありませんでした` : e.message;
     showProgressSyncError(reason);
+    markInitialSyncDone();
     return { ok: false, reason };
   }
 }
@@ -3932,17 +3948,29 @@ function buildCoachContext(studyDateKey) {
     }
   });
 
+  // 速読モード(問題は解かず本文だけを読む)でその日に読んだ本文と、そのノート・AIへの質問。
+  const speedKeys = Object.keys(getSpeedReadLog()[studyDateKey] || {});
+  speedKeys.forEach(k => {
+    for (let di = 0; di < 3; di++) {
+      const tn = stripHtmlToTextWithBreaks(localStorage.getItem(NOTES_LS_PREFIX + k + '-doc' + di + '-translate-notes'));
+      if (tn) noteLines.push(`[速読${k}の翻訳ノート] ${tn.slice(0, 500)}`);
+    }
+    const sa = stripHtmlToTextWithBreaks(localStorage.getItem(NOTES_LS_PREFIX + k + '-ai'));
+    if (sa) noteLines.push(`[速読${k}のAI質問履歴] ${sa.slice(0, 300)}`);
+  });
+
   let text = `学習日: ${studyDateKey}\n取り組んだ問題数: ${keys.length}問(正解 ${correctCount} / 不正解 ${incorrectKeys.length})\n`;
+  if (speedKeys.length) text += `速読モード(問題は解かず、Part7の本文を読むだけ)で読んだ本文: ${speedKeys.join(', ')}\n`;
   if (incorrectKeys.length) text += `不正解だった問題番号: ${incorrectKeys.join(', ')}\n`;
   if (keyElementLines.length) text += `\nこれらの問題を解くために必要だった文法・語彙・表現:\n${keyElementLines.slice(0, 20).join('\n')}\n`;
-  const bottleneckLines = buildBottleneckContextLines(keys);
+  const bottleneckLines = buildBottleneckContextLines(keys.concat(speedKeys));
   if (bottleneckLines.length) text += `\n翻訳画面で青太字にした箇所(聞き取れなかった・読みで引っかかった語句)と、その前後の文脈:\n${bottleneckLines.slice(0, 15).join('\n')}\n`;
   if (noteLines.length) text += `\n書いたノート・AIへの質問:\n${noteLines.slice(0, 20).join('\n')}`;
   return text;
 }
 
 async function generateCoachMessage() {
-  const studyDateKey = getMostRecentStudyDateKey();
+  const studyDateKey = getMostRecentCoachDateKey();
   if (!studyDateKey) return await callGemini(COACH_PROMPT_NO_DATA, 'まだ記録がありません。', { maxOutputTokens: 500 });
   const context = buildCoachContext(studyDateKey);
   return await callGemini(COACH_PROMPT, context, { maxOutputTokens: 1200 });
@@ -3950,10 +3978,39 @@ async function generateCoachMessage() {
 
 let coachGenerationInFlight = null;
 
+// ページを開いた直後の「他の端末の学習記録・ノートの取り込み」が終わったかどうか。
+// コーチメッセージは、その日の最初にトップを開いたときに「前回の学習日」の記録から
+// 作るが、以前は取り込みの完了を待たずに作っていたため、前日に別の端末(自宅PC→
+// 会社PCなど)で勉強していても、この端末の古い記録だけを見たメッセージになっていた。
+let initialSyncPending = true;
+let initialSyncResolve = null;
+const initialSyncPromise = new Promise(r => { initialSyncResolve = r; });
+function markInitialSyncDone() {
+  initialSyncPending = false;
+  initialSyncResolve();
+}
+// 取り込みが長引いたり失敗した場合でも、30秒でコーチメッセージの作成へ進む。
+setTimeout(markInitialSyncDone, 30000);
+
 async function loadOrGenerateCoachMessage(textareaEl, statusEl) {
   const todayKey = localDateKey();
+  const cachedNow = getCoachHistory()[todayKey];
+  // 取り込み中は、保存済みのメッセージがあればまずそれを出す。取り込み完了後の
+  // 画面の描き直しで、「前回の学習日」が変わっていないか改めて確認する。
+  if (cachedNow && initialSyncPending) {
+    textareaEl.value = cachedNow.text;
+    return;
+  }
+  if (initialSyncPending) {
+    statusEl.textContent = '他の端末の学習記録を取り込み中...';
+    await initialSyncPromise;
+    statusEl.textContent = '';
+  }
   const history = getCoachHistory();
-  if (history[todayKey]) {
+  const hasKey = !!(getGeminiKey() || getGeminiPaidKey());
+  // 保存済みでも、取り込み後に「前回の学習日」が変わっていた(古い記録から作った)
+  // 場合は作り直す。
+  if (history[todayKey] && (history[todayKey].studiedDate === getMostRecentCoachDateKey() || !hasKey)) {
     textareaEl.value = history[todayKey].text;
     return;
   }
@@ -3966,7 +4023,7 @@ async function loadOrGenerateCoachMessage(textareaEl, statusEl) {
     statusEl.textContent = 'コーチメッセージを準備中...';
     coachGenerationInFlight = generateCoachMessage()
       .then(text => {
-        saveCoachHistoryEntry(todayKey, { studiedDate: getMostRecentStudyDateKey(), text });
+        saveCoachHistoryEntry(todayKey, { studiedDate: getMostRecentCoachDateKey(), text });
         return text;
       })
       .catch(e => `コーチメッセージの取得に失敗しました: ${e.message}`)

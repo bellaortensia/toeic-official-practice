@@ -606,6 +606,8 @@
         count: bumpCount ? Math.min(99, prev.count + 1) : prev.count,
         lastCorrect: !!isCorrect, lastAt: now, noteKey: noteKey || prev.noteKey || null
       };
+      // AIコーチが「前回解いた問題」として振り返れるよう、解いた日の記録(dailyQuestions)にも残す。
+      if (bumpCount) recordDailyQuestion(key, isCorrect);
     };
     const t = ex.test;
     const p5 = ex.units.filter(u => u.kind === 'p5');
